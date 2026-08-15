@@ -1,0 +1,12 @@
+{
+  "name": "sonora-fan",
+  "version": "1.0.0",
+  "description": "Sonora Fan - Música e bate-papo em tempo real",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  },
+  "engines": { "node": ">=16.0.0" }
+}
