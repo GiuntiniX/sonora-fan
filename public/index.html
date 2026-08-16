@@ -699,7 +699,7 @@
     .kick-btn { background: var(--danger); color: #fff; }
     .kick-btn:hover { background: #dc2626; }
     .ban-btn { background: #7c2d12; color: #fb923c; }
-n    .ban-btn:hover { background: #9a3412; }
+    .ban-btn:hover { background: #9a3412; }
 
     /* CHAT */
     .chat-panel {
@@ -937,6 +937,7 @@ n    .ban-btn:hover { background: #9a3412; }
     .empty-queue .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
     .empty-queue p { font-size: 14px; }
   </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -1321,6 +1322,7 @@ function syncPlayer(state) {
 
   $('voteCount').textContent = (state.votes?.up || 0) - (state.votes?.down || 0);
   renderQueue(state.queue, state.currentIndex);
+  
 }
 
 function updateTrackInfo(track) {
@@ -1515,6 +1517,7 @@ function renderUsers(users) {
       <div class="user-avatar" style="background:${u.color}18;color:${u.color};border-color:${u.color}40">${u.name[0]}</div>
       <span style="font-weight:${isMe ? 600 : 400};color:${isMe ? 'var(--text)' : 'var(--text-secondary)'};">${escapeHtml(u.name)}${isMe ? ' (você)' : ''}</span>
       ${u.isAdmin ? '<span class="admin-tag">Admin</span>' : ''}
+
       ${amIAdmin && !isMe ? `
         <div class="user-actions">
           <button class="kick-btn" onclick="kickUser('${escapeHtml(u.name)}')">Kick</button>
