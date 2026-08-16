@@ -303,7 +303,7 @@
     /* ===== ROOM LAYOUT ===== */
     .room-layout {
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 1fr 420px;
       gap: 0;
       flex: 1;
       min-height: 0;
@@ -316,7 +316,7 @@
     .stage {
       display: flex;
       flex-direction: column;
-      padding: 24px 28px;
+      padding: 20px 16px;
       gap: 20px;
       overflow-y: auto;
     }
@@ -861,15 +861,16 @@
     }
     .chat-input-bar input {
       flex: 1;
-      padding: 12px 16px;
+      padding: 10px 12px;
       border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text);
-      font-size: 14px;
+      font-size: 13px;
       outline: none;
       transition: all 0.2s;
       font-family: inherit;
+      min-width: 0;
     }
     .chat-input-bar input:focus { 
       border-color: var(--accent2); 
@@ -877,16 +878,18 @@
     }
     .chat-input-bar input::placeholder { color: var(--text-muted); }
     .chat-input-bar button {
-      padding: 12px 22px;
+      padding: 10px 16px;
       border-radius: 10px;
       border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: #fff;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.15s;
       font-family: inherit;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .chat-input-bar button:hover { 
       transform: translateY(-1px);
@@ -1133,15 +1136,16 @@
       animation: bounceIn 0.3s ease;
     }
     .emoji-btn {
-      padding: 10px 14px;
+      padding: 8px 10px;
       border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text-secondary);
-      font-size: 18px;
+      font-size: 16px;
       cursor: pointer;
       transition: all 0.15s;
       line-height: 1;
+      flex-shrink: 0;
     }
     .emoji-btn:hover { background: var(--bg-hover); transform: scale(1.1); }
     .emoji-panel {
@@ -1277,7 +1281,7 @@
       <div class="stage">
         <!-- TERRA SONORA BANNER -->
         <div class="terra-banner" style="border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);">
-          <img src="https://p2.trrsf.com/image/fget/cf/1200/900/middle/images.terra.com/2026/03/13/imagem-5-ubryr9vqugjd.png" 
+          <img src="https://yt3.googleusercontent.com/YMKHm23rp5nzDdBKEp6ynYWUk3M4b8CiH18Q6tNUdDFswASPCUb6pRnxUVVkA5e0maeBEfZZrUQ=s900-c-k-c0x00ffffff-no-rj" 
                alt="Terra Sonora" 
                style="width:100%;height:auto;display:block;object-fit:contain;max-height:280px;background:linear-gradient(180deg,#0a0a14,#050508);">
         </div>
@@ -1313,11 +1317,7 @@
               <span id="totalTime">0:00</span>
             </div>
           </div>
-          <div class="vote-section">
-            <button class="vote-btn up" onclick="vote(1)">▲ Curtir</button>
-            <span class="vote-count" id="voteCount">0</span>
-            <button class="vote-btn down" onclick="vote(-1)">▼ Não curti</button>
-          </div>
+          <!-- Voto removido -->
         </div>
 
         <!-- QUEUE -->
@@ -1425,6 +1425,41 @@ let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
 let addCooldown = 10000;
+
+// ========== CENSOR ==========
+const badWords = [
+  // Português
+  'porra','caralho','merda','bosta','puta','viado','bicha','corno','foda','foder',
+  'cu','cuzão','cuzona','arrombado','arrombada','filho da puta','fdp','desgraçado',
+  'desgraçada','vagabundo','vagabunda','escroto','escrota','idiota','imbecil',
+  'retardado','retardada','buceta','pica','rola','pinto','piroca','cacete',
+  'punheta','siririca','boquete','anal','xota','xoxota','pepeca','xereca',
+  'caralho','crlh','krl','pqp','pnc','vtnc','vsf','fdp','foda-se','fodase',
+  'cuzao','bct','pkt','pucta','putaria','putinha','putao','viadinho','bichinha',
+  'viadao','bicha','bixinha','bixona','corno','corninho','cornao','otario',
+  'otaria','babaca','babacão','cretino','cretina','estupido','estupida',
+  'imbecil','idiota','lazarento','lazarenta','maldito','maldita','maldicao',
+  'nojento','nojenta','nojentao','sacana','safado','safada','tarado','tarada',
+  'vadia','vadio','vagabundo','vagabunda','xarope','xexelento','xexelenta',
+  // Inglês
+  'fuck','fucking','fucked','fucker','fuckin','shit','shitty','bitch','asshole',
+  'dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger',
+  'nigga','retard','fag','faggot','dyke','twat','wanker','bollocks','arsehole',
+  'cum','jizz','tits','boobs','dildo','blowjob','handjob','milf','anal','rape',
+  'rapist','pedophile','pedo','motherfucker','mf','stfu','gtfo','kys','fk','fck',
+  'sh1t','b1tch','d1ck','c0ck','p0rn','porn','xxx','sex','sexy','nude','naked',
+  'masturbate','masturbation','orgasm','ejaculate','penis','vagina','clitoris',
+  'testicles','scrotum','condom','erection','erect','boner','hardon','wetdream',
+];
+
+function censorText(text) {
+  let censored = text;
+  badWords.forEach(word => {
+    const regex = new RegExp('\\b' + word + '\\b', 'gi');
+    censored = censored.replace(regex, '***');
+  });
+  return censored;
+}
 
 // ========== UTILS ==========
 function $(id) { return document.getElementById(id); }
@@ -1718,14 +1753,6 @@ setInterval(() => {
   } catch(e) {}
 }, 1000);
 
-// ========== VOTE ==========
-function vote(delta) {
-  socket.emit('vote', delta);
-  const el = $('voteCount');
-  el.style.transform = 'scale(1.3)';
-  setTimeout(() => el.style.transform = 'scale(1)', 200);
-}
-
 // ========== QUEUE ==========
 function renderQueue(queue, currentIndex) {
   const list = $('queueList');
@@ -1745,7 +1772,7 @@ function renderQueue(queue, currentIndex) {
   queue.forEach((track, i) => {
     const div = document.createElement('div');
     div.className = 'queue-item' + (i === currentIndex ? ' playing' : '');
-    const showRemove = amIAdmin || track.dj === myName;
+    const showRemove = amIAdmin;
     div.innerHTML = `
       <span class="queue-num">${i === currentIndex ? '▶' : i + 1}</span>
       <div class="queue-thumb">
@@ -1755,8 +1782,11 @@ function renderQueue(queue, currentIndex) {
       <span class="queue-dj">${escapeHtml(track.dj || 'Sistema')}</span>
       ${showRemove && i !== currentIndex ? `<button class="queue-remove" onclick="event.stopPropagation(); removeFromQueue(${i})" title="Remover">×</button>` : ''}
     `;
-    if (i !== currentIndex) {
+    if (i !== currentIndex && amIAdmin) {
       div.onclick = () => socket.emit('skipTo', i);
+      div.style.cursor = 'pointer';
+    } else if (i !== currentIndex) {
+      div.style.cursor = 'default';
     }
     list.appendChild(div);
   });
@@ -1874,7 +1904,7 @@ function sendMsg() {
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
-  socket.emit('chat', { text });
+  socket.emit('chat', { text: censorText(text) });
   input.value = '';
 }
 
