@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sonora Fan — Palco</title>
+  <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -303,7 +303,7 @@
     /* ===== ROOM LAYOUT ===== */
     .room-layout {
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 1fr 420px;
       gap: 0;
       flex: 1;
       min-height: 0;
@@ -316,9 +316,79 @@
     .stage {
       display: flex;
       flex-direction: column;
-      padding: 24px 28px;
+      padding: 20px 16px;
       gap: 20px;
       overflow-y: auto;
+    }
+
+    /* DJ BOOTH */
+    .dj-booth-section {
+      text-align: center;
+      padding: 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(124,58,237,0.05), transparent);
+      position: relative;
+    }
+    .dj-booth-section::before {
+      content: 'CABINES DE DJ';
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      padding: 0 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+    .dj-booth {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: 80px;
+    }
+    .dj-slot {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      font-weight: 600;
+    }
+    .dj-slot.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(124,58,237,0.15));
+      color: var(--accent);
+      box-shadow: 0 0 30px rgba(255,107,53,0.2), 0 0 60px rgba(124,58,237,0.1);
+      transform: scale(1.08);
+    }
+    .dj-slot.occupied {
+      border-color: var(--border-hover);
+      color: var(--text-secondary);
+      cursor: default;
+    }
+    .dj-slot:hover:not(.occupied) {
+      border-color: var(--accent2);
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(124,58,237,0.2);
+    }
+    .dj-slot .dj-name {
+      position: absolute;
+      bottom: -24px;
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-weight: 500;
     }
 
     /* PLAYER */
@@ -430,37 +500,8 @@
       font-size: 11px;
       color: var(--text-muted);
     }
-    .vote-section {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 18px 18px;
-      border-top: 1px solid var(--border);
-      padding-top: 14px;
     }
-    .vote-btn {
-      padding: 10px 20px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: transparent;
-      cursor: pointer;
-      font-size: 14px;
-      color: var(--text-muted);
-      transition: all 0.15s;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
-    .vote-btn:hover { background: var(--bg-hover); }
-    .vote-btn.up:hover { color: var(--success); border-color: var(--success); }
-    .vote-btn.down:hover { color: var(--danger); border-color: var(--danger); }
-    .vote-count { 
-      font-size: 18px; 
-      font-weight: 800; 
-      color: var(--text);
-      min-width: 30px;
-      text-align: center;
     }
 
     /* QUEUE */
@@ -669,6 +710,15 @@
       transition: all 0.2s;
     }
     .user:hover .user-avatar { transform: scale(1.1); }
+    .user .dj-badge {
+      font-size: 10px;
+      color: var(--accent);
+      margin-left: auto;
+      background: rgba(255,107,53,0.12);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
     .user .admin-tag {
       font-size: 9px;
       color: var(--accent2);
@@ -782,15 +832,16 @@
     }
     .chat-input-bar input {
       flex: 1;
-      padding: 12px 16px;
+      padding: 10px 12px;
       border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text);
-      font-size: 14px;
+      font-size: 13px;
       outline: none;
       transition: all 0.2s;
       font-family: inherit;
+      min-width: 0;
     }
     .chat-input-bar input:focus { 
       border-color: var(--accent2); 
@@ -798,16 +849,18 @@
     }
     .chat-input-bar input::placeholder { color: var(--text-muted); }
     .chat-input-bar button {
-      padding: 12px 22px;
+      padding: 10px 16px;
       border-radius: 10px;
       border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: #fff;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.15s;
       font-family: inherit;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .chat-input-bar button:hover { 
       transform: translateY(-1px);
@@ -926,6 +979,8 @@
       .login-card { padding: 40px 24px; }
       .login-card h1 { font-size: 24px; }
       #youtube-player { height: 200px; }
+      .dj-booth { gap: 8px; }
+      .dj-slot { width: 50px; height: 50px; font-size: 10px; }
     }
 
     /* ===== EMPTY QUEUE STATE ===== */
@@ -936,11 +991,399 @@
     }
     .empty-queue .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
     .empty-queue p { font-size: 14px; }
+
+    /* ===== SHOW ANIMATIONS ===== */
+    @keyframes spotlight {
+      0%, 100% { opacity: 0.3; transform: rotate(-15deg) scale(1); }
+      25% { opacity: 0.6; transform: rotate(-10deg) scale(1.1); }
+      50% { opacity: 0.4; transform: rotate(-20deg) scale(0.95); }
+      75% { opacity: 0.7; transform: rotate(-12deg) scale(1.05); }
+    }
+    @keyframes spotlight2 {
+      0%, 100% { opacity: 0.2; transform: rotate(15deg) scale(1); }
+      25% { opacity: 0.5; transform: rotate(20deg) scale(1.15); }
+      50% { opacity: 0.3; transform: rotate(10deg) scale(0.9); }
+      75% { opacity: 0.6; transform: rotate(18deg) scale(1.1); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      50% { transform: translateY(-100vh) rotate(180deg); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 5px var(--accent-glow), 0 0 10px var(--accent2-glow); }
+      50% { box-shadow: 0 0 20px var(--accent-glow), 0 0 40px var(--accent2-glow); }
+    }
+    @keyframes equalizer {
+      0%, 100% { height: 4px; }
+      50% { height: 20px; }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .spotlight-left, .spotlight-right {
+      position: fixed;
+      top: -20%;
+      width: 60vw;
+      height: 120vh;
+      pointer-events: none;
+      z-index: 0;
+      mix-blend-mode: screen;
+    }
+    .spotlight-left {
+      left: -20%;
+      background: radial-gradient(ellipse at center, rgba(255,107,53,0.12) 0%, transparent 70%);
+      animation: spotlight 4s ease-in-out infinite;
+      transform-origin: top left;
+    }
+    .spotlight-right {
+      right: -20%;
+      background: radial-gradient(ellipse at center, rgba(124,58,237,0.12) 0%, transparent 70%);
+      animation: spotlight2 5s ease-in-out infinite;
+      transform-origin: top right;
+    }
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: float 8s linear infinite;
+      opacity: 0;
+    }
+    .particle:nth-child(2n) { background: var(--accent2); animation-duration: 10s; animation-delay: 1s; left: 20%; }
+    .particle:nth-child(3n) { background: var(--success); animation-duration: 12s; animation-delay: 2s; left: 40%; }
+    .particle:nth-child(4n) { background: var(--warning); animation-duration: 9s; animation-delay: 3s; left: 60%; }
+    .particle:nth-child(5n) { background: var(--accent); animation-duration: 11s; animation-delay: 4s; left: 80%; }
+    .particle:nth-child(6n) { background: var(--accent2); animation-duration: 13s; animation-delay: 0.5s; left: 10%; }
+    .particle:nth-child(7n) { background: var(--danger); animation-duration: 7s; animation-delay: 2.5s; left: 30%; }
+    .particle:nth-child(8n) { background: var(--accent); animation-duration: 14s; animation-delay: 1.5s; left: 50%; }
+    .particle:nth-child(9n) { background: var(--accent2); animation-duration: 6s; animation-delay: 3.5s; left: 70%; }
+    .particle:nth-child(10n) { background: var(--warning); animation-duration: 15s; animation-delay: 5s; left: 90%; }
+    .equalizer {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 24px;
+    }
+    .eq-bar {
+      width: 3px;
+      background: linear-gradient(to top, var(--accent), var(--accent2));
+      border-radius: 2px;
+      animation: equalizer 0.8s ease-in-out infinite;
+    }
+    .eq-bar:nth-child(1) { animation-delay: 0s; }
+    .eq-bar:nth-child(2) { animation-delay: 0.1s; }
+    .eq-bar:nth-child(3) { animation-delay: 0.2s; }
+    .eq-bar:nth-child(4) { animation-delay: 0.3s; }
+    .eq-bar:nth-child(5) { animation-delay: 0.15s; }
+    .room-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+      animation: shimmer 3s infinite;
+    }
+    .player-section {
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+    .msg {
+      animation: bounceIn 0.3s ease;
+    }
+    .emoji-btn {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-secondary);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .emoji-btn:hover { background: var(--bg-hover); transform: scale(1.1); }
+    .emoji-panel {
+      position: absolute;
+      bottom: 60px;
+      right: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: none;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      z-index: 100;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      max-width: 320px;
+    }
+    .emoji-panel.show { display: grid; }
+    .emoji-item {
+      padding: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 20px;
+      transition: all 0.1s;
+      user-select: none;
+    }
+    .emoji-item:hover { background: var(--bg-hover); transform: scale(1.2); }
+    .msg-music {
+      background: linear-gradient(90deg, rgba(255,107,53,0.08), rgba(124,58,237,0.05));
+      border: 1px solid rgba(255,107,53,0.15);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin: 4px 0;
+    }
+    .msg-music .music-like-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .msg-music .music-like-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,107,53,0.1);
+    }
+    .msg-music .music-like-btn.liked {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,107,53,0.15);
+    }
+
+    /* ===== THEME TOGGLE ===== */
+    .theme-toggle {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .theme-toggle:hover { background: var(--bg-hover); transform: scale(1.1); }
+
+    /* ===== AVATAR EMOJI PICKER ===== */
+    .avatar-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .avatar-option {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .avatar-option:hover { border-color: var(--accent2); transform: scale(1.15); }
+    .avatar-option.selected { border-color: var(--accent); background: rgba(255,107,53,0.15); }
+
+    /* ===== MESSAGE REACTIONS ===== */
+    .msg-reactions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .reaction-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.1s;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .reaction-btn:hover { border-color: var(--accent); background: rgba(255,107,53,0.1); }
+    .reaction-btn.has-reaction { border-color: var(--accent); background: rgba(255,107,53,0.15); }
+    .reaction-add {
+      opacity: 0;
+      transition: opacity 0.15s;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    .msg:hover .reaction-add { opacity: 1; }
+    .reaction-add:hover { background: var(--bg-hover); }
+    .reaction-picker {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      display: none;
+      gap: 4px;
+      z-index: 50;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .reaction-picker.show { display: flex; }
+    .reaction-emoji {
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.1s;
+    }
+    .reaction-emoji:hover { background: var(--bg-hover); transform: scale(1.2); }
+
+    /* ===== TYPING INDICATOR ===== */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .typing-indicator.show { display: flex; }
+    .typing-dots {
+      display: flex;
+      gap: 3px;
+    }
+    .typing-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: typingBounce 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+
+    /* ===== MENTION PING ===== */
+    .mention-highlight {
+      background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(124,58,237,0.2));
+      border-left: 3px solid var(--accent);
+      animation: mentionPulse 2s ease-in-out infinite;
+    }
+    @keyframes mentionPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.2); }
+      50% { box-shadow: 0 0 15px rgba(255,107,53,0.3); }
+    }
+    .msg-text .mention {
+      color: var(--accent);
+      font-weight: 700;
+      background: rgba(255,107,53,0.1);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+
+    /* ===== CONFETTI ===== */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      overflow: hidden;
+    }
+    .confetti-piece {
+      position: absolute;
+      width: 8px; height: 8px;
+      animation: confettiFall 3s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ===== FULLSCREEN MODE ===== */
+    }
+    }
+    }
+    }
+    }
+
+    /* ===== FAVORITES TAB ===== */
+    }
+    }
+    }
+    }
+    }
+
+    /* ===== CLEAR CHAT BUTTON ===== */
+    .clear-chat-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--danger);
+      background: transparent;
+      color: var(--danger);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 600;
+    }
+    .clear-chat-btn:hover { background: rgba(239,68,68,0.1); }
   </style>
+<base target="_blank">
 </head>
 <body>
 
 <div class="stage-bg"></div>
+<div class="spotlight-left"></div>
+<div class="spotlight-right"></div>
+<div class="particles">
+  <div class="particle" style="bottom:-10%;left:5%;"></div>
+  <div class="particle" style="bottom:-10%;left:15%;"></div>
+  <div class="particle" style="bottom:-10%;left:25%;"></div>
+  <div class="particle" style="bottom:-10%;left:35%;"></div>
+  <div class="particle" style="bottom:-10%;left:45%;"></div>
+  <div class="particle" style="bottom:-10%;left:55%;"></div>
+  <div class="particle" style="bottom:-10%;left:65%;"></div>
+  <div class="particle" style="bottom:-10%;left:75%;"></div>
+  <div class="particle" style="bottom:-10%;left:85%;"></div>
+  <div class="particle" style="bottom:-10%;left:95%;"></div>
+</div>
 
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
@@ -949,6 +1392,21 @@
     <h1>Sonora <span>Fan</span></h1>
     <p>Entre no palco. Ouça música com amigos,<br>adicione do YouTube e converse em tempo real.</p>
     <input type="text" id="loginName" placeholder="Como quer ser chamado?" maxlength="20" onkeydown="if(event.key==='Enter') doLogin()">
+    <div style="color:var(--text-muted);font-size:12px;margin-bottom:8px;">Escolha seu avatar:</div>
+    <div class="avatar-picker" id="avatarPicker">
+      <div class="avatar-option selected" data-emoji="🎸" onclick="selectAvatar(this)">🎸</div>
+      <div class="avatar-option" data-emoji="🎤" onclick="selectAvatar(this)">🎤</div>
+      <div class="avatar-option" data-emoji="🎧" onclick="selectAvatar(this)">🎧</div>
+      <div class="avatar-option" data-emoji="🎹" onclick="selectAvatar(this)">🎹</div>
+      <div class="avatar-option" data-emoji="🥁" onclick="selectAvatar(this)">🥁</div>
+      <div class="avatar-option" data-emoji="🎷" onclick="selectAvatar(this)">🎷</div>
+      <div class="avatar-option" data-emoji="🎺" onclick="selectAvatar(this)">🎺</div>
+      <div class="avatar-option" data-emoji="🎻" onclick="selectAvatar(this)">🎻</div>
+      <div class="avatar-option" data-emoji="🎵" onclick="selectAvatar(this)">🎵</div>
+      <div class="avatar-option" data-emoji="🎶" onclick="selectAvatar(this)">🎶</div>
+      <div class="avatar-option" data-emoji="🎼" onclick="selectAvatar(this)">🎼</div>
+      <div class="avatar-option" data-emoji="🎬" onclick="selectAvatar(this)">🎬</div>
+    </div>
     <div class="admin-toggle" onclick="toggleAdminField()">
       <input type="checkbox" id="isAdminCheck">
       <label for="isAdminCheck">Sou administrador</label>
@@ -988,7 +1446,10 @@
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
-        <span class="listener-pill"><span class="listener-dot"></span><span id="listenerCount">0</span> ouvintes</span>
+        
+        
+        <button class="theme-toggle" onclick="toggleTheme()" title="Tema" id="themeBtn">🌙</button>
+
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
     </div>
@@ -997,16 +1458,25 @@
       <div class="stage">
         <!-- TERRA SONORA BANNER -->
         <div class="terra-banner" style="border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);">
-          <img src="https://p2.trrsf.com/image/fget/cf/1200/900/middle/images.terra.com/2026/03/13/imagem-5-ubryr9vqugjd.png" 
+          <img src="https://iili.io/Ciid52s.jpg" 
                alt="Terra Sonora" 
-               style="width:100%;height:auto;display:block;object-fit:cover;max-height:200px;">
+               style="width:100%;height:auto;display:block;object-fit:contain;max-height:280px;background:linear-gradient(180deg,#0a0a14,#050508);">
         </div>
 
         <!-- PLAYER -->
         <div class="player-section">
           <div class="player-header">
             <span class="now-playing-label">Tocando agora</span>
-            <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div class="equalizer" id="equalizer">
+                <div class="eq-bar" style="height:8px;"></div>
+                <div class="eq-bar" style="height:14px;"></div>
+                <div class="eq-bar" style="height:6px;"></div>
+                <div class="eq-bar" style="height:18px;"></div>
+                <div class="eq-bar" style="height:10px;"></div>
+              </div>
+              <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
+            </div>
           </div>
           <div id="youtube-player"></div>
           <div class="player-info">
@@ -1024,11 +1494,7 @@
               <span id="totalTime">0:00</span>
             </div>
           </div>
-          <div class="vote-section">
-            <button class="vote-btn up" onclick="vote(1)">▲ Curtir</button>
-            <span class="vote-count" id="voteCount">0</span>
-            <button class="vote-btn down" onclick="vote(-1)">▼ Não curti</button>
-          </div>
+          <!-- Voto removido -->
         </div>
 
         <!-- QUEUE -->
@@ -1049,15 +1515,66 @@
       </div>
 
       <div class="sidebar">
-        <div class="users-panel">
-          <div class="panel-header">Pessoas na sala</div>
-          <div class="user-list" id="userList"></div>
+        <div class="users-panel" style="padding:14px 18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:14px;font-weight:600;">
+              <span style="font-size:18px;">👥</span>
+              <span id="userCount">0</span> ouvinte<span id="userCountPlural">s</span> na sala
+            </div>
+            <span class="listener-dot" style="position:static;"></span>
+          </div>
         </div>
         <div class="chat-panel">
           <div class="chat-messages" id="chatBox"></div>
-          <div class="chat-input-bar">
-            <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()">
+          <div id="clearChatContainer" style="display:none;padding:0 16px 8px;">
+            <button class="clear-chat-btn" onclick="clearChat()">🗑️ Limpar chat</button>
+          </div>
+          <div class="typing-indicator" id="typingIndicator">
+            <span id="typingName">Alguém</span> está digitando
+            <div class="typing-dots">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
+          <div class="chat-input-bar" style="position:relative;">
+            <button class="emoji-btn" onclick="toggleEmojiPanel()" title="Emojis">😀</button>
+            <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()" oninput="handleTyping()">
             <button onclick="sendMsg()">Enviar</button>
+            <div class="emoji-panel" id="emojiPanel">
+              <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
+              <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
+              <span class="emoji-item" onclick="insertEmoji('🥰')">🥰</span>
+              <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
+              <span class="emoji-item" onclick="insertEmoji('🤩')">🤩</span>
+              <span class="emoji-item" onclick="insertEmoji('😭')">😭</span>
+              <span class="emoji-item" onclick="insertEmoji('😡')">😡</span>
+              <span class="emoji-item" onclick="insertEmoji('🥳')">🥳</span>
+              <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
+              <span class="emoji-item" onclick="insertEmoji('👎')">👎</span>
+              <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
+              <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
+              <span class="emoji-item" onclick="insertEmoji('🎵')">🎵</span>
+              <span class="emoji-item" onclick="insertEmoji('🎸')">🎸</span>
+              <span class="emoji-item" onclick="insertEmoji('🎤')">🎤</span>
+              <span class="emoji-item" onclick="insertEmoji('🎧')">🎧</span>
+              <span class="emoji-item" onclick="insertEmoji('🎹')">🎹</span>
+              <span class="emoji-item" onclick="insertEmoji('🥁')">🥁</span>
+              <span class="emoji-item" onclick="insertEmoji('🎷')">🎷</span>
+              <span class="emoji-item" onclick="insertEmoji('🎺')">🎺</span>
+              <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
+              <span class="emoji-item" onclick="insertEmoji('🌟')">🌟</span>
+              <span class="emoji-item" onclick="insertEmoji('💯')">💯</span>
+              <span class="emoji-item" onclick="insertEmoji('🙌')">🙌</span>
+              <span class="emoji-item" onclick="insertEmoji('👏')">👏</span>
+              <span class="emoji-item" onclick="insertEmoji('🤘')">🤘</span>
+              <span class="emoji-item" onclick="insertEmoji('🕺')">🕺</span>
+              <span class="emoji-item" onclick="insertEmoji('💃')">💃</span>
+              <span class="emoji-item" onclick="insertEmoji('🍕')">🍕</span>
+              <span class="emoji-item" onclick="insertEmoji('🍺')">🍺</span>
+              <span class="emoji-item" onclick="insertEmoji('🌙')">🌙</span>
+              <span class="emoji-item" onclick="insertEmoji('☀️')">☀️</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1089,6 +1606,9 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- CONFETTI -->
+<div class="confetti-container" id="confettiContainer"></div>
+
 <script>
 
 const socket = io();
@@ -1101,6 +1621,45 @@ let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
 let addCooldown = 10000;
+let myAvatar = '🎸';
+let isTyping = false;
+let typingTimeout = null;
+let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
+
+// ========== CENSOR ==========
+const badWords = [
+  // Português
+  'porra','caralho','merda','bosta','puta','viado','bicha','corno','foda','foder',
+  'cu','cuzão','cuzona','arrombado','arrombada','filho da puta','fdp','desgraçado',
+  'desgraçada','vagabundo','vagabunda','escroto','escrota','idiota','imbecil',
+  'retardado','retardada','buceta','pica','rola','pinto','piroca','cacete',
+  'punheta','siririca','boquete','anal','xota','xoxota','pepeca','xereca',
+  'caralho','crlh','krl','pqp','pnc','vtnc','vsf','fdp','foda-se','fodase',
+  'cuzao','bct','pkt','pucta','putaria','putinha','putao','viadinho','bichinha',
+  'viadao','bicha','bixinha','bixona','corno','corninho','cornao','otario',
+  'otaria','babaca','babacão','cretino','cretina','estupido','estupida',
+  'imbecil','idiota','lazarento','lazarenta','maldito','maldita','maldicao',
+  'nojento','nojenta','nojentao','sacana','safado','safada','tarado','tarada',
+  'vadia','vadio','vagabundo','vagabunda','xarope','xexelento','xexelenta',
+  // Inglês
+  'fuck','fucking','fucked','fucker','fuckin','shit','shitty','bitch','asshole',
+  'dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger',
+  'nigga','retard','fag','faggot','dyke','twat','wanker','bollocks','arsehole',
+  'cum','jizz','tits','boobs','dildo','blowjob','handjob','milf','anal','rape',
+  'rapist','pedophile','pedo','motherfucker','mf','stfu','gtfo','kys','fk','fck',
+  'sh1t','b1tch','d1ck','c0ck','p0rn','porn','xxx','sex','sexy','nude','naked',
+  'masturbate','masturbation','orgasm','ejaculate','penis','vagina','clitoris',
+  'testicles','scrotum','condom','erection','erect','boner','hardon','wetdream',
+];
+
+function censorText(text) {
+  let censored = text;
+  badWords.forEach(word => {
+    const regex = new RegExp('\\b' + word + '\\b', 'gi');
+    censored = censored.replace(regex, '***');
+  });
+  return censored;
+}
 
 // ========== UTILS ==========
 function $(id) { return document.getElementById(id); }
@@ -1156,6 +1715,7 @@ function doLogin() {
   hide('loginScreen');
   showScreen('lobby');
   loadRooms();
+  applyTheme();
 }
 
 // ========== LOBBY ==========
@@ -1210,7 +1770,7 @@ async function createRoom() {
 // ========== ROOM ==========
 function joinRoom(slug) {
   currentRoomSlug = slug;
-  socket.emit('joinRoom', { slug, name: myName, adminPass: myAdminPass });
+  socket.emit('joinRoom', { slug, name: myName, adminPass: myAdminPass, avatar: myAvatar });
   showScreen('room');
   $('chatBox').innerHTML = '';
   amIAdmin = false;
@@ -1246,6 +1806,8 @@ function initPlayer() {
     playerVars: {
       autoplay: 1,
       controls: 0,
+      disablekb: 1,
+      fs: 0,
       rel: 0,
       modestbranding: 1,
       enablejsapi: 1,
@@ -1260,16 +1822,15 @@ function initPlayer() {
 
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
-    // Envia duração real do vídeo pro servidor
+    updateEqualizer(true);
     try {
       const duration = player.getDuration();
-      if (duration > 0) {
-        socket.emit('videoDuration', { duration: Math.floor(duration) });
-      }
+      if (duration > 0) socket.emit('videoDuration', { duration: Math.floor(duration) });
     } catch(e) {}
   }
+  if (event.data === YT.PlayerState.PAUSED) updateEqualizer(false);
   if (event.data === YT.PlayerState.ENDED) {
-    // Avisa o servidor que o vídeo terminou no player
+    updateEqualizer(false);
     socket.emit('videoEnded');
   }
 }
@@ -1319,7 +1880,6 @@ function syncPlayer(state) {
     } catch(e) {}
   }
 
-  $('voteCount').textContent = (state.votes?.up || 0) - (state.votes?.down || 0);
   renderQueue(state.queue, state.currentIndex);
   
 }
@@ -1327,7 +1887,7 @@ function syncPlayer(state) {
 function updateTrackInfo(track) {
   $('trackTitle').textContent = track.title;
   $('trackArtist').textContent = track.artist;
-  $('trackDj').textContent = track.dj ? `Adicionado por ${track.dj}` : '';
+  onTrackChange(track);
   $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
 }
 
@@ -1349,7 +1909,6 @@ socket.on('queueEmpty', () => {
 
 socket.on('users', (users) => {
   renderUsers(users);
-  $('listenerCount').textContent = users.length;
 });
 
 socket.on('chat', (msg) => { renderMessage(msg); });
@@ -1365,12 +1924,52 @@ socket.on('isAdmin', (isAdmin) => {
   amIAdmin = isAdmin;
   if (isAdmin) {
     show('adminBadge');
+    const clearContainer = $('clearChatContainer');
+    if (clearContainer) clearContainer.style.display = 'block';
     toast('Você é admin desta sala!', 'success');
   }
 });
 
 socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
 socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
+
+socket.on('typing', ({ name, isTyping }) => {
+  const indicator = $('typingIndicator');
+  const nameEl = $('typingName');
+  if (isTyping && name !== myName) {
+    nameEl.textContent = name;
+    indicator.classList.add('show');
+  } else {
+    indicator.classList.remove('show');
+  }
+});
+
+socket.on('chatUpdated', (msg) => {
+  // Atualiza reações em mensagens existentes
+  const existing = document.getElementById('msg-' + msg._id);
+  if (existing) {
+    renderMessage(msg);
+    existing.remove();
+  }
+});
+
+socket.on('chatCleared', () => {
+  $('chatBox').innerHTML = '';
+  toast('Chat limpo pelo admin', 'success');
+});
+
+socket.on('confetti', () => {
+  launchConfetti();
+});
+
+socket.on('musicLiked', ({ msgId, likes }) => {
+  const btn = document.getElementById('like-' + msgId);
+  const count = document.getElementById('like-count-' + msgId);
+  if (btn && count) {
+    btn.classList.add('liked');
+    btn.innerHTML = `❤️ <span id="like-count-${msgId}">${likes}</span> curtida${likes !== 1 ? 's' : ''}`;
+  }
+});
 
 // ========== PROGRESS ==========
 setInterval(() => {
@@ -1385,14 +1984,6 @@ setInterval(() => {
     }
   } catch(e) {}
 }, 1000);
-
-// ========== VOTE ==========
-function vote(delta) {
-  socket.emit('vote', delta);
-  const el = $('voteCount');
-  el.style.transform = 'scale(1.3)';
-  setTimeout(() => el.style.transform = 'scale(1)', 200);
-}
 
 // ========== QUEUE ==========
 function renderQueue(queue, currentIndex) {
@@ -1413,7 +2004,7 @@ function renderQueue(queue, currentIndex) {
   queue.forEach((track, i) => {
     const div = document.createElement('div');
     div.className = 'queue-item' + (i === currentIndex ? ' playing' : '');
-    const showRemove = amIAdmin || track.dj === myName;
+    const showRemove = amIAdmin;
     div.innerHTML = `
       <span class="queue-num">${i === currentIndex ? '▶' : i + 1}</span>
       <div class="queue-thumb">
@@ -1423,8 +2014,11 @@ function renderQueue(queue, currentIndex) {
       <span class="queue-dj">${escapeHtml(track.dj || 'Sistema')}</span>
       ${showRemove && i !== currentIndex ? `<button class="queue-remove" onclick="event.stopPropagation(); removeFromQueue(${i})" title="Remover">×</button>` : ''}
     `;
-    if (i !== currentIndex) {
+    if (i !== currentIndex && amIAdmin) {
       div.onclick = () => socket.emit('skipTo', i);
+      div.style.cursor = 'pointer';
+    } else if (i !== currentIndex) {
+      div.style.cursor = 'default';
     }
     list.appendChild(div);
   });
@@ -1506,26 +2100,11 @@ function startCooldown() {
 
 // ========== USERS ==========
 function renderUsers(users) {
-  const list = $('userList');
-  list.innerHTML = '';
-  users.forEach(u => {
-    const div = document.createElement('div');
-    div.className = 'user';
-    const isMe = u.name === myName;
-    div.innerHTML = `
-      <div class="user-avatar" style="background:${u.color}18;color:${u.color};border-color:${u.color}40">${u.name[0]}</div>
-      <span style="font-weight:${isMe ? 600 : 400};color:${isMe ? 'var(--text)' : 'var(--text-secondary)'};">${escapeHtml(u.name)}${isMe ? ' (você)' : ''}</span>
-      ${u.isAdmin ? '<span class="admin-tag">Admin</span>' : ''}
-
-      ${amIAdmin && !isMe ? `
-        <div class="user-actions">
-          <button class="kick-btn" onclick="kickUser('${escapeHtml(u.name)}')">Kick</button>
-          <button class="ban-btn" onclick="banUser('${escapeHtml(u.name)}')">Ban</button>
-        </div>
-      ` : ''}
-    `;
-    list.appendChild(div);
-  });
+  const count = users.length;
+  const countEl = $('userCount');
+  const pluralEl = $('userCountPlural');
+  if (countEl) countEl.textContent = count;
+  if (pluralEl) pluralEl.textContent = count === 1 ? '' : 's';
 }
 
 function kickUser(name) {
@@ -1542,35 +2121,245 @@ function sendMsg() {
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
-  socket.emit('chat', { text });
+  socket.emit('chat', { text: censorText(text) });
   input.value = '';
+  isTyping = false;
+  clearTimeout(typingTimeout);
+  socket.emit('typing', { isTyping: false });
 }
 
 function renderMessage(msg) {
   const box = $('chatBox');
   const div = document.createElement('div');
-  div.className = 'msg' + (msg.isSystem ? ' msg-system' : '');
 
-  if (msg.isSystem) {
-    div.innerHTML = `<span class="msg-text">${escapeHtml(msg.text)}</span><span class="msg-time">${formatTime(msg.createdAt)}</span>`;
-  } else {
+  if (msg.isMusic) {
+    div.className = 'msg msg-music';
+    div.id = 'music-' + msg._id;
+    const likes = msg.musicLikes || 0;
     div.innerHTML = `
-      <span class="msg-user" style="color:${msg.color || '#fff'}">${escapeHtml(msg.user)}${msg.isAdmin ? '<span class="msg-admin-badge">Admin</span>' : ''}</span>
-      <span class="msg-text">${escapeHtml(msg.text)}</span>
-      <span class="msg-time">${formatTime(msg.createdAt)}</span>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:16px;">🎵</span>
+        <span style="font-weight:700;color:var(--accent);font-size:13px;">${escapeHtml(msg.user)}</span>
+        <span style="color:var(--text-muted);font-size:12px;">adicionou uma música</span>
+        <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
+      </div>
+      <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px;">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
+      <button class="music-like-btn" id="like-${msg._id}" onclick="likeMusic('${msg._id}')">
+        ❤️ <span id="like-count-${msg._id}">${likes}</span> curtida${likes !== 1 ? 's' : ''}
+      </button>
     `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return;
   }
+
+  if (msg.isSystem) return;
+
+  // Detectar menções
+  const isMentioned = msg.text && msg.text.includes('@' + myName);
+  div.className = 'msg' + (isMentioned ? ' mention-highlight' : '');
+  div.id = 'msg-' + msg._id;
+
+  // Processar menções no texto
+  let processedText = escapeHtml(msg.text);
+  processedText = processedText.replace(/@(\\w+)/g, '<span class="mention">@$1</span>');
+
+  // Avatar
+  const avatar = msg.avatar || msg.user[0];
+
+  // Reações
+  let reactionsHtml = '';
+  if (msg.reactions && Object.keys(msg.reactions).length > 0) {
+    reactionsHtml = '<div class="msg-reactions">';
+    for (const [emoji, users] of Object.entries(msg.reactions)) {
+      const hasMine = users.includes(myName);
+      reactionsHtml += `<button class="reaction-btn ${hasMine ? 'has-reaction' : ''}" onclick="addReaction('${msg._id}', '${emoji}')">${emoji} ${users.length}</button>`;
+    }
+    reactionsHtml += '</div>';
+  }
+
+  div.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:8px;width:100%;">
+      <div style="width:28px;height:28px;border-radius:50%;background:${msg.color || '#888'}22;color:${msg.color || '#888'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid ${msg.color || '#888'}40;">${avatar}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span class="msg-user" style="color:${msg.color || '#fff'};cursor:pointer;" onclick="mentionUser('${escapeHtml(msg.user)}')">${escapeHtml(msg.user)}${msg.isAdmin ? '<span class="msg-admin-badge">Admin</span>' : ''}</span>
+          <span class="msg-time" style="opacity:0.5;">${formatTime(msg.createdAt)}</span>
+        </div>
+        <span class="msg-text">${processedText}</span>
+        ${reactionsHtml}
+        <div style="position:relative;">
+          <span class="reaction-add" onclick="toggleReactionPicker('${msg._id}')">+ 😀</span>
+          <div class="reaction-picker" id="react-picker-${msg._id}">
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '❤️')">❤️</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '🔥')">🔥</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '😂')">😂</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '👍')">👍</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '😮')">😮</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '🎵')">🎵</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
+
+  // Som de menção
+  if (isMentioned && msg.user !== myName) {
+    playMentionSound();
+  }
 }
 
 function addSystemMsg(text) {
-  renderMessage({ text, isSystem: true, createdAt: new Date() });
+  // Notificações de sistema não são exibidas no chat
+}
+
+// ========== THEME ==========
+function applyTheme() {
+  if (currentTheme === 'light') {
+    document.documentElement.style.setProperty('--bg', '#f5f5fa');
+    document.documentElement.style.setProperty('--bg-elevated', '#ffffff');
+    document.documentElement.style.setProperty('--bg-card', '#ffffff');
+    document.documentElement.style.setProperty('--bg-hover', '#f0f0f5');
+    document.documentElement.style.setProperty('--border', '#e0e0e8');
+    document.documentElement.style.setProperty('--border-hover', '#d0d0d8');
+    document.documentElement.style.setProperty('--text', '#1a1a2e');
+    document.documentElement.style.setProperty('--text-secondary', '#666680');
+    document.documentElement.style.setProperty('--text-muted', '#9999aa');
+    $('themeBtn').textContent = '☀️';
+  } else {
+    document.documentElement.style.setProperty('--bg', '#050508');
+    document.documentElement.style.setProperty('--bg-elevated', '#0a0a10');
+    document.documentElement.style.setProperty('--bg-card', '#0f0f18');
+    document.documentElement.style.setProperty('--bg-hover', '#161620');
+    document.documentElement.style.setProperty('--border', '#1e1e2e');
+    document.documentElement.style.setProperty('--border-hover', '#2a2a3e');
+    document.documentElement.style.setProperty('--text', '#f0f0f8');
+    document.documentElement.style.setProperty('--text-secondary', '#9a9ab0');
+    document.documentElement.style.setProperty('--text-muted', '#555570');
+    $('themeBtn').textContent = '🌙';
+  }
+}
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('sonoraTheme', currentTheme);
+  applyTheme();
+}
+
+// ========== AVATAR ==========
+function selectAvatar(el) {
+  document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
+  el.classList.add('selected');
+  myAvatar = el.dataset.emoji;
+}
+
+// ========== CONFETTI ==========
+function launchConfetti() {
+  const container = $('confettiContainer');
+  const colors = ['#ff6b35', '#7c3aed', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4'];
+  for (let i = 0; i < 50; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 2 + 's';
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    container.appendChild(piece);
+    setTimeout(() => piece.remove(), 4000);
+  }
+}
+
+// ========== CLEAR CHAT (admin) ==========
+function clearChat() {
+  if (!amIAdmin) return;
+  if (!confirm('Limpar todo o histórico de mensagens?')) return;
+  socket.emit('clearChat');
+}
+
+// ========== TYPING ==========
+function handleTyping() {
+  if (!isTyping) {
+    isTyping = true;
+    socket.emit('typing', { isTyping: true });
+  }
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    isTyping = false;
+    socket.emit('typing', { isTyping: false });
+  }, 2000);
+}
+
+// ========== REACTIONS ==========
+function toggleReactionPicker(msgId) {
+  const picker = document.getElementById('react-picker-' + msgId);
+  if (picker) picker.classList.toggle('show');
+}
+function addReaction(msgId, emoji) {
+  socket.emit('addReaction', { msgId, emoji });
+  const picker = document.getElementById('react-picker-' + msgId);
+  if (picker) picker.classList.remove('show');
+}
+
+// ========== MENTION ==========
+function mentionUser(name) {
+  const input = $('chatInput');
+  input.value += '@' + name + ' ';
+  input.focus();
+}
+
+// ========== EMOJI PICKER ==========
+function toggleEmojiPanel() {
+  $('emojiPanel').classList.toggle('show');
+}
+function insertEmoji(emoji) {
+  const input = $('chatInput');
+  input.value += emoji;
+  input.focus();
+  $('emojiPanel').classList.remove('show');
+}
+
+// ========== EQUALIZER ==========
+function updateEqualizer(playing) {
+  const bars = document.querySelectorAll('.eq-bar');
+  bars.forEach(bar => {
+    bar.style.animationPlayState = playing ? 'running' : 'paused';
+    if (!playing) bar.style.height = '4px';
+  });
+}
+
+// ========== MENTION SOUND ==========
+function playMentionSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+// ========== MUSIC LIKE ==========
+function likeMusic(msgId) {
+  socket.emit('likeMusic', { msgId });
 }
 
 // ========== INIT ==========
 $('loginName').focus();
 </script>
+
+<!-- RODAPÉ -->
+<div style="text-align:center;padding:20px;border-top:1px solid var(--border);color:var(--text-muted);font-size:13px;background:var(--bg-elevated);position:relative;z-index:1;">
+  Desenvolvido por <a href="https://www.linkedin.com/in/ggiuntini/" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600;">Guilherme Giuntini</a>
+</div>
 
 </body>
 </html>
