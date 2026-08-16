@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -12,33 +11,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ========== CONFIG ==========
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Senha padrão do admin
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
-
-// ========== PERSISTÊNCIA DE USUÁRIOS ==========
-const USERS_FILE = path.join(__dirname, 'users.json');
-let usersDB = [];
-
-function loadUsers() {
-  try {
-    if (fs.existsSync(USERS_FILE)) {
-      usersDB = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-    }
-  } catch (e) {
-    console.log('⚠️ Não foi possível carregar usuários, iniciando com lista vazia');
-    usersDB = [];
-  }
-}
-
-function saveUsers() {
-  try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(usersDB, null, 2));
-  } catch (e) {
-    console.log('⚠️ Erro ao salvar usuários');
-  }
-}
-
-loadUsers();
 
 // ========== ESTADO ==========
 const rooms = new Map();
@@ -46,18 +20,17 @@ const rooms = new Map();
 function createRoom(slug, name, adminName = null) {
   return {
     slug, name,
-    admin: adminName,
-    queue: [],
+    admin: adminName, // nome do admin da sala
+    queue: [], // começa vazio — quem entra coloca as músicas
     currentIndex: 0,
     startedAt: Date.now(),
     votes: { up: 0, down: 0 },
-    playedHistory: [],
+    
     bannedUsers: [],
     chatHistory: [],
     listenerCount: 0,
-    lastAddTime: new Map(),
-    isPlaying: false,
-    partyMode: false,
+    lastAddTime: new Map(), // userName -> timestamp (cooldown)
+    isPlaying: false, // não toca nada até alguém adicionar
   };
 }
 
@@ -104,29 +77,25 @@ function addSystemMsg(slug, text) {
   io.to(slug).emit('chat', msg);
 }
 
-// ========== AUTO-ADVANCE ==========
+// ========== AUTO-ADVANCE (fila consumível) ==========
 setInterval(() => {
   for (const [slug, room] of rooms) {
     if (!room.isPlaying || room.queue.length === 0) continue;
+
     const track = room.queue[room.currentIndex];
     if (!track) continue;
+
     const pos = getPosition(room);
     const duration = track.duration || 180;
+
     if (pos >= duration - 3) {
       const finishedTrack = room.queue.shift();
-      room.playedHistory.push({
-        id: finishedTrack.id,
-        title: finishedTrack.title,
-        artist: finishedTrack.artist,
-        dj: finishedTrack.dj || 'Sistema',
-        likes: (room.votes?.up || 0),
-        playedAt: new Date(),
-      });
-      if (room.playedHistory.length > 50) room.playedHistory.shift();
       room.currentIndex = 0;
       room.startedAt = Date.now();
       room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
+
       broadcastState(slug);
+
       if (room.queue.length > 0) {
         const next = room.queue[0];
         io.to(slug).emit('trackChanged', next);
@@ -142,78 +111,7 @@ setInterval(() => {
   }
 }, 2000);
 
-// ========== API AUTH ==========
-app.post('/api/auth/register', (req, res) => {
-  const { name, email, password, gender, birthDate, bio, avatar } = req.body;
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
-  }
-  if (usersDB.find(u => u.email === email)) {
-    return res.status(409).json({ error: 'Este email já está cadastrado' });
-  }
-  if (usersDB.find(u => u.name === name)) {
-    return res.status(409).json({ error: 'Este nome de usuário já está em uso' });
-  }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres' });
-  }
-  const user = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
-    password,
-    gender: gender || 'nao_informar',
-    birthDate: birthDate || null,
-    bio: bio || '',
-    avatar: avatar || '🎸',
-    createdAt: new Date(),
-    lastLogin: new Date(),
-    totalSongsAdded: 0,
-    totalMessages: 0,
-  };
-  usersDB.push(user);
-  saveUsers();
-  const { password: _, ...safeUser } = user;
-  res.json({ success: true, user: safeUser, token: user.id });
-});
-
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email e senha são obrigatórios' });
-  }
-  const user = usersDB.find(u => u.email === email.trim().toLowerCase());
-  if (!user || user.password !== password) {
-    return res.status(401).json({ error: 'Email ou senha incorretos' });
-  }
-  user.lastLogin = new Date();
-  saveUsers();
-  const { password: _, ...safeUser } = user;
-  res.json({ success: true, user: safeUser, token: user.id });
-});
-
-app.get('/api/auth/me', (req, res) => {
-  const token = req.headers.authorization;
-  if (!token) return res.status(401).json({ error: 'Não autenticado' });
-  const user = usersDB.find(u => u.id === token);
-  if (!user) return res.status(401).json({ error: 'Sessão inválida' });
-  const { password: _, ...safeUser } = user;
-  res.json({ user: safeUser });
-});
-
-app.get('/api/auth/stats', (req, res) => {
-  res.json({
-    totalUsers: usersDB.length,
-    newToday: usersDB.filter(u => {
-      const d = new Date(u.createdAt);
-      const today = new Date();
-      return d.toDateString() === today.toDateString();
-    }).length,
-    onlineNow: Array.from(io.sockets?.sockets?.values() || []).length,
-  });
-});
-
-// ========== API ROOMS ==========
+// ========== API ==========
 app.get('/api/rooms', (req, res) => {
   const list = Array.from(rooms.values()).map(r => ({
     slug: r.slug, name: r.name, listenerCount: r.listenerCount,
@@ -255,8 +153,11 @@ io.on('connection', (socket) => {
     socket.userAvatar = avatar || name[0];
     room.listenerCount++;
 
+    // Só quem digita a senha correta é admin
     const isAdmin = adminPass === ADMIN_PASSWORD;
     socket.isAdmin = isAdmin;
+
+    // Se não tem admin na sala e a senha está correta, torna admin da sala
     if (isAdmin && !room.admin) {
       room.admin = name;
     }
@@ -273,6 +174,7 @@ io.on('connection', (socket) => {
     socket.emit('chatHistory', room.chatHistory.slice(-150));
     socket.emit('isAdmin', socket.isAdmin);
     broadcastUsers(slug);
+    // Entrada silenciosa
   });
 
   socket.on('chat', ({ text }) => {
@@ -332,19 +234,24 @@ io.on('connection', (socket) => {
     broadcastState(currentRoom);
   });
 
+  // Add song com COOLDOWN de 10 segundos
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     const now = Date.now();
     const lastAdd = room.lastAddTime.get(socket.userName) || 0;
+
     if (now - lastAdd < 10000) {
       const wait = Math.ceil((10000 - (now - lastAdd)) / 1000);
       socket.emit('error', `Aguarde ${wait}s para adicionar outra música`);
       return;
     }
+
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
+
+    // Se não estava tocando, começa a tocar
     if (!room.isPlaying && room.queue.length === 1) {
       room.isPlaying = true;
       room.currentIndex = 0;
@@ -352,7 +259,9 @@ io.on('connection', (socket) => {
       io.to(currentRoom).emit('trackChanged', song);
       addSystemMsg(currentRoom, `▶ ${song.title} — ${song.artist}`);
     }
+
     broadcastState(currentRoom);
+
     const musicMsg = {
       _id: Date.now().toString() + Math.random(),
       user: socket.userName,
@@ -379,7 +288,11 @@ io.on('connection', (socket) => {
     }
     const room = rooms.get(currentRoom);
     if (index < 0 || index >= room.queue.length) return;
-    if (index > 0) room.queue.splice(0, index);
+
+    if (index > 0) {
+      room.queue.splice(0, index);
+    }
+
     room.currentIndex = 0;
     room.startedAt = Date.now();
     room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
@@ -445,15 +358,6 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoom);
     if (!room || !room.isPlaying || room.queue.length === 0) return;
     const finishedTrack = room.queue.shift();
-    room.playedHistory.push({
-      id: finishedTrack.id,
-      title: finishedTrack.title,
-      artist: finishedTrack.artist,
-      dj: finishedTrack.dj || 'Sistema',
-      likes: (room.votes?.up || 0),
-      playedAt: new Date(),
-    });
-    if (room.playedHistory.length > 50) room.playedHistory.shift();
     room.currentIndex = 0;
     room.startedAt = Date.now();
     room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
@@ -464,6 +368,7 @@ io.on('connection', (socket) => {
       addSystemMsg(currentRoom, `▶ ${next.title} — ${next.artist}`);
       addSystemMsg(currentRoom, `🗑️ "${finishedTrack.title}" terminou`);
     } else {
+      // MODO RÁDIO: toca música relacionada automaticamente
       const radioTracks = [
         { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', artist: 'Rick Astley', duration: 212 },
         { id: 'fJ9rUzIMcZQ', title: 'Bohemian Rhapsody', artist: 'Queen', duration: 355 },
@@ -478,7 +383,7 @@ io.on('connection', (socket) => {
       ];
       const randomTrack = radioTracks[Math.floor(Math.random() * radioTracks.length)];
       randomTrack.dj = '📻 Rádio Sonora';
-      room.queue.push({ ...randomTrack });
+      room.queue.push(randomTrack);
       room.isPlaying = true;
       room.currentIndex = 0;
       room.startedAt = Date.now();
@@ -499,25 +404,11 @@ io.on('connection', (socket) => {
     if (!msg.likedBy) msg.likedBy = [];
     msg.likedBy.push(socket.userName);
     io.to(currentRoom).emit('musicLiked', { msgId, likes: msg.musicLikes });
+    // Confetti quando bate 10 likes
     if (msg.musicLikes === 10) {
       io.to(currentRoom).emit('confetti');
       addSystemMsg(currentRoom, `🎉 "${msg.musicTitle}" bateu 10 curtidas!`);
     }
-  });
-
-  socket.on('getHistory', () => {
-    if (!currentRoom) return;
-    const room = rooms.get(currentRoom);
-    if (!room) return;
-    socket.emit('history', room.playedHistory);
-  });
-
-  socket.on('partyMode', ({ active }) => {
-    if (!currentRoom) return;
-    const room = rooms.get(currentRoom);
-    if (!room) return;
-    room.partyMode = active;
-    io.to(currentRoom).emit('partyMode', { active });
   });
 
   socket.on('disconnect', () => {
@@ -527,6 +418,7 @@ io.on('connection', (socket) => {
         room.listenerCount = Math.max(0, room.listenerCount - 1);
         broadcastState(currentRoom);
         broadcastUsers(currentRoom);
+        // Saída silenciosa
       }
     }
   });
