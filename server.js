@@ -21,16 +21,18 @@ function createRoom(slug, name, adminName = null) {
   return {
     slug, name,
     admin: adminName, // nome do admin da sala
-    queue: [], // começa vazio — quem entra coloca as músicas
+    queue: [
+      { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', artist: 'Rick Astley', dj: 'Sistema', duration: 212 },
+    ],
     currentIndex: 0,
     startedAt: Date.now(),
-    votes: { up: 0, down: 0 },
+    votes: { up: 5, down: 0 },
     
     bannedUsers: [],
     chatHistory: [],
     listenerCount: 0,
     lastAddTime: new Map(), // userName -> timestamp (cooldown)
-    isPlaying: false, // não toca nada até alguém adicionar
+    isPlaying: true,
   };
 }
 
@@ -61,7 +63,6 @@ function broadcastUsers(slug) {
     const users = sockets.map(s => ({
       name: s.userName || 'Anônimo',
       color: s.userColor || '#888',
-      avatar: s.userAvatar || s.userName?.[0] || '?',
       isAdmin: s.isAdmin || false,
     }));
     io.to(slug).emit('users', users);
@@ -135,7 +136,7 @@ app.get('*', (req, res) => {
 io.on('connection', (socket) => {
   let currentRoom = null;
 
-  socket.on('joinRoom', ({ slug, name, adminPass, avatar }) => {
+  socket.on('joinRoom', ({ slug, name, adminPass }) => {
     const room = rooms.get(slug);
     if (!room) { socket.emit('error', 'Sala não encontrada'); return; }
     if (room.bannedUsers.includes(name)) { socket.emit('error', 'Você foi banido'); return; }
@@ -150,16 +151,19 @@ io.on('connection', (socket) => {
     socket.join(slug);
     socket.userName = name;
     socket.userColor = colors[Math.floor(Math.random() * colors.length)];
-    socket.userAvatar = avatar || name[0];
     room.listenerCount++;
 
-    // Só quem digita a senha correta é admin
+    // Verifica se é admin
     const isAdmin = adminPass === ADMIN_PASSWORD;
     socket.isAdmin = isAdmin;
 
     // Se não tem admin na sala e a senha está correta, torna admin da sala
     if (isAdmin && !room.admin) {
       room.admin = name;
+    }
+    // Se o nome bate com o admin da sala
+    if (room.admin === name) {
+      socket.isAdmin = true;
     }
 
     socket.emit('roomState', {
@@ -185,45 +189,11 @@ io.on('connection', (socket) => {
       user: socket.userName, text: text.trim(),
       color: socket.userColor, isSystem: false,
       isAdmin: socket.isAdmin || false,
-      avatar: socket.userAvatar || socket.userName[0],
-      reactions: {},
       createdAt: new Date(),
     };
     room.chatHistory.push(msg);
     if (room.chatHistory.length > 300) room.chatHistory.shift();
     io.to(currentRoom).emit('chat', msg);
-  });
-
-  socket.on('typing', ({ isTyping }) => {
-    if (!currentRoom) return;
-    socket.to(currentRoom).emit('typing', { name: socket.userName, isTyping });
-  });
-
-  socket.on('addReaction', ({ msgId, emoji }) => {
-    if (!currentRoom || !msgId || !emoji) return;
-    const room = rooms.get(currentRoom);
-    if (!room) return;
-    const msg = room.chatHistory.find(m => m._id === msgId);
-    if (!msg || msg.isSystem || msg.isMusic) return;
-    if (!msg.reactions) msg.reactions = {};
-    if (!msg.reactions[emoji]) msg.reactions[emoji] = [];
-    if (msg.reactions[emoji].includes(socket.userName)) {
-      msg.reactions[emoji] = msg.reactions[emoji].filter(u => u !== socket.userName);
-      if (msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
-    } else {
-      msg.reactions[emoji].push(socket.userName);
-    }
-    io.to(currentRoom).emit('chatUpdated', msg);
-  });
-
-  socket.on('clearChat', () => {
-    if (!currentRoom || !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin pode limpar o chat');
-      return;
-    }
-    const room = rooms.get(currentRoom);
-    room.chatHistory = [];
-    io.to(currentRoom).emit('chatCleared');
   });
 
   socket.on('vote', (delta) => {
@@ -368,28 +338,10 @@ io.on('connection', (socket) => {
       addSystemMsg(currentRoom, `▶ ${next.title} — ${next.artist}`);
       addSystemMsg(currentRoom, `🗑️ "${finishedTrack.title}" terminou`);
     } else {
-      // MODO RÁDIO: toca música relacionada automaticamente
-      const radioTracks = [
-        { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', artist: 'Rick Astley', duration: 212 },
-        { id: 'fJ9rUzIMcZQ', title: 'Bohemian Rhapsody', artist: 'Queen', duration: 355 },
-        { id: 'hTWKbfoikeg', title: 'Smells Like Teen Spirit', artist: 'Nirvana', duration: 301 },
-        { id: 'Zi_XLOBDo_Y', title: 'Billie Jean', artist: 'Michael Jackson', duration: 294 },
-        { id: 'btPJPFnesV4', title: 'Imagine', artist: 'John Lennon', duration: 183 },
-        { id: '1w7OgIMMRc4', title: "Guns N' Roses - Sweet Child O' Mine", artist: "Guns N' Roses", duration: 356 },
-        { id: 'l482T0yNkeo', title: 'Hotel California', artist: 'Eagles', duration: 391 },
-        { id: 'pAgnJDJN4VA', title: 'AC/DC - Back In Black', artist: 'AC/DC', duration: 255 },
-        { id: 'fLexgOxsZu0', title: 'Bruno Mars - The Lazy Song', artist: 'Bruno Mars', duration: 208 },
-        { id: 'kffacxfA7G4', title: 'Baby', artist: 'Justin Bieber', duration: 214 },
-      ];
-      const randomTrack = radioTracks[Math.floor(Math.random() * radioTracks.length)];
-      randomTrack.dj = '📻 Rádio Sonora';
-      room.queue.push(randomTrack);
-      room.isPlaying = true;
-      room.currentIndex = 0;
-      room.startedAt = Date.now();
+      room.isPlaying = false;
       broadcastState(currentRoom);
-      io.to(currentRoom).emit('trackChanged', randomTrack);
-      addSystemMsg(currentRoom, `📻 Modo rádio ativado! Tocando: ${randomTrack.title} — ${randomTrack.artist}`);
+      addSystemMsg(currentRoom, `🏁 Fila encerrada. Adicione mais músicas!`);
+      io.to(currentRoom).emit('queueEmpty');
     }
   });
 
@@ -404,11 +356,6 @@ io.on('connection', (socket) => {
     if (!msg.likedBy) msg.likedBy = [];
     msg.likedBy.push(socket.userName);
     io.to(currentRoom).emit('musicLiked', { msgId, likes: msg.musicLikes });
-    // Confetti quando bate 10 likes
-    if (msg.musicLikes === 10) {
-      io.to(currentRoom).emit('confetti');
-      addSystemMsg(currentRoom, `🎉 "${msg.musicTitle}" bateu 10 curtidas!`);
-    }
   });
 
   socket.on('disconnect', () => {
