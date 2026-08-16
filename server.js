@@ -21,17 +21,15 @@ function createRoom(slug, name, adminName = null) {
   return {
     slug, name,
     admin: adminName,
-    queue: [
-      { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', artist: 'Rick Astley', dj: 'Sistema', duration: 212 },
-    ],
+    queue: [],
     currentIndex: 0,
     startedAt: Date.now(),
-    votes: { up: 5, down: 0 },
+    votes: { up: 0, down: 0 },
     bannedUsers: [],
     chatHistory: [],
     listenerCount: 0,
     lastAddTime: new Map(),
-    isPlaying: true,
+    isPlaying: false,
     lastAdvanceAt: 0, // protege contra avanço duplo
   };
 }
