@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sonora Fan — Palco</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #050508;
+      --bg-elevated: #0a0a10;
+      --bg-card: #0f0f18;
+      --bg-hover: #161620;
+      --border: #1e1e2e;
+      --border-hover: #2a2a3e;
+      --text: #f0f0f8;
+      --text-secondary: #9a9ab0;
+      --text-muted: #555570;
+      --accent: #ff6b35;
+      --accent-glow: rgba(255,107,53,0.3);
+      --accent2: #7c3aed;
+      --accent2-glow: rgba(124,58,237,0.3);
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --stage-light: rgba(124,58,237,0.08);
+      --radius: 16px;
+      --radius-sm: 12px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== STAGE LIGHTS EFFECT ===== */
+    .stage-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 20% 100%, rgba(255,107,53,0.08), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124,58,237,0.08), transparent);
+    }
+
+    /* ===== LOGIN SCREEN ===== */
+    .login-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      background-image: 
+        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(124,58,237,0.2), transparent),
+        radial-gradient(ellipse 40% 30% at 20% 80%, rgba(255,107,53,0.1), transparent);
+    }
+    .login-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 56px 44px;
+      text-align: center;
+      max-width: 420px;
+      width: 92%;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+    }
+    .login-card .logo {
+      font-size: 56px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 20px var(--accent-glow));
+    }
+    .login-card h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+    .login-card h1 span { 
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .login-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+    .login-card input {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .login-card input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+    }
+    .login-card input::placeholder { color: var(--text-muted); }
+    .login-card .admin-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .login-card .admin-toggle input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+      accent-color: var(--accent2);
+    }
+    .login-card button {
+      width: 100%;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(124,58,237,0.3);
+    }
+    .login-card button:active { transform: scale(0.98); }
+
+    /* ===== APP LAYOUT ===== */
+    .app { 
+      position: relative; 
+      z-index: 1; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .hidden { display: none !important; }
+
+    /* ===== HEADER ===== */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(5,5,8,0.85);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-left button {
+      padding: 9px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+    .header-left button:hover { background: var(--bg-card); color: var(--text); border-color: var(--border-hover); }
+    .header h1 { 
+      font-size: 18px; 
+      font-weight: 700; 
+      letter-spacing: -0.3px;
+    }
+    .header h1 span { 
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .listener-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .listener-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .admin-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== LOBBY ===== */
+    .lobby { 
+      padding: 32px; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      width: 100%;
+    }
+    .lobby-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .lobby-top h2 { 
+      font-size: 24px; 
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .room-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .room-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .room-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .room-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.1);
+    }
+    .room-card:hover::before { opacity: 1; }
+    .room-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+    .room-card .meta {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 14px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+      grid-column: 1 / -1;
+    }
+    .empty-state .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
+
+    /* ===== ROOM LAYOUT ===== */
+    .room-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+    }
+    @media (max-width: 1024px) {
+      .room-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ===== STAGE (LEFT) ===== */
+    .stage {
+      display: flex;
+      flex-direction: column;
+      padding: 24px 28px;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    /* PLAYER */
+    .player-section {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .now-playing-label {
+      font-size: 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--danger);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
+    }
+    #youtube-player {
+      width: 100%;
+      height: 320px;
+      background: #000;
+    }
+    .player-info {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 18px;
+    }
+    .cover {
+      width: 72px; height: 72px;
+      border-radius: 10px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .cover img { width: 100%; height: 100%; object-fit: cover; }
+    .track-info { flex: 1; min-width: 0; }
+    .track-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.3px;
+    }
+    .track-artist { 
+      font-size: 14px; 
+      color: var(--text-secondary); 
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .track-dj {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .progress-section {
+      padding: 0 18px 18px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 3px;
+      transition: width 0.8s linear;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+    .progress-time {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .vote-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+    .vote-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .vote-btn:hover { background: var(--bg-hover); }
+    .vote-btn.up:hover { color: var(--success); border-color: var(--success); }
+    .vote-btn.down:hover { color: var(--danger); border-color: var(--danger); }
+    .vote-count { 
+      font-size: 18px; 
+      font-weight: 800; 
+      color: var(--text);
+      min-width: 30px;
+      text-align: center;
+    }
+
+    /* QUEUE */
+    .queue-section {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .queue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elevated);
+    }
+    .queue-header span:first-child {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .queue-list { 
+      display: flex; 
+      flex-direction: column; 
+      max-height: 240px; 
+      overflow-y: auto;
+    }
+    .queue-list::-webkit-scrollbar { width: 5px; }
+    .queue-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .queue-item:last-child { border-bottom: none; }
+    .queue-item:hover { background: var(--bg-hover); }
+    .queue-item.playing {
+      background: linear-gradient(90deg, rgba(255,107,53,0.08), transparent);
+      border-left: 3px solid var(--accent);
+    }
+    .queue-num { 
+      width: 28px; 
+      text-align: center; 
+      color: var(--text-muted); 
+      font-size: 12px; 
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .queue-item.playing .queue-num { color: var(--accent); }
+    .queue-thumb {
+      width: 40px; height: 30px;
+      border-radius: 6px;
+      background: var(--bg);
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .queue-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .queue-title { 
+      flex: 1; 
+      color: var(--text-secondary); 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .queue-item.playing .queue-title { 
+      color: var(--text); 
+      font-weight: 600;
+    }
+    .queue-dj { 
+      font-size: 11px; 
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .queue-remove {
+      opacity: 0;
+      transition: opacity 0.2s;
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+    .queue-item:hover .queue-remove { opacity: 1; }
+    .queue-remove:hover { transform: scale(1.2); }
+
+    /* ADD SONG */
+    .add-song {
+      display: flex;
+      gap: 10px;
+      padding: 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .add-song input {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .add-song input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .add-song input:disabled { opacity: 0.5; cursor: not-allowed; }
+    .add-song button {
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .add-song button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(124,58,237,0.3);
+    }
+    .add-song button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .cooldown-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 0 18px 8px;
+      text-align: center;
+    }
+
+    /* ===== SIDEBAR (RIGHT) ===== */
+    .sidebar {
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-elevated);
+      height: 100%;
+    }
+    @media (max-width: 1024px) {
+      .sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 600px; }
+    }
+
+    /* USERS */
+    .users-panel {
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .user-list::-webkit-scrollbar { width: 4px; }
+    .user-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      position: relative;
+    }
+    .user:hover { background: var(--bg-card); }
+    .user-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .user:hover .user-avatar { transform: scale(1.1); }
+    .user .admin-tag {
+      font-size: 9px;
+      color: var(--accent2);
+      background: rgba(124,58,237,0.12);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+    }
+    .user-actions {
+      position: absolute;
+      right: 6px;
+      display: none;
+      gap: 4px;
+    }
+    .user:hover .user-actions { display: flex; }
+    .user-actions button {
+      padding: 4px 8px;
+      font-size: 10px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .kick-btn { background: var(--danger); color: #fff; }
+    .kick-btn:hover { background: #dc2626; }
+    .ban-btn { background: #7c2d12; color: #fb923c; }
+    .ban-btn:hover { background: #9a3412; }
+
+    /* CHAT */
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 16px;
+      font-size: 14px;
+      min-height: 0;
+    }
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .msg {
+      display: flex;
+      gap: 8px;
+      line-height: 1.5;
+      padding: 6px 10px;
+      border-radius: 10px;
+      animation: msgIn 0.25s ease;
+      transition: background 0.15s;
+    }
+    .msg:hover { background: rgba(255,255,255,0.02); }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .msg-user { 
+      font-weight: 700; 
+      flex-shrink: 0; 
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .msg-admin-badge {
+      font-size: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .msg-text { 
+      color: var(--text-secondary); 
+      word-break: break-word;
+      font-size: 13px;
+    }
+    .msg-system { 
+      color: var(--text-muted); 
+      font-style: italic; 
+      font-size: 12px; 
+      padding: 4px 10px;
+      text-align: center;
+    }
+    .msg-system .msg-text { color: var(--text-muted); }
+    .msg-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-left: auto;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+    .msg:hover .msg-time { opacity: 1; }
+    .chat-input-bar {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: var(--bg-card);
+    }
+    .chat-input-bar input {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .chat-input-bar input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .chat-input-bar input::placeholder { color: var(--text-muted); }
+    .chat-input-bar button {
+      padding: 12px 22px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .chat-input-bar button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+    }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px 28px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      z-index: 300;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      font-weight: 500;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.error { border-color: var(--danger); color: #fca5a5; }
+    .toast.success { border-color: var(--success); color: #86efac; }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 90%;
+      max-width: 420px;
+      animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.3px; }
+    .modal input, .modal select {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 14px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .modal input:focus, .modal select:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
+    .modal-actions button {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .modal-actions .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .modal-actions .btn-secondary:hover { background: var(--bg-card); }
+    .modal-actions .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+    .modal-actions .btn-primary:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1024px) {
+      .room-layout { grid-template-columns: 1fr; }
+      .sidebar { border-left: none; border-top: 1px solid var(--border); }
+      #youtube-player { height: 240px; }
+      .stage { padding: 16px; }
+    }
+    @media (max-width: 640px) {
+      .header { padding: 12px 16px; }
+      .header h1 { font-size: 15px; }
+      .lobby { padding: 16px; }
+      .room-grid { grid-template-columns: 1fr; }
+      .login-card { padding: 40px 24px; }
+      .login-card h1 { font-size: 24px; }
+      #youtube-player { height: 200px; }
+    }
+
+    /* ===== EMPTY QUEUE STATE ===== */
+    .empty-queue {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-queue .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-queue p { font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<div class="stage-bg"></div>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="logo">🎸</div>
+    <h1>Sonora <span>Fan</span></h1>
+    <p>Entre no palco. Ouça música com amigos,<br>adicione do YouTube e converse em tempo real.</p>
+    <input type="text" id="loginName" placeholder="Como quer ser chamado?" maxlength="20" onkeydown="if(event.key==='Enter') doLogin()">
+    <div class="admin-toggle" onclick="toggleAdminField()">
+      <input type="checkbox" id="isAdminCheck">
+      <label for="isAdminCheck">Sou administrador</label>
+    </div>
+    <input type="password" id="adminPass" placeholder="Senha de admin" class="hidden" onkeydown="if(event.key==='Enter') doLogin()">
+    <button onclick="doLogin()">Entrar no palco</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen hidden" id="screen-lobby">
+  <div class="app">
+    <div class="header">
+      <div class="header-left">
+        <h1>🎸 Sonora <span>Fan</span></h1>
+      </div>
+      <button style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'" onclick="showCreateModal()">+ Nova sala</button>
+    </div>
+    <div class="lobby">
+      <div class="lobby-top"><h2>Salas disponíveis</h2></div>
+      <div class="room-grid" id="roomGrid">
+        <div class="empty-state">
+          <div class="icon">🎵</div>
+          <p>Carregando salas...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM -->
+<div class="screen hidden" id="screen-room">
+  <div class="app">
+    <div class="header">
+      <div class="header-left">
+        <button onclick="leaveRoom()">← Voltar</button>
+        <h1 id="roomTitle">Sala</h1>
+      </div>
+      <div class="header-right">
+        <span class="listener-pill"><span class="listener-dot"></span><span id="listenerCount">0</span> ouvintes</span>
+        <span id="adminBadge" class="admin-badge hidden">Admin</span>
+      </div>
+    </div>
+
+    <div class="room-layout">
+      <div class="stage">
+        <!-- TERRA SONORA BANNER -->
+        <div class="terra-banner" style="border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);">
+          <img src="https://p2.trrsf.com/image/fget/cf/1200/900/middle/images.terra.com/2026/03/13/imagem-5-ubryr9vqugjd.png" 
+               alt="Terra Sonora" 
+               style="width:100%;height:auto;display:block;object-fit:cover;max-height:200px;">
+        </div>
+
+        <!-- PLAYER -->
+        <div class="player-section">
+          <div class="player-header">
+            <span class="now-playing-label">Tocando agora</span>
+            <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
+          </div>
+          <div id="youtube-player"></div>
+          <div class="player-info">
+            <div class="cover" id="trackCover">🎵</div>
+            <div class="track-info">
+              <div class="track-title" id="trackTitle">Carregando...</div>
+              <div class="track-artist" id="trackArtist">Aguarde</div>
+              <div class="track-dj" id="trackDj"></div>
+            </div>
+          </div>
+          <div class="progress-section">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="progress-time">
+              <span id="currentTime">0:00</span>
+              <span id="totalTime">0:00</span>
+            </div>
+          </div>
+          <div class="vote-section">
+            <button class="vote-btn up" onclick="vote(1)">▲ Curtir</button>
+            <span class="vote-count" id="voteCount">0</span>
+            <button class="vote-btn down" onclick="vote(-1)">▼ Não curti</button>
+          </div>
+        </div>
+
+        <!-- QUEUE -->
+        <div class="queue-section">
+          <div class="queue-header">
+            <span>Fila de músicas</span>
+            <span id="queueCount" style="color:var(--text-muted);font-size:13px;font-weight:600;">0 músicas</span>
+          </div>
+          <div class="queue-list" id="queueList"></div>
+        </div>
+
+        <!-- ADD SONG -->
+        <div class="add-song">
+          <input type="text" id="songUrl" placeholder="Cole um link do YouTube...">
+          <button id="addBtn" onclick="addSong()">Adicionar</button>
+        </div>
+        <div class="cooldown-text hidden" id="cooldownText"></div>
+      </div>
+
+      <div class="sidebar">
+        <div class="users-panel">
+          <div class="panel-header">Pessoas na sala</div>
+          <div class="user-list" id="userList"></div>
+        </div>
+        <div class="chat-panel">
+          <div class="chat-messages" id="chatBox"></div>
+          <div class="chat-input-bar">
+            <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()">
+            <button onclick="sendMsg()">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CRIAR SALA -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <h3>Criar nova sala</h3>
+    <input type="text" id="newRoomName" placeholder="Nome da sala" maxlength="40">
+    <select id="newRoomGenre">
+      <option value="mixed">🎵 Misto</option>
+      <option value="rock">🎸 Rock</option>
+      <option value="pop">🎤 Pop</option>
+      <option value="eletronica">🎹 Eletrônica</option>
+      <option value="indie">🎧 Indie</option>
+      <option value="hiphop">🎤 Hip Hop</option>
+      <option value="jazz">🎷 Jazz</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideCreateModal()">Cancelar</button>
+      <button class="btn-primary" onclick="createRoom()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+
+const socket = io();
+let myName = '';
+let myAdminPass = '';
+let amIAdmin = false;
+let currentRoomSlug = null;
+let currentRoomData = null;
+let player = null;
+let currentTrackId = null;
+let lastAddTime = 0;
+let addCooldown = 10000;
+
+// ========== UTILS ==========
+function $(id) { return document.getElementById(id); }
+function show(id) { $(id).classList.remove('hidden'); }
+function hide(id) { $(id).classList.add('hidden'); }
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  show('screen-' + id);
+}
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+function toast(msg, type) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+function formatTime(date) {
+  const d = new Date(date);
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+function formatDuration(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return m + ':' + s.toString().padStart(2,'0');
+}
+
+// ========== LOGIN ==========
+function toggleAdminField() {
+  const check = $('isAdminCheck');
+  const pass = $('adminPass');
+  if (check.checked) {
+    show('adminPass');
+    setTimeout(() => pass.focus(), 100);
+  } else {
+    hide('adminPass');
+    pass.value = '';
+  }
+}
+
+function doLogin() {
+  const name = $('loginName').value.trim();
+  if (!name) { toast('Digite um nome', 'error'); return; }
+  if (name.length < 2) { toast('Nome muito curto', 'error'); return; }
+
+  myName = name;
+  myAdminPass = $('adminPass').value.trim();
+
+  hide('loginScreen');
+  showScreen('lobby');
+  loadRooms();
+}
+
+// ========== LOBBY ==========
+async function loadRooms() {
+  try {
+    const res = await fetch('/api/rooms');
+    const rooms = await res.json();
+    const grid = $('roomGrid');
+    if (rooms.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>`;
+      return;
+    }
+    grid.innerHTML = '';
+    rooms.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'room-card';
+      card.onclick = () => joinRoom(r.slug);
+      card.innerHTML = `
+        <h3>${escapeHtml(r.name)}</h3>
+        <div class="meta">
+          <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
+          <span>🎵 Ao vivo</span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    $('roomGrid').innerHTML = `<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar salas</p></div>`;
+  }
+}
+
+function showCreateModal() { $('createModal').classList.add('active'); $('newRoomName').focus(); }
+function hideCreateModal() { $('createModal').classList.remove('active'); }
+
+async function createRoom() {
+  const name = $('newRoomName').value.trim();
+  if (!name) { toast('Digite um nome para a sala', 'error'); return; }
+  try {
+    const res = await fetch('/api/rooms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, adminName: myName }),
+    });
+    const data = await res.json();
+    if (data.slug) {
+      hideCreateModal();
+      joinRoom(data.slug);
+    }
+  } catch(e) { toast('Erro ao criar sala', 'error'); }
+}
+
+// ========== ROOM ==========
+function joinRoom(slug) {
+  currentRoomSlug = slug;
+  socket.emit('joinRoom', { slug, name: myName, adminPass: myAdminPass });
+  showScreen('room');
+  $('chatBox').innerHTML = '';
+  amIAdmin = false;
+  hide('adminBadge');
+  loadYouTubeAPI();
+}
+
+function leaveRoom() {
+  if (currentRoomSlug) socket.emit('leaveRoom');
+  currentRoomSlug = null;
+  currentRoomData = null;
+  amIAdmin = false;
+  if (player && player.stopVideo) player.stopVideo();
+  showScreen('lobby');
+  loadRooms();
+}
+
+// ========== YOUTUBE ==========
+function loadYouTubeAPI() {
+  if (window.YT && window.YT.Player) { initPlayer(); return; }
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+}
+
+function onYouTubeIframeAPIReady() { initPlayer(); }
+
+function initPlayer() {
+  if (player) return;
+  player = new YT.Player('youtube-player', {
+    height: '320',
+    width: '100%',
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      rel: 0,
+      modestbranding: 1,
+      enablejsapi: 1,
+    },
+    events: {
+      onReady: () => { if (currentRoomData) syncPlayer(currentRoomData); },
+      onStateChange: onPlayerStateChange,
+      onError: onPlayerError,
+    }
+  });
+}
+
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.PLAYING) {
+    // Envia duração real do vídeo pro servidor
+    try {
+      const duration = player.getDuration();
+      if (duration > 0) {
+        socket.emit('videoDuration', { duration: Math.floor(duration) });
+      }
+    } catch(e) {}
+  }
+  if (event.data === YT.PlayerState.ENDED) {
+    // Avisa o servidor que o vídeo terminou no player
+    socket.emit('videoEnded');
+  }
+}
+
+function onPlayerError(event) {
+  console.log('YouTube error:', event.data);
+  toast('Este vídeo não permite reprodução. Pulando...', 'error');
+  setTimeout(() => {
+    if (currentRoomData && currentRoomData.queue.length > 1) {
+      socket.emit('skipTo', 1);
+    }
+  }, 2000);
+}
+
+function syncPlayer(state) {
+  if (!player || !player.loadVideoById) return;
+  const track = state.queue[state.currentIndex];
+  if (!track) {
+    $('trackTitle').textContent = 'Fila vazia';
+    $('trackArtist').textContent = 'Adicione uma música do YouTube';
+    $('trackDj').textContent = '';
+    $('trackCover').innerHTML = '🎵';
+    $('progressFill').style.width = '0%';
+    if (player && player.stopVideo) player.stopVideo();
+    return;
+  }
+
+  $('roomTitle').textContent = state.name;
+
+  if (currentTrackId !== track.id) {
+    currentTrackId = track.id;
+    try {
+      player.loadVideoById({
+        videoId: track.id,
+        startSeconds: Math.floor(state.position)
+      });
+    } catch(e) {
+      console.error('Erro ao carregar vídeo:', e);
+    }
+    updateTrackInfo(track);
+  } else {
+    try {
+      const currentPos = player.getCurrentTime();
+      if (Math.abs(currentPos - state.position) > 4) {
+        player.seekTo(state.position, true);
+      }
+    } catch(e) {}
+  }
+
+  $('voteCount').textContent = (state.votes?.up || 0) - (state.votes?.down || 0);
+  renderQueue(state.queue, state.currentIndex);
+  
+}
+
+function updateTrackInfo(track) {
+  $('trackTitle').textContent = track.title;
+  $('trackArtist').textContent = track.artist;
+  $('trackDj').textContent = track.dj ? `Adicionado por ${track.dj}` : '';
+  $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
+}
+
+// ========== SOCKET ==========
+socket.on('roomState', (state) => {
+  currentRoomData = state;
+  syncPlayer(state);
+});
+
+socket.on('trackChanged', (track) => {
+  currentTrackId = null;
+  if (currentRoomData) syncPlayer(currentRoomData);
+  addSystemMsg(`▶ ${track.title} — ${track.artist}`);
+});
+
+socket.on('queueEmpty', () => {
+  toast('Fila encerrada! Adicione mais músicas.', 'success');
+});
+
+socket.on('users', (users) => {
+  renderUsers(users);
+  $('listenerCount').textContent = users.length;
+});
+
+socket.on('chat', (msg) => { renderMessage(msg); });
+
+socket.on('chatHistory', (messages) => {
+  $('chatBox').innerHTML = '';
+  messages.forEach(m => renderMessage(m));
+});
+
+socket.on('error', (msg) => { toast(msg, 'error'); });
+
+socket.on('isAdmin', (isAdmin) => {
+  amIAdmin = isAdmin;
+  if (isAdmin) {
+    show('adminBadge');
+    toast('Você é admin desta sala!', 'success');
+  }
+});
+
+socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
+socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
+
+// ========== PROGRESS ==========
+setInterval(() => {
+  if (!player || !player.getCurrentTime) return;
+  try {
+    const current = player.getCurrentTime();
+    const duration = player.getDuration();
+    if (duration > 0) {
+      $('progressFill').style.width = (current / duration * 100) + '%';
+      $('currentTime').textContent = formatDuration(current);
+      $('totalTime').textContent = formatDuration(duration);
+    }
+  } catch(e) {}
+}, 1000);
+
+// ========== VOTE ==========
+function vote(delta) {
+  socket.emit('vote', delta);
+  const el = $('voteCount');
+  el.style.transform = 'scale(1.3)';
+  setTimeout(() => el.style.transform = 'scale(1)', 200);
+}
+
+// ========== QUEUE ==========
+function renderQueue(queue, currentIndex) {
+  const list = $('queueList');
+  list.innerHTML = '';
+  $('queueCount').textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
+
+  if (queue.length === 0) {
+    list.innerHTML = `
+      <div class="empty-queue">
+        <div class="icon">🎵</div>
+        <p>Fila vazia. Adicione uma música!</p>
+      </div>
+    `;
+    return;
+  }
+
+  queue.forEach((track, i) => {
+    const div = document.createElement('div');
+    div.className = 'queue-item' + (i === currentIndex ? ' playing' : '');
+    const showRemove = amIAdmin || track.dj === myName;
+    div.innerHTML = `
+      <span class="queue-num">${i === currentIndex ? '▶' : i + 1}</span>
+      <div class="queue-thumb">
+        <img src="https://img.youtube.com/vi/${track.id}/default.jpg" alt="" onerror="this.style.display='none'">
+      </div>
+      <span class="queue-title">${escapeHtml(track.title)} — ${escapeHtml(track.artist)}</span>
+      <span class="queue-dj">${escapeHtml(track.dj || 'Sistema')}</span>
+      ${showRemove && i !== currentIndex ? `<button class="queue-remove" onclick="event.stopPropagation(); removeFromQueue(${i})" title="Remover">×</button>` : ''}
+    `;
+    if (i !== currentIndex) {
+      div.onclick = () => socket.emit('skipTo', i);
+    }
+    list.appendChild(div);
+  });
+}
+
+function removeFromQueue(index) {
+  if (!confirm('Remover esta música da fila?')) return;
+  socket.emit('removeFromQueue', index);
+}
+
+// ========== ADD SONG ==========
+function addSong() {
+  const input = $('songUrl');
+  const url = input.value.trim();
+  if (!url) return;
+
+  const now = Date.now();
+  const timeSinceLast = now - lastAddTime;
+  if (timeSinceLast < addCooldown) {
+    const wait = Math.ceil((addCooldown - timeSinceLast) / 1000);
+    toast(`Aguarde ${wait}s para adicionar outra música`, 'error');
+    return;
+  }
+
+  let videoId = '';
+  if (url.includes('youtube.com/watch?v=')) {
+    try { videoId = new URL(url).searchParams.get('v'); } catch(e) {}
+  } else if (url.includes('youtu.be/')) {
+    videoId = url.split('youtu.be/')[1].split('?')[0];
+  } else if (url.length === 11 && /^[a-zA-Z0-9_-]+$/.test(url)) {
+    videoId = url;
+  }
+
+  if (!videoId) { toast('Link inválido. Cole um link do YouTube.', 'error'); return; }
+
+  input.disabled = true;
+  $('addBtn').disabled = true;
+
+  fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`)
+    .then(r => r.json())
+    .then(data => {
+      const title = data.title || 'Música desconhecida';
+      const artist = data.author_name || 'Artista desconhecido';
+      socket.emit('addSong', { id: videoId, title, artist, duration: 180 });
+      lastAddTime = Date.now();
+      input.value = '';
+      startCooldown();
+    })
+    .catch(() => {
+      socket.emit('addSong', { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: 180 });
+      lastAddTime = Date.now();
+      input.value = '';
+      startCooldown();
+    });
+}
+
+function startCooldown() {
+  const input = $('songUrl');
+  const btn = $('addBtn');
+  const text = $('cooldownText');
+  let remaining = 10;
+
+  text.textContent = `Aguarde ${remaining}s para adicionar outra música`;
+  text.classList.remove('hidden');
+
+  const interval = setInterval(() => {
+    remaining--;
+    if (remaining > 0) {
+      text.textContent = `Aguarde ${remaining}s para adicionar outra música`;
+    } else {
+      clearInterval(interval);
+      input.disabled = false;
+      btn.disabled = false;
+      text.classList.add('hidden');
+      input.focus();
+    }
+  }, 1000);
+}
+
+// ========== USERS ==========
+function renderUsers(users) {
+  const list = $('userList');
+  list.innerHTML = '';
+  users.forEach(u => {
+    const div = document.createElement('div');
+    div.className = 'user';
+    const isMe = u.name === myName;
+    div.innerHTML = `
+      <div class="user-avatar" style="background:${u.color}18;color:${u.color};border-color:${u.color}40">${u.name[0]}</div>
+      <span style="font-weight:${isMe ? 600 : 400};color:${isMe ? 'var(--text)' : 'var(--text-secondary)'};">${escapeHtml(u.name)}${isMe ? ' (você)' : ''}</span>
+      ${u.isAdmin ? '<span class="admin-tag">Admin</span>' : ''}
+
+      ${amIAdmin && !isMe ? `
+        <div class="user-actions">
+          <button class="kick-btn" onclick="kickUser('${escapeHtml(u.name)}')">Kick</button>
+          <button class="ban-btn" onclick="banUser('${escapeHtml(u.name)}')">Ban</button>
+        </div>
+      ` : ''}
+    `;
+    list.appendChild(div);
+  });
+}
+
+function kickUser(name) {
+  if (!confirm(`Remover ${name} da sala?`)) return;
+  socket.emit('kick', { targetName: name });
+}
+function banUser(name) {
+  if (!confirm(`Banir ${name} permanentemente?`)) return;
+  socket.emit('ban', { targetName: name });
+}
+
+// ========== CHAT ==========
+function sendMsg() {
+  const input = $('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  socket.emit('chat', { text });
+  input.value = '';
+}
+
+function renderMessage(msg) {
+  const box = $('chatBox');
+  const div = document.createElement('div');
+  div.className = 'msg' + (msg.isSystem ? ' msg-system' : '');
+
+  if (msg.isSystem) {
+    div.innerHTML = `<span class="msg-text">${escapeHtml(msg.text)}</span><span class="msg-time">${formatTime(msg.createdAt)}</span>`;
+  } else {
+    div.innerHTML = `
+      <span class="msg-user" style="color:${msg.color || '#fff'}">${escapeHtml(msg.user)}${msg.isAdmin ? '<span class="msg-admin-badge">Admin</span>' : ''}</span>
+      <span class="msg-text">${escapeHtml(msg.text)}</span>
+      <span class="msg-time">${formatTime(msg.createdAt)}</span>
+    `;
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function addSystemMsg(text) {
+  renderMessage({ text, isSystem: true, createdAt: new Date() });
+}
+
+// ========== INIT ==========
+$('loginName').focus();
+</script>
+
+</body>
+</html>
