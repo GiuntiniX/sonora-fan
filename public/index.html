@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sonora Fan — A melhor Vibe</title>
+  <title>Sonora Fan — Palco</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -2100,26 +2100,11 @@ function startCooldown() {
 
 // ========== USERS ==========
 function renderUsers(users) {
-  const list = $('userList');
-  list.innerHTML = '';
-  users.forEach(u => {
-    const div = document.createElement('div');
-    div.className = 'user';
-    const isMe = u.name === myName;
-    div.innerHTML = `
-      <div class="user-avatar" style="background:${u.color}18;color:${u.color};border-color:${u.color}40">${u.name[0]}</div>
-      <span style="font-weight:${isMe ? 600 : 400};color:${isMe ? 'var(--text)' : 'var(--text-secondary)'};">${escapeHtml(u.name)}${isMe ? ' (você)' : ''}</span>
-      ${u.isAdmin ? '<span class="admin-tag">Admin</span>' : ''}
-      
-      ${amIAdmin && !isMe ? `
-        <div class="user-actions">
-          <button class="kick-btn" onclick="kickUser('${escapeHtml(u.name)}')">Kick</button>
-          <button class="ban-btn" onclick="banUser('${escapeHtml(u.name)}')">Ban</button>
-        </div>
-      ` : ''}
-    `;
-    list.appendChild(div);
-  });
+  const count = users.length;
+  const countEl = $('userCount');
+  const pluralEl = $('userCountPlural');
+  if (countEl) countEl.textContent = count;
+  if (pluralEl) pluralEl.textContent = count === 1 ? '' : 's';
 }
 
 function kickUser(name) {
