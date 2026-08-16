@@ -321,76 +321,6 @@
       overflow-y: auto;
     }
 
-    /* DJ BOOTH */
-    .dj-booth-section {
-      text-align: center;
-      padding: 20px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(124,58,237,0.05), transparent);
-      position: relative;
-    }
-    .dj-booth-section::before {
-      content: 'CABINES DE DJ';
-      position: absolute;
-      top: -9px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--bg-elevated);
-      padding: 0 12px;
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--text-muted);
-      letter-spacing: 1px;
-    }
-    .dj-booth {
-      display: flex;
-      gap: 14px;
-      align-items: flex-end;
-      justify-content: center;
-      min-height: 80px;
-    }
-    .dj-slot {
-      width: 64px; height: 64px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      color: var(--text-muted);
-      background: var(--bg-card);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      font-weight: 600;
-    }
-    .dj-slot.active {
-      border-color: var(--accent);
-      background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(124,58,237,0.15));
-      color: var(--accent);
-      box-shadow: 0 0 30px rgba(255,107,53,0.2), 0 0 60px rgba(124,58,237,0.1);
-      transform: scale(1.08);
-    }
-    .dj-slot.occupied {
-      border-color: var(--border-hover);
-      color: var(--text-secondary);
-      cursor: default;
-    }
-    .dj-slot:hover:not(.occupied) {
-      border-color: var(--accent2);
-      transform: scale(1.1);
-      box-shadow: 0 0 20px rgba(124,58,237,0.2);
-    }
-    .dj-slot .dj-name {
-      position: absolute;
-      bottom: -24px;
-      font-size: 10px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      font-weight: 500;
-    }
-
     /* PLAYER */
     .player-section {
       border-radius: var(--radius-sm);
@@ -739,15 +669,6 @@
       transition: all 0.2s;
     }
     .user:hover .user-avatar { transform: scale(1.1); }
-    .user .dj-badge {
-      font-size: 10px;
-      color: var(--accent);
-      margin-left: auto;
-      background: rgba(255,107,53,0.12);
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-weight: 700;
-    }
     .user .admin-tag {
       font-size: 9px;
       color: var(--accent2);
@@ -778,7 +699,7 @@
     .kick-btn { background: var(--danger); color: #fff; }
     .kick-btn:hover { background: #dc2626; }
     .ban-btn { background: #7c2d12; color: #fb923c; }
-    .ban-btn:hover { background: #9a3412; }
+n    .ban-btn:hover { background: #9a3412; }
 
     /* CHAT */
     .chat-panel {
@@ -1005,8 +926,6 @@
       .login-card { padding: 40px 24px; }
       .login-card h1 { font-size: 24px; }
       #youtube-player { height: 200px; }
-      .dj-booth { gap: 8px; }
-      .dj-slot { width: 50px; height: 50px; font-size: 10px; }
     }
 
     /* ===== EMPTY QUEUE STATE ===== */
@@ -1076,9 +995,11 @@
 
     <div class="room-layout">
       <div class="stage">
-        <!-- DJ BOOTH -->
-        <div class="dj-booth-section">
-          <div class="dj-booth" id="djBooth"></div>
+        <!-- TERRA SONORA BANNER -->
+        <div class="terra-banner" style="border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);">
+          <img src="https://p2.trrsf.com/image/fget/cf/1200/900/middle/images.terra.com/2026/03/13/imagem-5-ubryr9vqugjd.png" 
+               alt="Terra Sonora" 
+               style="width:100%;height:auto;display:block;object-fit:cover;max-height:200px;">
         </div>
 
         <!-- PLAYER -->
@@ -1324,7 +1245,7 @@ function initPlayer() {
     width: '100%',
     playerVars: {
       autoplay: 1,
-      controls: 1,
+      controls: 0,
       rel: 0,
       modestbranding: 1,
       enablejsapi: 1,
@@ -1338,8 +1259,18 @@ function initPlayer() {
 }
 
 function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.PLAYING) {
+    // Envia duração real do vídeo pro servidor
+    try {
+      const duration = player.getDuration();
+      if (duration > 0) {
+        socket.emit('videoDuration', { duration: Math.floor(duration) });
+      }
+    } catch(e) {}
+  }
   if (event.data === YT.PlayerState.ENDED) {
-    // Servidor avança automaticamente e remove da fila
+    // Avisa o servidor que o vídeo terminou no player
+    socket.emit('videoEnded');
   }
 }
 
@@ -1390,7 +1321,6 @@ function syncPlayer(state) {
 
   $('voteCount').textContent = (state.votes?.up || 0) - (state.votes?.down || 0);
   renderQueue(state.queue, state.currentIndex);
-  renderDjBooth(state.djSlots);
 }
 
 function updateTrackInfo(track) {
@@ -1573,23 +1503,6 @@ function startCooldown() {
   }, 1000);
 }
 
-// ========== DJ ==========
-function renderDjBooth(slots) {
-  const booth = $('djBooth');
-  booth.innerHTML = '';
-  slots.forEach((dj, i) => {
-    const div = document.createElement('div');
-    const isMe = dj === myName;
-    div.className = 'dj-slot' + (isMe ? ' active' : '') + (dj ? ' occupied' : '');
-    div.onclick = () => {
-      if (isMe) socket.emit('leaveDj');
-      else socket.emit('takeDj', i);
-    };
-    div.innerHTML = `${i + 1}<span class="dj-name">${escapeHtml(dj || 'vazio')}</span>`;
-    booth.appendChild(div);
-  });
-}
-
 // ========== USERS ==========
 function renderUsers(users) {
   const list = $('userList');
@@ -1602,7 +1515,6 @@ function renderUsers(users) {
       <div class="user-avatar" style="background:${u.color}18;color:${u.color};border-color:${u.color}40">${u.name[0]}</div>
       <span style="font-weight:${isMe ? 600 : 400};color:${isMe ? 'var(--text)' : 'var(--text-secondary)'};">${escapeHtml(u.name)}${isMe ? ' (você)' : ''}</span>
       ${u.isAdmin ? '<span class="admin-tag">Admin</span>' : ''}
-      ${u.djSlot >= 0 ? '<span class="dj-badge">DJ</span>' : ''}
       ${amIAdmin && !isMe ? `
         <div class="user-actions">
           <button class="kick-btn" onclick="kickUser('${escapeHtml(u.name)}')">Kick</button>
