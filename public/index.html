@@ -2131,6 +2131,23 @@ function renderUsers(users) {
   const pluralEl = $('userCountPlural');
   if (countEl) countEl.textContent = count;
   if (pluralEl) pluralEl.textContent = count === 1 ? '' : 's';
+
+  // Renderiza lista de usuários na sidebar (se houver container)
+  const userList = document.querySelector('.user-list');
+  if (userList) {
+    userList.innerHTML = '';
+    users.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'user';
+      const avatar = u.avatar || '👤';
+      const adminTag = u.isAdmin ? '<span class="admin-tag">Admin</span>' : '';
+      div.innerHTML = `
+        <div class="user-avatar" style="background:${u.color}22;color:${u.color};border-color:${u.color}40;">${avatar}</div>
+        <span>${escapeHtml(u.name)}${adminTag}</span>
+      `;
+      userList.appendChild(div);
+    });
+  }
 }
 
 function kickUser(name) {
@@ -2147,6 +2164,15 @@ function sendMsg() {
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
+
+  // Comandos especiais
+  if (text === '/confetti') {
+    socket.emit('confetti');
+    launchConfetti();
+    input.value = '';
+    return;
+  }
+
   socket.emit('chat', { text: censorText(text) });
   input.value = '';
   isTyping = false;
