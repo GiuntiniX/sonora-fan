@@ -1176,6 +1176,258 @@
       color: var(--accent);
       background: rgba(255,107,53,0.15);
     }
+
+    /* ===== THEME TOGGLE ===== */
+    .theme-toggle {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .theme-toggle:hover { background: var(--bg-hover); transform: scale(1.1); }
+
+    /* ===== AVATAR EMOJI PICKER ===== */
+    .avatar-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .avatar-option {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .avatar-option:hover { border-color: var(--accent2); transform: scale(1.15); }
+    .avatar-option.selected { border-color: var(--accent); background: rgba(255,107,53,0.15); }
+
+    /* ===== MESSAGE REACTIONS ===== */
+    .msg-reactions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .reaction-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.1s;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .reaction-btn:hover { border-color: var(--accent); background: rgba(255,107,53,0.1); }
+    .reaction-btn.has-reaction { border-color: var(--accent); background: rgba(255,107,53,0.15); }
+    .reaction-add {
+      opacity: 0;
+      transition: opacity 0.15s;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    .msg:hover .reaction-add { opacity: 1; }
+    .reaction-add:hover { background: var(--bg-hover); }
+    .reaction-picker {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      display: none;
+      gap: 4px;
+      z-index: 50;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .reaction-picker.show { display: flex; }
+    .reaction-emoji {
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.1s;
+    }
+    .reaction-emoji:hover { background: var(--bg-hover); transform: scale(1.2); }
+
+    /* ===== TYPING INDICATOR ===== */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .typing-indicator.show { display: flex; }
+    .typing-dots {
+      display: flex;
+      gap: 3px;
+    }
+    .typing-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: typingBounce 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+
+    /* ===== MENTION PING ===== */
+    .mention-highlight {
+      background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(124,58,237,0.2));
+      border-left: 3px solid var(--accent);
+      animation: mentionPulse 2s ease-in-out infinite;
+    }
+    @keyframes mentionPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.2); }
+      50% { box-shadow: 0 0 15px rgba(255,107,53,0.3); }
+    }
+    .msg-text .mention {
+      color: var(--accent);
+      font-weight: 700;
+      background: rgba(255,107,53,0.1);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+
+    /* ===== CONFETTI ===== */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      overflow: hidden;
+    }
+    .confetti-piece {
+      position: absolute;
+      width: 8px; height: 8px;
+      animation: confettiFall 3s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ===== FULLSCREEN MODE ===== */
+    .fullscreen-btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 600;
+    }
+    .fullscreen-btn:hover { background: var(--bg-hover); color: var(--text); }
+    .room-layout.fullscreen-mode {
+      grid-template-columns: 1fr;
+    }
+    .room-layout.fullscreen-mode .sidebar {
+      display: none;
+    }
+    .room-layout.fullscreen-mode .stage {
+      padding: 40px 60px;
+    }
+    .room-layout.fullscreen-mode #youtube-player {
+      height: 500px;
+    }
+
+    /* ===== FAVORITES TAB ===== */
+    .fav-btn {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .fav-btn:hover { background: var(--bg-card); color: var(--text); }
+    .fav-btn.active { background: rgba(255,107,53,0.15); color: var(--accent); border-color: var(--accent); }
+    .fav-modal {
+      max-width: 500px;
+    }
+    .fav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      background: var(--bg-card);
+    }
+    .fav-item:hover { background: var(--bg-hover); }
+    .fav-thumb {
+      width: 60px; height: 45px;
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .fav-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .fav-info { flex: 1; min-width: 0; }
+    .fav-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fav-artist { font-size: 12px; color: var(--text-muted); }
+    .fav-play-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ===== CLEAR CHAT BUTTON ===== */
+    .clear-chat-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--danger);
+      background: transparent;
+      color: var(--danger);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 600;
+    }
+    .clear-chat-btn:hover { background: rgba(239,68,68,0.1); }
   </style>
 <base target="_blank">
 </head>
@@ -1204,6 +1456,21 @@
     <h1>Sonora <span>Fan</span></h1>
     <p>Entre no palco. Ouça música com amigos,<br>adicione do YouTube e converse em tempo real.</p>
     <input type="text" id="loginName" placeholder="Como quer ser chamado?" maxlength="20" onkeydown="if(event.key==='Enter') doLogin()">
+    <div style="color:var(--text-muted);font-size:12px;margin-bottom:8px;">Escolha seu avatar:</div>
+    <div class="avatar-picker" id="avatarPicker">
+      <div class="avatar-option selected" data-emoji="🎸" onclick="selectAvatar(this)">🎸</div>
+      <div class="avatar-option" data-emoji="🎤" onclick="selectAvatar(this)">🎤</div>
+      <div class="avatar-option" data-emoji="🎧" onclick="selectAvatar(this)">🎧</div>
+      <div class="avatar-option" data-emoji="🎹" onclick="selectAvatar(this)">🎹</div>
+      <div class="avatar-option" data-emoji="🥁" onclick="selectAvatar(this)">🥁</div>
+      <div class="avatar-option" data-emoji="🎷" onclick="selectAvatar(this)">🎷</div>
+      <div class="avatar-option" data-emoji="🎺" onclick="selectAvatar(this)">🎺</div>
+      <div class="avatar-option" data-emoji="🎻" onclick="selectAvatar(this)">🎻</div>
+      <div class="avatar-option" data-emoji="🎵" onclick="selectAvatar(this)">🎵</div>
+      <div class="avatar-option" data-emoji="🎶" onclick="selectAvatar(this)">🎶</div>
+      <div class="avatar-option" data-emoji="🎼" onclick="selectAvatar(this)">🎼</div>
+      <div class="avatar-option" data-emoji="🎬" onclick="selectAvatar(this)">🎬</div>
+    </div>
     <div class="admin-toggle" onclick="toggleAdminField()">
       <input type="checkbox" id="isAdminCheck">
       <label for="isAdminCheck">Sou administrador</label>
@@ -1243,6 +1510,9 @@
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
+        <button class="fav-btn" onclick="showFavorites()" title="Minhas favoritas">❤️ Favoritas</button>
+        <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Tela cheia">⛶ Fullscreen</button>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Tema" id="themeBtn">🌙</button>
         <span class="listener-pill"><span class="listener-dot"></span><span id="listenerCount">0</span> ouvintes</span>
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
@@ -1309,15 +1579,28 @@
       </div>
 
       <div class="sidebar">
-        <div class="users-panel">
-          <div class="panel-header">Pessoas na sala</div>
-          <div class="user-list" id="userList"></div>
+        <div class="users-panel" style="padding:14px 18px;">
+          <div style="display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:14px;font-weight:600;">
+            <span style="font-size:18px;">👥</span>
+            <span id="userCount">0</span> pessoa<span id="userCountPlural">s</span> na sala
+          </div>
         </div>
         <div class="chat-panel">
           <div class="chat-messages" id="chatBox"></div>
+          <div id="clearChatContainer" style="display:none;padding:0 16px 8px;">
+            <button class="clear-chat-btn" onclick="clearChat()">🗑️ Limpar chat</button>
+          </div>
+          <div class="typing-indicator" id="typingIndicator">
+            <span id="typingName">Alguém</span> está digitando
+            <div class="typing-dots">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          </div>
           <div class="chat-input-bar" style="position:relative;">
             <button class="emoji-btn" onclick="toggleEmojiPanel()" title="Emojis">😀</button>
-            <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()">
+            <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()" oninput="handleTyping()">
             <button onclick="sendMsg()">Enviar</button>
             <div class="emoji-panel" id="emojiPanel">
               <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
@@ -1360,6 +1643,23 @@
   </div>
 </div>
 
+<!-- MODAL FAVORITAS -->
+<div class="modal-overlay" id="favModal">
+  <div class="modal fav-modal">
+    <h3>❤️ Minhas favoritas</h3>
+    <div id="favList" style="max-height:400px;overflow-y:auto;">
+      <div style="text-align:center;padding:40px;color:var(--text-muted);">
+        <div style="font-size:40px;margin-bottom:12px;">🎵</div>
+        <p>Nenhuma música favoritada ainda</p>
+        <p style="font-size:12px;margin-top:8px;">Clique no ❤️ quando uma música tocar para salvá-la</p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideFavorites()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CRIAR SALA -->
 <div class="modal-overlay" id="createModal">
   <div class="modal">
@@ -1384,6 +1684,9 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- CONFETTI -->
+<div class="confetti-container" id="confettiContainer"></div>
+
 <script>
 
 const socket = io();
@@ -1396,6 +1699,11 @@ let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
 let addCooldown = 10000;
+let myAvatar = '🎸';
+let myFavorites = JSON.parse(localStorage.getItem('sonoraFavorites') || '[]');
+let isTyping = false;
+let typingTimeout = null;
+let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
 
 // ========== CENSOR ==========
 const badWords = [
@@ -1486,6 +1794,7 @@ function doLogin() {
   hide('loginScreen');
   showScreen('lobby');
   loadRooms();
+  applyTheme();
 }
 
 // ========== LOBBY ==========
@@ -1540,7 +1849,7 @@ async function createRoom() {
 // ========== ROOM ==========
 function joinRoom(slug) {
   currentRoomSlug = slug;
-  socket.emit('joinRoom', { slug, name: myName, adminPass: myAdminPass });
+  socket.emit('joinRoom', { slug, name: myName, adminPass: myAdminPass, avatar: myAvatar });
   showScreen('room');
   $('chatBox').innerHTML = '';
   amIAdmin = false;
@@ -1655,7 +1964,7 @@ function syncPlayer(state) {
 function updateTrackInfo(track) {
   $('trackTitle').textContent = track.title;
   $('trackArtist').textContent = track.artist;
-  $('trackDj').textContent = track.dj ? `Adicionado por ${track.dj}` : '';
+  onTrackChange(track);
   $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
 }
 
@@ -1693,12 +2002,43 @@ socket.on('isAdmin', (isAdmin) => {
   amIAdmin = isAdmin;
   if (isAdmin) {
     show('adminBadge');
+    const clearContainer = $('clearChatContainer');
+    if (clearContainer) clearContainer.style.display = 'block';
     toast('Você é admin desta sala!', 'success');
   }
 });
 
 socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
 socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
+
+socket.on('typing', ({ name, isTyping }) => {
+  const indicator = $('typingIndicator');
+  const nameEl = $('typingName');
+  if (isTyping && name !== myName) {
+    nameEl.textContent = name;
+    indicator.classList.add('show');
+  } else {
+    indicator.classList.remove('show');
+  }
+});
+
+socket.on('chatUpdated', (msg) => {
+  // Atualiza reações em mensagens existentes
+  const existing = document.getElementById('msg-' + msg._id);
+  if (existing) {
+    renderMessage(msg);
+    existing.remove();
+  }
+});
+
+socket.on('chatCleared', () => {
+  $('chatBox').innerHTML = '';
+  toast('Chat limpo pelo admin', 'success');
+});
+
+socket.on('confetti', () => {
+  launchConfetti();
+});
 
 socket.on('musicLiked', ({ msgId, likes }) => {
   const btn = document.getElementById('like-' + msgId);
@@ -1876,6 +2216,9 @@ function sendMsg() {
   if (!text) return;
   socket.emit('chat', { text: censorText(text) });
   input.value = '';
+  isTyping = false;
+  clearTimeout(typingTimeout);
+  socket.emit('typing', { isTyping: false });
 }
 
 function renderMessage(msg) {
@@ -1905,18 +2248,195 @@ function renderMessage(msg) {
 
   if (msg.isSystem) return;
 
-  div.className = 'msg';
+  // Detectar menções
+  const isMentioned = msg.text && msg.text.includes('@' + myName);
+  div.className = 'msg' + (isMentioned ? ' mention-highlight' : '');
+  div.id = 'msg-' + msg._id;
+
+  // Processar menções no texto
+  let processedText = escapeHtml(msg.text);
+  processedText = processedText.replace(/@(\\w+)/g, '<span class="mention">@$1</span>');
+
+  // Avatar
+  const avatar = msg.avatar || msg.user[0];
+
+  // Reações
+  let reactionsHtml = '';
+  if (msg.reactions && Object.keys(msg.reactions).length > 0) {
+    reactionsHtml = '<div class="msg-reactions">';
+    for (const [emoji, users] of Object.entries(msg.reactions)) {
+      const hasMine = users.includes(myName);
+      reactionsHtml += `<button class="reaction-btn ${hasMine ? 'has-reaction' : ''}" onclick="addReaction('${msg._id}', '${emoji}')">${emoji} ${users.length}</button>`;
+    }
+    reactionsHtml += '</div>';
+  }
+
   div.innerHTML = `
-    <span class="msg-user" style="color:${msg.color || '#fff'}">${escapeHtml(msg.user)}${msg.isAdmin ? '<span class="msg-admin-badge">Admin</span>' : ''}</span>
-    <span class="msg-text">${escapeHtml(msg.text)}</span>
-    <span class="msg-time">${formatTime(msg.createdAt)}</span>
+    <div style="display:flex;align-items:flex-start;gap:8px;width:100%;">
+      <div style="width:28px;height:28px;border-radius:50%;background:${msg.color || '#888'}22;color:${msg.color || '#888'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid ${msg.color || '#888'}40;">${avatar}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+          <span class="msg-user" style="color:${msg.color || '#fff'};cursor:pointer;" onclick="mentionUser('${escapeHtml(msg.user)}')">${escapeHtml(msg.user)}${msg.isAdmin ? '<span class="msg-admin-badge">Admin</span>' : ''}</span>
+          <span class="msg-time" style="opacity:0.5;">${formatTime(msg.createdAt)}</span>
+        </div>
+        <span class="msg-text">${processedText}</span>
+        ${reactionsHtml}
+        <div style="position:relative;">
+          <span class="reaction-add" onclick="toggleReactionPicker('${msg._id}')">+ 😀</span>
+          <div class="reaction-picker" id="react-picker-${msg._id}">
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '❤️')">❤️</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '🔥')">🔥</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '😂')">😂</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '👍')">👍</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '😮')">😮</span>
+            <span class="reaction-emoji" onclick="addReaction('${msg._id}', '🎵')">🎵</span>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
+
+  // Som de menção
+  if (isMentioned && msg.user !== myName) {
+    playMentionSound();
+  }
 }
 
 function addSystemMsg(text) {
   // Notificações de sistema não são exibidas no chat
+}
+
+// ========== THEME ==========
+function applyTheme() {
+  if (currentTheme === 'light') {
+    document.documentElement.style.setProperty('--bg', '#f5f5fa');
+    document.documentElement.style.setProperty('--bg-elevated', '#ffffff');
+    document.documentElement.style.setProperty('--bg-card', '#ffffff');
+    document.documentElement.style.setProperty('--bg-hover', '#f0f0f5');
+    document.documentElement.style.setProperty('--border', '#e0e0e8');
+    document.documentElement.style.setProperty('--border-hover', '#d0d0d8');
+    document.documentElement.style.setProperty('--text', '#1a1a2e');
+    document.documentElement.style.setProperty('--text-secondary', '#666680');
+    document.documentElement.style.setProperty('--text-muted', '#9999aa');
+    $('themeBtn').textContent = '☀️';
+  } else {
+    document.documentElement.style.setProperty('--bg', '#050508');
+    document.documentElement.style.setProperty('--bg-elevated', '#0a0a10');
+    document.documentElement.style.setProperty('--bg-card', '#0f0f18');
+    document.documentElement.style.setProperty('--bg-hover', '#161620');
+    document.documentElement.style.setProperty('--border', '#1e1e2e');
+    document.documentElement.style.setProperty('--border-hover', '#2a2a3e');
+    document.documentElement.style.setProperty('--text', '#f0f0f8');
+    document.documentElement.style.setProperty('--text-secondary', '#9a9ab0');
+    document.documentElement.style.setProperty('--text-muted', '#555570');
+    $('themeBtn').textContent = '🌙';
+  }
+}
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('sonoraTheme', currentTheme);
+  applyTheme();
+}
+
+// ========== AVATAR ==========
+function selectAvatar(el) {
+  document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
+  el.classList.add('selected');
+  myAvatar = el.dataset.emoji;
+}
+
+// ========== FULLSCREEN ==========
+function toggleFullscreen() {
+  document.querySelector('.room-layout').classList.toggle('fullscreen-mode');
+}
+
+// ========== CONFETTI ==========
+function launchConfetti() {
+  const container = $('confettiContainer');
+  const colors = ['#ff6b35', '#7c3aed', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4'];
+  for (let i = 0; i < 50; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 2 + 's';
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    container.appendChild(piece);
+    setTimeout(() => piece.remove(), 4000);
+  }
+}
+
+// ========== FAVORITES ==========
+function addToFavorites(track) {
+  if (!track) return;
+  const exists = myFavorites.find(f => f.id === track.id);
+  if (exists) return;
+  myFavorites.push({ id: track.id, title: track.title, artist: track.artist, addedAt: Date.now() });
+  localStorage.setItem('sonoraFavorites', JSON.stringify(myFavorites));
+  toast('❤️ Adicionada aos favoritos!', 'success');
+}
+function showFavorites() {
+  const list = $('favList');
+  if (myFavorites.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:12px;">🎵</div><p>Nenhuma música favoritada ainda</p><p style="font-size:12px;margin-top:8px;">Clique no ❤️ quando uma música tocar para salvá-la</p></div>`;
+  } else {
+    list.innerHTML = '';
+    myFavorites.forEach(f => {
+      const div = document.createElement('div');
+      div.className = 'fav-item';
+      div.innerHTML = `
+        <div class="fav-thumb"><img src="https://img.youtube.com/vi/${f.id}/mqdefault.jpg" alt=""></div>
+        <div class="fav-info"><div class="fav-title">${escapeHtml(f.title)}</div><div class="fav-artist">${escapeHtml(f.artist)}</div></div>
+        <button class="fav-play-btn" onclick="socket.emit('addSong', {id:'${f.id}',title:'${escapeHtml(f.title)}',artist:'${escapeHtml(f.artist)}',duration:180});hideFavorites();">▶ Adicionar</button>
+      `;
+      list.appendChild(div);
+    });
+  }
+  $('favModal').classList.add('active');
+}
+function hideFavorites() {
+  $('favModal').classList.remove('active');
+}
+
+// ========== CLEAR CHAT (admin) ==========
+function clearChat() {
+  if (!amIAdmin) return;
+  if (!confirm('Limpar todo o histórico de mensagens?')) return;
+  socket.emit('clearChat');
+}
+
+// ========== TYPING ==========
+function handleTyping() {
+  if (!isTyping) {
+    isTyping = true;
+    socket.emit('typing', { isTyping: true });
+  }
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    isTyping = false;
+    socket.emit('typing', { isTyping: false });
+  }, 2000);
+}
+
+// ========== REACTIONS ==========
+function toggleReactionPicker(msgId) {
+  const picker = document.getElementById('react-picker-' + msgId);
+  if (picker) picker.classList.toggle('show');
+}
+function addReaction(msgId, emoji) {
+  socket.emit('addReaction', { msgId, emoji });
+  const picker = document.getElementById('react-picker-' + msgId);
+  if (picker) picker.classList.remove('show');
+}
+
+// ========== MENTION ==========
+function mentionUser(name) {
+  const input = $('chatInput');
+  input.value += '@' + name + ' ';
+  input.focus();
 }
 
 // ========== EMOJI PICKER ==========
@@ -1937,6 +2457,24 @@ function updateEqualizer(playing) {
     bar.style.animationPlayState = playing ? 'running' : 'paused';
     if (!playing) bar.style.height = '4px';
   });
+}
+
+// ========== MENTION SOUND ==========
+function playMentionSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
 }
 
 // ========== MUSIC LIKE ==========
