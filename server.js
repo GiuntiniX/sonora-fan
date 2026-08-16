@@ -21,18 +21,16 @@ function createRoom(slug, name, adminName = null) {
   return {
     slug, name,
     admin: adminName, // nome do admin da sala
-    queue: [
-      { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', artist: 'Rick Astley', dj: 'Sistema', duration: 212 },
-    ],
+    queue: [], // começa vazio — quem entra coloca as músicas
     currentIndex: 0,
     startedAt: Date.now(),
-    votes: { up: 5, down: 0 },
+    votes: { up: 0, down: 0 },
     
     bannedUsers: [],
     chatHistory: [],
     listenerCount: 0,
     lastAddTime: new Map(), // userName -> timestamp (cooldown)
-    isPlaying: true,
+    isPlaying: false, // não toca nada até alguém adicionar
   };
 }
 
@@ -155,17 +153,13 @@ io.on('connection', (socket) => {
     socket.userAvatar = avatar || name[0];
     room.listenerCount++;
 
-    // Verifica se é admin
+    // Só quem digita a senha correta é admin
     const isAdmin = adminPass === ADMIN_PASSWORD;
     socket.isAdmin = isAdmin;
 
     // Se não tem admin na sala e a senha está correta, torna admin da sala
     if (isAdmin && !room.admin) {
       room.admin = name;
-    }
-    // Se o nome bate com o admin da sala
-    if (room.admin === name) {
-      socket.isAdmin = true;
     }
 
     socket.emit('roomState', {
