@@ -10,13 +10,17 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// ========== CONFIG ==========
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Senha padrão do admin
+const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
+
 // ========== ESTADO ==========
 const rooms = new Map();
-const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316'];
 
-function createRoom(slug, name) {
+function createRoom(slug, name, adminName = null) {
   return {
     slug, name,
+    admin: adminName, // nome do admin da sala
     queue: [
       { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', artist: 'Rick Astley', dj: 'Sistema', duration: 212 },
     ],
@@ -28,10 +32,11 @@ function createRoom(slug, name) {
     chatHistory: [],
     listenerCount: 0,
     lastAddTime: new Map(), // userName -> timestamp (cooldown)
+    isPlaying: true,
   };
 }
 
-rooms.set('lounge', createRoom('lounge', 'Lounge Sonora'));
+rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
 
 function getPosition(room) {
   const track = room.queue[room.currentIndex];
@@ -49,6 +54,8 @@ function broadcastState(slug) {
     votes: room.votes,
     queue: room.queue,
     djSlots: room.djSlots,
+    admin: room.admin,
+    isPlaying: room.isPlaying,
   });
 }
 
@@ -58,6 +65,7 @@ function broadcastUsers(slug) {
       name: s.userName || 'Anônimo',
       color: s.userColor || '#888',
       djSlot: s.djSlot ?? -1,
+      isAdmin: s.isAdmin || false,
     }));
     io.to(slug).emit('users', users);
   });
@@ -66,25 +74,43 @@ function broadcastUsers(slug) {
 function addSystemMsg(slug, text) {
   const room = rooms.get(slug);
   if (!room) return;
-  const msg = { _id: Date.now().toString() + Math.random(), user: 'Sistema', text, color: '#555', isSystem: true, createdAt: new Date() };
+  const msg = { _id: Date.now().toString() + Math.random(), user: 'Sistema', text, color: '#888', isSystem: true, createdAt: new Date() };
   room.chatHistory.push(msg);
-  if (room.chatHistory.length > 200) room.chatHistory.shift();
+  if (room.chatHistory.length > 300) room.chatHistory.shift();
   io.to(slug).emit('chat', msg);
 }
 
-// Auto-advance
+// ========== AUTO-ADVANCE (fila consumível) ==========
 setInterval(() => {
   for (const [slug, room] of rooms) {
+    if (!room.isPlaying || room.queue.length === 0) continue;
+
     const track = room.queue[room.currentIndex];
     if (!track) continue;
-    if (getPosition(room) >= (track.duration || 180) - 1) {
-      room.currentIndex = (room.currentIndex + 1) % room.queue.length;
+
+    const pos = getPosition(room);
+    const duration = track.duration || 180;
+
+    if (pos >= duration - 1) {
+      // MÚSICA ACABOU → remove da fila e toca próxima
+      const finishedTrack = room.queue.shift(); // remove do início
+      room.currentIndex = 0; // sempre aponta para o primeiro
       room.startedAt = Date.now();
-      room.votes = { up: Math.floor(Math.random() * 10) + 2, down: 0 };
+      room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
+
       broadcastState(slug);
-      const next = room.queue[room.currentIndex];
-      io.to(slug).emit('trackChanged', next);
-      addSystemMsg(slug, `▶ ${next.title} — ${next.artist}`);
+
+      if (room.queue.length > 0) {
+        const next = room.queue[0];
+        io.to(slug).emit('trackChanged', next);
+        addSystemMsg(slug, `▶ ${next.title} — ${next.artist}`);
+        addSystemMsg(slug, `🗑️ "${finishedTrack.title}" foi removida da fila`);
+      } else {
+        room.isPlaying = false;
+        broadcastState(slug);
+        addSystemMsg(slug, `🏁 Fila encerrada. Adicione mais músicas!`);
+        io.to(slug).emit('queueEmpty');
+      }
     }
   }
 }, 2000);
@@ -98,10 +124,10 @@ app.get('/api/rooms', (req, res) => {
 });
 
 app.post('/api/rooms', (req, res) => {
-  const { name } = req.body;
+  const { name, adminName } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
-  rooms.set(slug, createRoom(slug, name));
+  rooms.set(slug, createRoom(slug, name, adminName || null));
   res.json({ slug, name });
 });
 
@@ -113,7 +139,7 @@ app.get('*', (req, res) => {
 io.on('connection', (socket) => {
   let currentRoom = null;
 
-  socket.on('joinRoom', ({ slug, name }) => {
+  socket.on('joinRoom', ({ slug, name, adminPass }) => {
     const room = rooms.get(slug);
     if (!room) { socket.emit('error', 'Sala não encontrada'); return; }
     if (room.bannedUsers.includes(name)) { socket.emit('error', 'Você foi banido'); return; }
@@ -131,6 +157,19 @@ io.on('connection', (socket) => {
     socket.djSlot = -1;
     room.listenerCount++;
 
+    // Verifica se é admin
+    const isAdmin = adminPass === ADMIN_PASSWORD;
+    socket.isAdmin = isAdmin;
+
+    // Se não tem admin na sala e a senha está correta, torna admin da sala
+    if (isAdmin && !room.admin) {
+      room.admin = name;
+    }
+    // Se o nome bate com o admin da sala
+    if (room.admin === name) {
+      socket.isAdmin = true;
+    }
+
     socket.emit('roomState', {
       slug: room.slug, name: room.name,
       currentIndex: room.currentIndex,
@@ -138,8 +177,11 @@ io.on('connection', (socket) => {
       votes: room.votes,
       queue: room.queue,
       djSlots: room.djSlots,
+      admin: room.admin,
+      isPlaying: room.isPlaying,
     });
-    socket.emit('chatHistory', room.chatHistory.slice(-100));
+    socket.emit('chatHistory', room.chatHistory.slice(-150));
+    socket.emit('isAdmin', socket.isAdmin);
     broadcastUsers(slug);
     addSystemMsg(slug, `👋 ${name} entrou`);
   });
@@ -151,10 +193,11 @@ io.on('connection', (socket) => {
       _id: Date.now().toString() + Math.random(),
       user: socket.userName, text: text.trim(),
       color: socket.userColor, isSystem: false,
+      isAdmin: socket.isAdmin || false,
       createdAt: new Date(),
     };
     room.chatHistory.push(msg);
-    if (room.chatHistory.length > 200) room.chatHistory.shift();
+    if (room.chatHistory.length > 300) room.chatHistory.shift();
     io.to(currentRoom).emit('chat', msg);
   });
 
@@ -182,6 +225,16 @@ io.on('connection', (socket) => {
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
+
+    // Se não estava tocando, começa a tocar
+    if (!room.isPlaying && room.queue.length === 1) {
+      room.isPlaying = true;
+      room.currentIndex = 0;
+      room.startedAt = Date.now();
+      io.to(currentRoom).emit('trackChanged', song);
+      addSystemMsg(currentRoom, `▶ ${song.title} — ${song.artist}`);
+    }
+
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `➕ ${socket.userName} adicionou "${song.title}"`);
   });
@@ -190,12 +243,41 @@ io.on('connection', (socket) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     if (index < 0 || index >= room.queue.length) return;
-    room.currentIndex = index;
+
+    // Admin pode pular livremente. Não-admin só pode pular para frente?
+    // Vou deixar todos poderem pular, mas o admin pode pular para qualquer lugar
+
+    // Remove todas as músicas antes do index (fila consumível)
+    if (index > 0) {
+      room.queue.splice(0, index);
+    }
+
+    room.currentIndex = 0;
     room.startedAt = Date.now();
-    room.votes = { up: Math.floor(Math.random() * 10) + 2, down: 0 };
+    room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
+    room.isPlaying = true;
     broadcastState(currentRoom);
-    io.to(currentRoom).emit('trackChanged', room.queue[index]);
-    addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[index].title}`);
+    io.to(currentRoom).emit('trackChanged', room.queue[0]);
+    addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0].title}`);
+  });
+
+  socket.on('removeFromQueue', (index) => {
+    if (!currentRoom) return;
+    const room = rooms.get(currentRoom);
+    // Só admin ou quem adicionou pode remover
+    const track = room.queue[index];
+    if (!track) return;
+    if (!socket.isAdmin && track.dj !== socket.userName) {
+      socket.emit('error', 'Só o admin ou quem adicionou pode remover');
+      return;
+    }
+    if (index === room.currentIndex) {
+      socket.emit('error', 'Não pode remover a música que está tocando');
+      return;
+    }
+    const removed = room.queue.splice(index, 1)[0];
+    broadcastState(currentRoom);
+    addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${removed.title}"`);
   });
 
   socket.on('takeDj', (index) => {
@@ -221,22 +303,28 @@ io.on('connection', (socket) => {
   });
 
   socket.on('kick', ({ targetName }) => {
-    if (!currentRoom) return;
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode remover usuários');
+      return;
+    }
     io.in(currentRoom).fetchSockets().then(sockets => {
       const target = sockets.find(s => s.userName === targetName);
-      if (target) { target.emit('kicked', 'Removido da sala'); target.disconnect(); }
-      addSystemMsg(currentRoom, `🚪 ${targetName} foi removido`);
+      if (target) { target.emit('kicked', 'Removido da sala pelo admin'); target.disconnect(); }
+      addSystemMsg(currentRoom, `🚪 ${targetName} foi removido pelo admin`);
     });
   });
 
   socket.on('ban', ({ targetName }) => {
-    if (!currentRoom) return;
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode banir usuários');
+      return;
+    }
     const room = rooms.get(currentRoom);
     room.bannedUsers.push(targetName);
     io.in(currentRoom).fetchSockets().then(sockets => {
       const target = sockets.find(s => s.userName === targetName);
-      if (target) { target.emit('banned', 'Banido da sala'); target.disconnect(); }
-      addSystemMsg(currentRoom, `🚫 ${targetName} foi banido`);
+      if (target) { target.emit('banned', 'Banido da sala pelo admin'); target.disconnect(); }
+      addSystemMsg(currentRoom, `🚫 ${targetName} foi banido pelo admin`);
     });
   });
 
