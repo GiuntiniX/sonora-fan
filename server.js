@@ -90,6 +90,17 @@ setInterval(() => {
 
     if (pos >= duration - 3) {
       const finishedTrack = room.queue.shift();
+      // Adiciona ao histórico
+      room.playedHistory.push({
+        id: finishedTrack.id,
+        title: finishedTrack.title,
+        artist: finishedTrack.artist,
+        dj: finishedTrack.dj || 'Sistema',
+        likes: (room.votes?.up || 0),
+        playedAt: new Date(),
+      });
+      if (room.playedHistory.length > 50) room.playedHistory.shift();
+
       room.currentIndex = 0;
       room.startedAt = Date.now();
       room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
@@ -358,6 +369,17 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoom);
     if (!room || !room.isPlaying || room.queue.length === 0) return;
     const finishedTrack = room.queue.shift();
+    // Adiciona ao histórico
+    room.playedHistory.push({
+      id: finishedTrack.id,
+      title: finishedTrack.title,
+      artist: finishedTrack.artist,
+      dj: finishedTrack.dj || 'Sistema',
+      likes: (room.votes?.up || 0),
+      playedAt: new Date(),
+    });
+    if (room.playedHistory.length > 50) room.playedHistory.shift();
+
     room.currentIndex = 0;
     room.startedAt = Date.now();
     room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
@@ -409,6 +431,21 @@ io.on('connection', (socket) => {
       io.to(currentRoom).emit('confetti');
       addSystemMsg(currentRoom, `🎉 "${msg.musicTitle}" bateu 10 curtidas!`);
     }
+  });
+
+  socket.on('getHistory', () => {
+    if (!currentRoom) return;
+    const room = rooms.get(currentRoom);
+    if (!room) return;
+    socket.emit('history', room.playedHistory);
+  });
+
+  socket.on('partyMode', ({ active }) => {
+    if (!currentRoom) return;
+    const room = rooms.get(currentRoom);
+    if (!room) return;
+    room.partyMode = active;
+    io.to(currentRoom).emit('partyMode', { active });
   });
 
   socket.on('disconnect', () => {
