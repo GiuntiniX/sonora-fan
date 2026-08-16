@@ -367,10 +367,7 @@
   <div class="particle" style="bottom:-10%;left:95%;"></div>
 </div>
 
-<!-- WELCOME SCREEN -->
-<div class="welcome-screen" id="welcomeScreen">
-  <div class="welcome-logo">🎸</div>
-  <div class="welcome-title">Sonora <span>Fan</span></div>
+<div class="welcome-title">Sonora <span>Fan</span></div>
   <div class="welcome-subtitle">Música, amigos e vibe de show ao vivo</div>
   <div class="welcome-bar"><div class="welcome-bar-fill"></div></div>
 </div>
@@ -839,10 +836,7 @@ function formatDuration(seconds) {
 // ========== WELCOME & INIT ==========
 window.addEventListener('DOMContentLoaded', () => {
   loadStats();
-  setTimeout(() => {
-    $('welcomeScreen').classList.add('hidden');
-    checkAuth();
-  }, 2200);
+  checkAuth();
 });
 
 async function loadStats() {
