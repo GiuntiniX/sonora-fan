@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ========== CONFIG ==========
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Senha padrão do admin
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
 
 // ========== ESTADO ==========
@@ -20,7 +20,7 @@ const rooms = new Map();
 function createRoom(slug, name, adminName = null) {
   return {
     slug, name,
-    admin: adminName, // nome do admin da sala
+    admin: adminName,
     queue: [
       { id: 'dQw4w9WgXcQ', title: 'Never Gonna Give You Up', artist: 'Rick Astley', dj: 'Sistema', duration: 212 },
     ],
@@ -30,7 +30,7 @@ function createRoom(slug, name, adminName = null) {
     bannedUsers: [],
     chatHistory: [],
     listenerCount: 0,
-    lastAddTime: new Map(), // userName -> timestamp (cooldown)
+    lastAddTime: new Map(),
     isPlaying: true,
   };
 }
@@ -88,8 +88,6 @@ setInterval(() => {
     const pos = getPosition(room);
     const duration = track.duration || 180;
 
-    // Só avança se passou da duração real (com margem de 3s)
-    // A duração real é atualizada pelo cliente quando o vídeo carrega
     if (pos >= duration - 3) {
       const finishedTrack = room.queue.shift();
       room.currentIndex = 0;
@@ -155,15 +153,12 @@ io.on('connection', (socket) => {
 
     room.listenerCount++;
 
-    // Verifica se é admin
     const isAdmin = adminPass === ADMIN_PASSWORD;
     socket.isAdmin = isAdmin;
 
-    // Se não tem admin na sala e a senha está correta, torna admin da sala
     if (isAdmin && !room.admin) {
       room.admin = name;
     }
-    // Se o nome bate com o admin da sala
     if (room.admin === name) {
       socket.isAdmin = true;
     }
@@ -206,7 +201,6 @@ io.on('connection', (socket) => {
     broadcastState(currentRoom);
   });
 
-  // Add song com COOLDOWN de 10 segundos
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -223,7 +217,6 @@ io.on('connection', (socket) => {
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
 
-    // Se não estava tocando, começa a tocar
     if (!room.isPlaying && room.queue.length === 1) {
       room.isPlaying = true;
       room.currentIndex = 0;
@@ -241,10 +234,6 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoom);
     if (index < 0 || index >= room.queue.length) return;
 
-    // Admin pode pular livremente. Não-admin só pode pular para frente?
-    // Vou deixar todos poderem pular, mas o admin pode pular para qualquer lugar
-
-    // Remove todas as músicas antes do index (fila consumível)
     if (index > 0) {
       room.queue.splice(0, index);
     }
@@ -261,7 +250,6 @@ io.on('connection', (socket) => {
   socket.on('removeFromQueue', (index) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
-    // Só admin ou quem adicionou pode remover
     const track = room.queue[index];
     if (!track) return;
     if (!socket.isAdmin && track.dj !== socket.userName) {
@@ -284,7 +272,6 @@ io.on('connection', (socket) => {
     const track = room.queue[room.currentIndex];
     if (track && track.duration !== duration) {
       track.duration = duration;
-      // Não precisa broadcast, só atualiza a duração interna
     }
   });
 
@@ -293,7 +280,6 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoom);
     if (!room || !room.isPlaying || room.queue.length === 0) return;
 
-    // Força o avanço da fila
     const finishedTrack = room.queue.shift();
     room.currentIndex = 0;
     room.startedAt = Date.now();
@@ -314,14 +300,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('kick', ({ targetName }) => {
-    if (!currentRoom || !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin pode remover usuários');
-      return;
-    }
-    io.in(currentRoom).fetchSockets().then(sockets => {
-      const target = sockets.find(s => s.userName === targetName);
-      if (target) { target.emit('kicked', 'Removido da sala pelo admin'); target
   socket.on('kick', ({ targetName }) => {
     if (!currentRoom || !socket.isAdmin) {
       socket.emit('error', 'Apenas admin pode remover usuários');
@@ -348,49 +326,11 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('videoDuration', ({ duration }) => {
-    if (!currentRoom || !duration || duration <= 0) return;
-    const room = rooms.get(currentRoom);
-    if (!room) return;
-    const track = room.queue[room.currentIndex];
-    if (track && track.duration !== duration) {
-      track.duration = duration;
-      // Não precisa broadcast, só atualiza a duração interna
-    }
-  });
-
-  socket.on('videoEnded', () => {
-    if (!currentRoom) return;
-    const room = rooms.get(currentRoom);
-    if (!room || !room.isPlaying || room.queue.length === 0) return;
-
-    // Força o avanço da fila
-    const finishedTrack = room.queue.shift();
-    room.currentIndex = 0;
-    room.startedAt = Date.now();
-    room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
-
-    broadcastState(currentRoom);
-
-    if (room.queue.length > 0) {
-      const next = room.queue[0];
-      io.to(currentRoom).emit('trackChanged', next);
-      addSystemMsg(currentRoom, `▶ ${next.title} — ${next.artist}`);
-      addSystemMsg(currentRoom, `🗑️ "${finishedTrack.title}" terminou`);
-    } else {
-      room.isPlaying = false;
-      broadcastState(currentRoom);
-      addSystemMsg(currentRoom, `🏁 Fila encerrada. Adicione mais músicas!`);
-      io.to(currentRoom).emit('queueEmpty');
-    }
-  });
-
   socket.on('disconnect', () => {
     if (currentRoom) {
       const room = rooms.get(currentRoom);
       if (room) {
         room.listenerCount = Math.max(0, room.listenerCount - 1);
-
         broadcastState(currentRoom);
         broadcastUsers(currentRoom);
         addSystemMsg(currentRoom, `👋 ${socket.userName || 'Alguém'} saiu`);
