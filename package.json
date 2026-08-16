@@ -1,7 +1,7 @@
 {
   "name": "sonora-fan",
-  "version": "1.0.0",
-  "description": "Sonora Fan - Música e bate-papo em tempo real",
+  "version": "2.0.0",
+  "description": "Sonora Fan — Palco de show com música e bate-papo em tempo real",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "dependencies": {
