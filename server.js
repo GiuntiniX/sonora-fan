@@ -233,6 +233,10 @@ io.on('connection', (socket) => {
       return;
     }
 
+    if (room.queue.length >= 20) {
+      socket.emit('error', 'Fila cheia (máx. 20 músicas). Aguarde a próxima rodada.');
+      return;
+    }
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
