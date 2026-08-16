@@ -252,14 +252,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('skipTo', (index) => {
-    if (!currentRoom) return;
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode pular músicas');
+      return;
+    }
     const room = rooms.get(currentRoom);
     if (index < 0 || index >= room.queue.length) return;
 
-    // Admin pode pular livremente. Não-admin só pode pular para frente?
-    // Vou deixar todos poderem pular, mas o admin pode pular para qualquer lugar
-
-    // Remove todas as músicas antes do index (fila consumível)
     if (index > 0) {
       room.queue.splice(0, index);
     }
@@ -274,15 +273,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('removeFromQueue', (index) => {
-    if (!currentRoom) return;
-    const room = rooms.get(currentRoom);
-    // Só admin ou quem adicionou pode remover
-    const track = room.queue[index];
-    if (!track) return;
-    if (!socket.isAdmin && track.dj !== socket.userName) {
-      socket.emit('error', 'Só o admin ou quem adicionou pode remover');
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode remover músicas da fila');
       return;
     }
+    const room = rooms.get(currentRoom);
+    const track = room.queue[index];
+    if (!track) return;
     if (index === room.currentIndex) {
       socket.emit('error', 'Não pode remover a música que está tocando');
       return;
