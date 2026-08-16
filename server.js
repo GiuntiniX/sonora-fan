@@ -27,7 +27,7 @@ function createRoom(slug, name, adminName = null) {
     currentIndex: 0,
     startedAt: Date.now(),
     votes: { up: 5, down: 0 },
-
+    
     bannedUsers: [],
     chatHistory: [],
     listenerCount: 0,
@@ -89,8 +89,6 @@ setInterval(() => {
     const pos = getPosition(room);
     const duration = track.duration || 180;
 
-    // Só avança se passou da duração real (com margem de 3s)
-    // A duração real é atualizada pelo cliente quando o vídeo carrega
     if (pos >= duration - 3) {
       const finishedTrack = room.queue.shift();
       room.currentIndex = 0;
@@ -153,7 +151,6 @@ io.on('connection', (socket) => {
     socket.join(slug);
     socket.userName = name;
     socket.userColor = colors[Math.floor(Math.random() * colors.length)];
-
     room.listenerCount++;
 
     // Verifica se é admin
@@ -181,7 +178,7 @@ io.on('connection', (socket) => {
     socket.emit('chatHistory', room.chatHistory.slice(-150));
     socket.emit('isAdmin', socket.isAdmin);
     broadcastUsers(slug);
-    addSystemMsg(slug, `👋 ${name} entrou`);
+    // Entrada silenciosa
   });
 
   socket.on('chat', ({ text }) => {
@@ -234,7 +231,24 @@ io.on('connection', (socket) => {
     }
 
     broadcastState(currentRoom);
-    addSystemMsg(currentRoom, `➕ ${socket.userName} adicionou "${song.title}"`);
+
+    const musicMsg = {
+      _id: Date.now().toString() + Math.random(),
+      user: socket.userName,
+      text: '',
+      color: socket.userColor,
+      isSystem: false,
+      isAdmin: socket.isAdmin || false,
+      isMusic: true,
+      musicTitle: song.title,
+      musicArtist: song.artist,
+      musicLikes: 0,
+      likedBy: [],
+      createdAt: new Date(),
+    };
+    room.chatHistory.push(musicMsg);
+    if (room.chatHistory.length > 300) room.chatHistory.shift();
+    io.to(currentRoom).emit('chat', musicMsg);
   });
 
   socket.on('skipTo', (index) => {
@@ -309,25 +323,18 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoom);
     if (!room) return;
     const track = room.queue[room.currentIndex];
-    if (track && track.duration !== duration) {
-      track.duration = duration;
-      // Não precisa broadcast, só atualiza a duração interna
-    }
+    if (track && track.duration !== duration) track.duration = duration;
   });
 
   socket.on('videoEnded', () => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     if (!room || !room.isPlaying || room.queue.length === 0) return;
-
-    // Força o avanço da fila
     const finishedTrack = room.queue.shift();
     room.currentIndex = 0;
     room.startedAt = Date.now();
     room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
-
     broadcastState(currentRoom);
-
     if (room.queue.length > 0) {
       const next = room.queue[0];
       io.to(currentRoom).emit('trackChanged', next);
@@ -341,15 +348,27 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('likeMusic', ({ msgId }) => {
+    if (!currentRoom || !msgId) return;
+    const room = rooms.get(currentRoom);
+    if (!room) return;
+    const msg = room.chatHistory.find(m => m._id === msgId);
+    if (!msg || !msg.isMusic) return;
+    if (msg.likedBy && msg.likedBy.includes(socket.userName)) return;
+    msg.musicLikes = (msg.musicLikes || 0) + 1;
+    if (!msg.likedBy) msg.likedBy = [];
+    msg.likedBy.push(socket.userName);
+    io.to(currentRoom).emit('musicLiked', { msgId, likes: msg.musicLikes });
+  });
+
   socket.on('disconnect', () => {
     if (currentRoom) {
       const room = rooms.get(currentRoom);
       if (room) {
         room.listenerCount = Math.max(0, room.listenerCount - 1);
-
         broadcastState(currentRoom);
         broadcastUsers(currentRoom);
-        addSystemMsg(currentRoom, `👋 ${socket.userName || 'Alguém'} saiu`);
+        // Saída silenciosa
       }
     }
   });
