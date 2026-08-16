@@ -1338,81 +1338,17 @@
     }
 
     /* ===== FULLSCREEN MODE ===== */
-    .fullscreen-btn {
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-secondary);
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-weight: 600;
     }
-    .fullscreen-btn:hover { background: var(--bg-hover); color: var(--text); }
-    .room-layout.fullscreen-mode {
-      grid-template-columns: 1fr;
     }
-    .room-layout.fullscreen-mode .sidebar {
-      display: none;
     }
-    .room-layout.fullscreen-mode .stage {
-      padding: 40px 60px;
     }
-    .room-layout.fullscreen-mode #youtube-player {
-      height: 500px;
     }
 
     /* ===== FAVORITES TAB ===== */
-    .fav-btn {
-      padding: 8px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
-    .fav-btn:hover { background: var(--bg-card); color: var(--text); }
-    .fav-btn.active { background: rgba(255,107,53,0.15); color: var(--accent); border-color: var(--accent); }
-    .fav-modal {
-      max-width: 500px;
     }
-    .fav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      margin-bottom: 8px;
-      background: var(--bg-card);
     }
-    .fav-item:hover { background: var(--bg-hover); }
-    .fav-thumb {
-      width: 60px; height: 45px;
-      border-radius: 6px;
-      overflow: hidden;
-      flex-shrink: 0;
     }
-    .fav-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .fav-info { flex: 1; min-width: 0; }
-    .fav-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .fav-artist { font-size: 12px; color: var(--text-muted); }
-    .fav-play-btn {
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
     }
 
     /* ===== CLEAR CHAT BUTTON ===== */
@@ -1510,10 +1446,10 @@
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
-        <button class="fav-btn" onclick="showFavorites()" title="Minhas favoritas">❤️ Favoritas</button>
-        <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Tela cheia">⛶ Fullscreen</button>
+        
+        
         <button class="theme-toggle" onclick="toggleTheme()" title="Tema" id="themeBtn">🌙</button>
-        <span class="listener-pill"><span class="listener-dot"></span><span id="listenerCount">0</span> ouvintes</span>
+
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
     </div>
@@ -1580,9 +1516,12 @@
 
       <div class="sidebar">
         <div class="users-panel" style="padding:14px 18px;">
-          <div style="display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:14px;font-weight:600;">
-            <span style="font-size:18px;">👥</span>
-            <span id="userCount">0</span> pessoa<span id="userCountPlural">s</span> na sala
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:14px;font-weight:600;">
+              <span style="font-size:18px;">👥</span>
+              <span id="userCount">0</span> ouvinte<span id="userCountPlural">s</span> na sala
+            </div>
+            <span class="listener-dot" style="position:static;"></span>
           </div>
         </div>
         <div class="chat-panel">
@@ -1643,23 +1582,6 @@
   </div>
 </div>
 
-<!-- MODAL FAVORITAS -->
-<div class="modal-overlay" id="favModal">
-  <div class="modal fav-modal">
-    <h3>❤️ Minhas favoritas</h3>
-    <div id="favList" style="max-height:400px;overflow-y:auto;">
-      <div style="text-align:center;padding:40px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:12px;">🎵</div>
-        <p>Nenhuma música favoritada ainda</p>
-        <p style="font-size:12px;margin-top:8px;">Clique no ❤️ quando uma música tocar para salvá-la</p>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="hideFavorites()">Fechar</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL CRIAR SALA -->
 <div class="modal-overlay" id="createModal">
   <div class="modal">
@@ -1700,7 +1622,6 @@ let currentTrackId = null;
 let lastAddTime = 0;
 let addCooldown = 10000;
 let myAvatar = '🎸';
-let myFavorites = JSON.parse(localStorage.getItem('sonoraFavorites') || '[]');
 let isTyping = false;
 let typingTimeout = null;
 let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
@@ -1885,6 +1806,8 @@ function initPlayer() {
     playerVars: {
       autoplay: 1,
       controls: 0,
+      disablekb: 1,
+      fs: 0,
       rel: 0,
       modestbranding: 1,
       enablejsapi: 1,
@@ -1986,7 +1909,6 @@ socket.on('queueEmpty', () => {
 
 socket.on('users', (users) => {
   renderUsers(users);
-  $('listenerCount').textContent = users.length;
 });
 
 socket.on('chat', (msg) => { renderMessage(msg); });
@@ -2347,11 +2269,6 @@ function selectAvatar(el) {
   myAvatar = el.dataset.emoji;
 }
 
-// ========== FULLSCREEN ==========
-function toggleFullscreen() {
-  document.querySelector('.room-layout').classList.toggle('fullscreen-mode');
-}
-
 // ========== CONFETTI ==========
 function launchConfetti() {
   const container = $('confettiContainer');
@@ -2367,38 +2284,6 @@ function launchConfetti() {
     container.appendChild(piece);
     setTimeout(() => piece.remove(), 4000);
   }
-}
-
-// ========== FAVORITES ==========
-function addToFavorites(track) {
-  if (!track) return;
-  const exists = myFavorites.find(f => f.id === track.id);
-  if (exists) return;
-  myFavorites.push({ id: track.id, title: track.title, artist: track.artist, addedAt: Date.now() });
-  localStorage.setItem('sonoraFavorites', JSON.stringify(myFavorites));
-  toast('❤️ Adicionada aos favoritos!', 'success');
-}
-function showFavorites() {
-  const list = $('favList');
-  if (myFavorites.length === 0) {
-    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:12px;">🎵</div><p>Nenhuma música favoritada ainda</p><p style="font-size:12px;margin-top:8px;">Clique no ❤️ quando uma música tocar para salvá-la</p></div>`;
-  } else {
-    list.innerHTML = '';
-    myFavorites.forEach(f => {
-      const div = document.createElement('div');
-      div.className = 'fav-item';
-      div.innerHTML = `
-        <div class="fav-thumb"><img src="https://img.youtube.com/vi/${f.id}/mqdefault.jpg" alt=""></div>
-        <div class="fav-info"><div class="fav-title">${escapeHtml(f.title)}</div><div class="fav-artist">${escapeHtml(f.artist)}</div></div>
-        <button class="fav-play-btn" onclick="socket.emit('addSong', {id:'${f.id}',title:'${escapeHtml(f.title)}',artist:'${escapeHtml(f.artist)}',duration:180});hideFavorites();">▶ Adicionar</button>
-      `;
-      list.appendChild(div);
-    });
-  }
-  $('favModal').classList.add('active');
-}
-function hideFavorites() {
-  $('favModal').classList.remove('active');
 }
 
 // ========== CLEAR CHAT (admin) ==========
