@@ -144,9 +144,15 @@ setInterval(() => {
 
 // ========== API ==========
 app.get('/api/rooms', (req, res) => {
-  const list = Array.from(rooms.values()).map(r => ({
-    slug: r.slug, name: r.name, listenerCount: r.listenerCount,
-  }));
+  const list = Array.from(rooms.values()).map(r => {
+    const track = r.queue[r.currentIndex];
+    return {
+      slug: r.slug, name: r.name, listenerCount: r.listenerCount,
+      isPlaying: r.isPlaying,
+      queueLength: r.queue.length,
+      currentTrack: track ? { id: track.id, title: track.title, artist: track.artist } : null,
+    };
+  });
   res.json(list);
 });
 
