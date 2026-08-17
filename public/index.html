@@ -1500,6 +1500,10 @@
       <input type="checkbox" id="isAdminCheck">
       <label for="isAdminCheck">Sou administrador</label>
     </div>
+    <div class="admin-toggle" onclick="toggleSpectatorField()">
+      <input type="checkbox" id="isSpectatorCheck">
+      <label for="isSpectatorCheck">Modo espectador (só ouvir)</label>
+    </div>
     <input type="password" id="adminPass" placeholder="Senha de admin" class="hidden" onkeydown="if(event.key==='Enter') doLogin()">
     <button onclick="doLogin()">Entrar no palco</button>
   </div>
@@ -1590,6 +1594,12 @@
               <input type="range" id="volumeSlider" min="0" max="100" value="80" style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer;" oninput="setVolume(this.value)">
               <span id="volumeValue" style="font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;">80%</span>
             </div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+              <button id="skipVoteBtn" onclick="voteSkip()" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" title="Votar para pular (50% dos ouvintes)">������️ Votar pular</button>
+              <button id="repeatBtn" onclick="toggleRepeat()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" title="Repetir fila">������</button>
+              <button id="shuffleBtn" onclick="shuffleQueue()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" title="Embaralhar fila">������</button>
+            </div>
+            <div id="skipVoteStatus" style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:4px;display:none;"></div>
           </div>
           <!-- Voto removido -->
         </div>
@@ -1605,8 +1615,17 @@
 
         <!-- ADD SONG -->
         <div class="add-song">
-          <input type="text" id="songUrl" placeholder="Cole um link do YouTube...">
+          <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="previewSong(this.value)">
           <button id="addBtn" onclick="addSong()">Adicionar</button>
+        </div>
+        <div id="songPreview" style="display:none;padding:12px 18px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img id="previewThumb" src="" style="width:80px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
+            <div style="flex:1;min-width:0;">
+              <div id="previewTitle" style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+              <div id="previewArtist" style="font-size:12px;color:var(--text-secondary);margin-top:2px;"></div>
+            </div>
+          </div>
         </div>
         <div class="cooldown-text hidden" id="cooldownText"></div>
       </div>
@@ -1646,6 +1665,12 @@
           </div>
           <div class="chat-input-bar" style="position:relative;">
             <button class="emoji-btn" onclick="toggleEmojiPanel()" title="Emojis">😀</button>
+            <select id="statusSelect" onchange="changeStatus(this.value)" style="padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text-secondary);font-size:12px;outline:none;cursor:pointer;flex-shrink:0;">
+              <option value="online">🟢 Online</option>
+              <option value="away">🌙 Ausente</option>
+              <option value="dnd">🔴 Não perturbe</option>
+              <option value="music">🎵 Ouvindo</option>
+            </select>
             <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()" oninput="handleTyping()">
             <button onclick="sendMsg()">Enviar</button>
             <div class="emoji-panel" id="emojiPanel">
@@ -1703,6 +1728,11 @@
       <option value="hiphop">🎤 Hip Hop</option>
       <option value="jazz">🎷 Jazz</option>
     </select>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <input type="checkbox" id="newRoomPrivate" style="width:auto;margin:0;accent-color:var(--accent2);">
+      <label for="newRoomPrivate" style="color:var(--text-secondary);font-size:13px;cursor:pointer;">Sala privada (com senha)</label>
+    </div>
+    <input type="password" id="newRoomPass" placeholder="Senha da sala (opcional)" class="hidden" style="margin-bottom:14px;">
     <div class="modal-actions">
       <button class="btn-secondary" onclick="hideCreateModal()">Cancelar</button>
       <button class="btn-primary" onclick="createRoom()">Criar</button>
@@ -1811,18 +1841,35 @@ function toggleAdminField() {
   }
 }
 
+function toggleSpectatorField() {
+  const check = $('isSpectatorCheck');
+  if (check.checked) {
+    $('loginName').placeholder = 'Nome de espectador (opcional)';
+  } else {
+    $('loginName').placeholder = 'Como quer ser chamado?';
+  }
+}
+
+let isSpectator = false;
+
 function doLogin() {
   const name = $('loginName').value.trim();
-  if (!name) { toast('Digite um nome', 'error'); return; }
-  if (name.length < 2) { toast('Nome muito curto', 'error'); return; }
+  isSpectator = $('isSpectatorCheck').checked;
 
-  myName = name;
+  if (!isSpectator && !name) { toast('Digite um nome', 'error'); return; }
+  if (!isSpectator && name.length < 2) { toast('Nome muito curto', 'error'); return; }
+
+  myName = name || 'Espectador';
   myAdminPass = $('adminPass').value.trim();
+
+  localStorage.setItem('sonoraName', myName);
+  localStorage.setItem('sonoraAvatar', myAvatar);
 
   hide('loginScreen');
   showScreen('lobby');
   loadRooms();
   applyTheme();
+  requestNotifPermission();
 }
 
 // ========== LOBBY ==========
@@ -1840,11 +1887,14 @@ async function loadRooms() {
       const card = document.createElement('div');
       card.className = 'room-card';
       card.onclick = () => joinRoom(r.slug);
+      const genreEmoji = { mixed: '🎵', rock: '🎸', pop: '🎤', eletronica: '🎹', indie: '🎧', hiphop: '🎤', jazz: '🎷' };
+      const genreLabel = { mixed: 'Misto', rock: 'Rock', pop: 'Pop', eletronica: 'Eletrônica', indie: 'Indie', hiphop: 'Hip Hop', jazz: 'Jazz' };
+      const lockIcon = r.isPrivate ? '🔒 ' : '';
       card.innerHTML = `
-        <h3>${escapeHtml(r.name)}</h3>
+        <h3>${lockIcon}${escapeHtml(r.name)}</h3>
         <div class="meta">
           <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
-          <span>🎵 Ao vivo</span>
+          <span>${genreEmoji[r.genre] || '🎵'} ${genreLabel[r.genre] || 'Misto'}</span>
         </div>
       `;
       grid.appendChild(card);
@@ -1860,11 +1910,14 @@ function hideCreateModal() { $('createModal').classList.remove('active'); }
 async function createRoom() {
   const name = $('newRoomName').value.trim();
   if (!name) { toast('Digite um nome para a sala', 'error'); return; }
+  const genre = $('newRoomGenre').value;
+  const isPrivate = $('newRoomPrivate').checked;
+  const roomPass = isPrivate ? ($('newRoomPass').value.trim() || null) : null;
   try {
     const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, adminName: myName }),
+      body: JSON.stringify({ name, adminName: myName, genre, isPrivate, roomPass }),
     });
     const data = await res.json();
     if (data.slug) {
@@ -1874,15 +1927,45 @@ async function createRoom() {
   } catch(e) { toast('Erro ao criar sala', 'error'); }
 }
 
+// Mostrar/esconder campo de senha no modal
+$('newRoomPrivate').addEventListener('change', function() {
+  if (this.checked) show('newRoomPass');
+  else hide('newRoomPass');
+});
+
 // ========== ROOM ==========
 function joinRoom(slug) {
   currentRoomSlug = slug;
-  socket.emit('joinRoom', { slug, name: myName, adminPass: myAdminPass, avatar: myAvatar });
+  const status = $('statusSelect') ? $('statusSelect').value : 'online';
+  socket.emit('joinRoom', { slug, name: myName, adminPass: myAdminPass, avatar: myAvatar, status });
   showScreen('room');
   $('chatBox').innerHTML = '';
   amIAdmin = false;
   hide('adminBadge');
+  hasVotedSkip = false;
+  if ($('skipVoteBtn')) $('skipVoteBtn').style.opacity = '1';
   loadYouTubeAPI();
+
+  // Modo espectador: desabilita interações
+  if (isSpectator) {
+    $('songUrl').disabled = true;
+    $('songUrl').placeholder = 'Modo espectador - só ouvindo';
+    $('addBtn').disabled = true;
+    $('chatInput').disabled = true;
+    $('chatInput').placeholder = 'Modo espectador';
+    const spectatorBadge = document.createElement('span');
+    spectatorBadge.id = 'spectatorBadge';
+    spectatorBadge.className = 'admin-badge';
+    spectatorBadge.style.background = 'var(--text-muted)';
+    spectatorBadge.textContent = 'Spectator';
+    document.querySelector('.header-right').appendChild(spectatorBadge);
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomFromUrl = urlParams.get('room');
+  if (roomFromUrl && roomFromUrl !== slug) {
+    window.history.replaceState({}, '', '/');
+  }
 }
 
 function leaveRoom() {
@@ -1890,7 +1973,10 @@ function leaveRoom() {
   currentRoomSlug = null;
   currentRoomData = null;
   amIAdmin = false;
+  isSpectator = false;
   if (player && player.stopVideo) player.stopVideo();
+  const badge = $('spectatorBadge');
+  if (badge) badge.remove();
   showScreen('lobby');
   loadRooms();
 }
@@ -2013,14 +2099,39 @@ socket.on('roomState', (state) => {
     ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
   const newTrackId = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
 
-  // Se a música mudou, força recarregamento do player
   if (newTrackId && newTrackId !== prevTrackId) {
     currentTrackId = null;
+    hasVotedSkip = false;
+    if ($('skipVoteBtn')) $('skipVoteBtn').style.opacity = '1';
   }
 
   currentRoomData = state;
   syncPlayer(state);
   renderHistory(state.history);
+
+  // Atualizar botão de repetir
+  const repeatBtn = $('repeatBtn');
+  if (repeatBtn) {
+    repeatBtn.style.borderColor = state.repeatMode ? 'var(--accent)' : 'var(--border)';
+    repeatBtn.style.color = state.repeatMode ? 'var(--accent)' : 'var(--text-secondary)';
+    repeatBtn.style.background = state.repeatMode ? 'rgba(255,107,53,0.1)' : 'var(--bg)';
+  }
+
+  // Atualizar votação de pular
+  const skipStatus = $('skipVoteStatus');
+  if (skipStatus && state.skipVotes) {
+    const count = state.skipVotes.length;
+    const needed = Math.ceil((state.queue.length > 0 ? count + 1 : 1) / 2); // aproximação
+    if (count > 0) {
+      skipStatus.style.display = 'block';
+      skipStatus.textContent = `${count} voto${count !== 1 ? 's' : ''} para pular`;
+    } else {
+      skipStatus.style.display = 'none';
+    }
+  }
+
+  // Background dinâmico por gênero
+  updateGenreBackground(state.genre);
 });
 
 
@@ -2167,6 +2278,7 @@ function addSong() {
   const input = $('songUrl');
   const url = input.value.trim();
   if (!url) return;
+  $('songPreview').style.display = 'none';
 
   const now = Date.now();
   const timeSinceLast = now - lastAddTime;
@@ -2239,7 +2351,6 @@ function renderUsers(users) {
   if (countEl) countEl.textContent = count;
   if (pluralEl) pluralEl.textContent = count === 1 ? '' : 's';
 
-  // Renderiza lista de usuários na sidebar (se houver container)
   const userList = document.querySelector('.user-list');
   if (userList) {
     userList.innerHTML = '';
@@ -2248,9 +2359,12 @@ function renderUsers(users) {
       div.className = 'user';
       const avatar = u.avatar || '👤';
       const adminTag = u.isAdmin ? '<span class="admin-tag">Admin</span>' : '';
+      const statusEmoji = { online: '🟢', away: '🌙', dnd: '🔴', music: '🎵' };
+      const statusIcon = statusEmoji[u.status] || '🟢';
       div.innerHTML = `
         <div class="user-avatar" style="background:${u.color}22;color:${u.color};border-color:${u.color}40;">${avatar}</div>
         <span>${escapeHtml(u.name)}${adminTag}</span>
+        <span style="margin-left:auto;font-size:11px;">${statusIcon}</span>
       `;
       userList.appendChild(div);
     });
@@ -2463,6 +2577,77 @@ async function joinRandomRoom() {
   }
 }
 
+// ========== PREVIEW DO YOUTUBE ==========
+let previewTimeout = null;
+function previewSong(url) {
+  clearTimeout(previewTimeout);
+  const preview = $('songPreview');
+  if (!url.trim()) { preview.style.display = 'none'; return; }
+
+  previewTimeout = setTimeout(() => {
+    let videoId = '';
+    if (url.includes('youtube.com/watch?v=')) {
+      try { videoId = new URL(url).searchParams.get('v'); } catch(e) {}
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1].split('?')[0];
+    } else if (url.length === 11 && /^[a-zA-Z0-9_-]+$/.test(url)) {
+      videoId = url;
+    }
+    if (!videoId) { preview.style.display = 'none'; return; }
+
+    fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`)
+      .then(r => r.json())
+      .then(data => {
+        $('previewThumb').src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+        $('previewThumb').style.display = 'block';
+        $('previewTitle').textContent = data.title || 'Música desconhecida';
+        $('previewArtist').textContent = data.author_name || 'Artista desconhecido';
+        preview.style.display = 'block';
+      })
+      .catch(() => { preview.style.display = 'none'; });
+  }, 500);
+}
+
+// ========== VOTAR PARA PULAR ==========
+let hasVotedSkip = false;
+function voteSkip() {
+  if (hasVotedSkip) { toast('Você já votou para pular', 'error'); return; }
+  socket.emit('skipVote');
+  hasVotedSkip = true;
+  $('skipVoteBtn').style.opacity = '0.5';
+}
+
+// ========== REPETIR FILA ==========
+function toggleRepeat() {
+  socket.emit('toggleRepeat');
+}
+
+// ========== EMBARALHAR FILA ==========
+function shuffleQueue() {
+  socket.emit('shuffleQueue');
+}
+
+// ========== STATUS DO USUÁRIO ==========
+function changeStatus(status) {
+  socket.emit('setStatus', { status });
+}
+
+// ========== BACKGROUND DINÂMICO POR GÊNERO ==========
+function updateGenreBackground(genre) {
+  const stageBg = document.querySelector('.stage-bg');
+  if (!stageBg) return;
+  const gradients = {
+    mixed: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.15), transparent), radial-gradient(ellipse 60% 40% at 20% 100%, rgba(255,107,53,0.08), transparent), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124,58,237,0.08), transparent)',
+    rock: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(239,68,68,0.2), transparent), radial-gradient(ellipse 60% 40% at 20% 100%, rgba(220,38,38,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(185,28,28,0.1), transparent)',
+    pop: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(236,72,153,0.2), transparent), radial-gradient(ellipse 60% 40% at 20% 100%, rgba(219,39,119,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(190,24,93,0.1), transparent)',
+    eletronica: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(6,182,212,0.2), transparent), radial-gradient(ellipse 60% 40% at 20% 100%, rgba(8,145,178,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(14,116,144,0.1), transparent)',
+    indie: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(168,85,247,0.2), transparent), radial-gradient(ellipse 60% 40% at 20% 100%, rgba(147,51,234,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(126,34,206,0.1), transparent)',
+    hiphop: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245,158,11,0.2), transparent), radial-gradient(ellipse 60% 40% at 20% 100%, rgba(217,119,6,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(180,83,9,0.1), transparent)',
+    jazz: 'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(251,191,36,0.2), transparent), radial-gradient(ellipse 60% 40% at 20% 100%, rgba(245,158,11,0.1), transparent), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(217,119,6,0.1), transparent)',
+  };
+  stageBg.style.background = gradients[genre] || gradients.mixed;
+}
+
 function renderHistory(history) {
   const list = $('historyList');
   if (!list) return;
@@ -2596,8 +2781,86 @@ function likeMusic(msgId) {
   socket.emit('likeMusic', { msgId });
 }
 
+// ========== ATALHOS DE TECLADO ==========
+document.addEventListener('keydown', (e) => {
+  if ($('loginScreen').style.display !== 'none') return; // só quando logado
+  if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+    if (e.key === 'Escape') document.activeElement.blur();
+    return;
+  }
+  switch(e.key) {
+    case ' ':
+      e.preventDefault();
+      if (player && player.getPlayerState) {
+        const state = player.getPlayerState();
+        if (state === YT.PlayerState.PLAYING) player.pauseVideo();
+        else player.playVideo();
+      }
+      break;
+    case 'm':
+    case 'M':
+      if (player && player.isMuted && player.mute && player.unMute) {
+        if (player.isMuted()) player.unMute();
+        else player.mute();
+      }
+      break;
+    case 'n':
+    case 'N':
+      e.preventDefault();
+      $('songUrl').focus();
+      break;
+    case 'c':
+    case 'C':
+      e.preventDefault();
+      $('chatInput').focus();
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      if (player && player.setVolume) {
+        const v = Math.min(100, (player.getVolume() || 80) + 5);
+        player.setVolume(v);
+        $('volumeSlider').value = v;
+        $('volumeValue').textContent = v + '%';
+      }
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      if (player && player.setVolume) {
+        const v = Math.max(0, (player.getVolume() || 80) - 5);
+        player.setVolume(v);
+        $('volumeSlider').value = v;
+        $('volumeValue').textContent = v + '%';
+      }
+      break;
+  }
+});
+
+// ========== NOTIFICAÇÃO DESKTOP ==========
+let notifPermission = false;
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(p => { notifPermission = p === 'granted'; });
+  }
+}
+function sendNotif(title, body) {
+  if (notifPermission && document.hidden) {
+    new Notification(title, { body, icon: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg' });
+  }
+}
+
 // ========== INIT ==========
 $('loginName').focus();
+
+// Carregar preferências salvas
+const savedName = localStorage.getItem('sonoraName');
+const savedAvatar = localStorage.getItem('sonoraAvatar');
+if (savedName) $('loginName').value = savedName;
+if (savedAvatar) {
+  document.querySelectorAll('.avatar-option').forEach(a => {
+    a.classList.toggle('selected', a.dataset.emoji === savedAvatar);
+    if (a.dataset.emoji === savedAvatar) myAvatar = savedAvatar;
+  });
+}
 </script>
 
 <!-- RODAPÉ -->
