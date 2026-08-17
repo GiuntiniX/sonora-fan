@@ -2245,12 +2245,8 @@ socket.on('typing', ({ name, isTyping }) => {
 });
 
 socket.on('chatUpdated', (msg) => {
-  // Atualiza reações em mensagens existentes
-  const existing = document.getElementById('msg-' + msg._id);
-  if (existing) {
-    renderMessage(msg);
-    existing.remove();
-  }
+  // Atualiza reações em mensagens existentes, mantendo a posição no chat
+  updateMessageInPlace(msg);
 });
 
 socket.on('chatCleared', () => {
@@ -2652,11 +2648,8 @@ function sendMsg() {
   socket.emit('typing', { isTyping: false });
 }
 
-function renderMessage(msg) {
-  const box = $('chatBox');
+function buildMessageElement(msg) {
   const div = document.createElement('div');
-  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
-  const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
 
   if (msg.isMusic) {
     div.className = 'msg msg-music';
@@ -2670,16 +2663,14 @@ function renderMessage(msg) {
         <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
       </div>
       <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px;">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
-      <button class="music-like-btn" id="like-${msg._id}" onclick="likeMusic('${msg._id}')">
+      <button class="music-like-btn${msg.likedBy && msg.likedBy.includes(myName) ? ' liked' : ''}" id="like-${msg._id}" onclick="likeMusic('${msg._id}')">
         ❤️ <span id="like-count-${msg._id}">${likes}</span> curtida${likes !== 1 ? 's' : ''}
       </button>
     `;
-    box.appendChild(div);
-    if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
-    return;
+    return div;
   }
 
-  if (msg.isSystem) return;
+  if (msg.isSystem) return null;
 
   // Detectar menções
   const isMentioned = msg.text && msg.text.includes('@' + myName);
@@ -2688,7 +2679,7 @@ function renderMessage(msg) {
 
   // Processar menções no texto
   let processedText = escapeHtml(msg.text);
-  processedText = processedText.replace(/@(\\w+)/g, '<span class="mention">@$1</span>');
+  processedText = processedText.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
 
   // Avatar
   const avatar = msg.avatar || msg.user[0];
@@ -2728,13 +2719,37 @@ function renderMessage(msg) {
       </div>
     </div>
   `;
+  return div;
+}
+
+function renderMessage(msg) {
+  const box = $('chatBox');
+  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
+  const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
+
+  const div = buildMessageElement(msg);
+  if (!div) return;
+
   box.appendChild(div);
   if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
 
   // Som de menção
-  if (isMentioned && msg.user !== myName) {
+  const isMentioned = msg.text && msg.text.includes('@' + myName);
+  if (!msg.isMusic && isMentioned && msg.user !== myName) {
     playMentionSound();
   }
+}
+
+// Atualiza uma mensagem já existente (ex: reação) sem tirá-la do lugar
+function updateMessageInPlace(msg) {
+  const existingId = msg.isMusic ? 'music-' + msg._id : 'msg-' + msg._id;
+  const existing = document.getElementById(existingId);
+  if (!existing) { renderMessage(msg); return; }
+
+  const newDiv = buildMessageElement(msg);
+  if (!newDiv) return;
+
+  existing.replaceWith(newDiv);
 }
 
 function addSystemMsg(text) {
