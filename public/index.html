@@ -738,94 +738,6 @@
       padding: 0 18px 8px;
       text-align: center;
     }
-    .song-preview {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      padding: 14px 18px;
-      margin-top: 10px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-hover);
-      background: var(--bg-card);
-      animation: previewIn 0.2s ease;
-    }
-    @keyframes previewIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .song-preview-thumb {
-      width: 84px;
-      height: 63px;
-      border-radius: 8px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: var(--bg);
-      border: 1px solid var(--border);
-    }
-    .song-preview-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .song-preview-info .sp-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: var(--accent2);
-      margin-bottom: 2px;
-    }
-    .song-preview-info .sp-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .song-preview-info .sp-artist {
-      font-size: 12px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .song-preview-info .sp-duration {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-    .song-preview-actions {
-      display: flex;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-    .song-preview-actions button {
-      padding: 9px 16px;
-      border-radius: 10px;
-      border: none;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: inherit;
-      white-space: nowrap;
-    }
-    .sp-confirm-btn {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-    }
-    .sp-confirm-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(124,58,237,0.3); }
-    .sp-confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .sp-cancel-btn {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border) !important;
-    }
-    .sp-cancel-btn:hover { color: var(--text); border-color: var(--border-hover) !important; }
-    @media (max-width: 640px) {
-      .song-preview { flex-wrap: wrap; }
-      .song-preview-actions { width: 100%; justify-content: flex-end; }
-    }
 
     /* ===== SIDEBAR (RIGHT) ===== */
     .sidebar {
@@ -1693,26 +1605,10 @@
 
         <!-- ADD SONG -->
         <div class="add-song">
-          <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." onkeydown="if(event.key==='Enter') addSong()">
+          <input type="text" id="songUrl" placeholder="Cole um link do YouTube...">
           <button id="addBtn" onclick="addSong()">Adicionar</button>
         </div>
         <div class="cooldown-text hidden" id="cooldownText"></div>
-
-        <!-- SONG PREVIEW -->
-        <div class="song-preview hidden" id="songPreview">
-          <img class="song-preview-thumb" id="previewThumb" src="" alt="" onerror="this.style.visibility='hidden'">
-          <div class="song-preview-info">
-            <div class="sp-label">Confirme antes de adicionar</div>
-            <div class="sp-title" id="previewTitle">—</div>
-            <div class="sp-artist" id="previewArtist"></div>
-            <div class="sp-duration" id="previewDuration"></div>
-          </div>
-          <div class="song-preview-actions">
-            <button class="sp-cancel-btn" onclick="cancelSongPreview()">Cancelar</button>
-            <button class="sp-confirm-btn" id="previewConfirmBtn" onclick="confirmAddSong()" disabled>Adicionar</button>
-          </div>
-        </div>
-        <div id="previewPlayerHost" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;left:-9999px;"></div>
       </div>
 
       <div class="sidebar">
@@ -2291,116 +2187,25 @@ function addSong() {
 
   if (!videoId) { toast('Link inválido. Cole um link do YouTube.', 'error'); return; }
 
-  showSongPreview(videoId);
-}
-
-// ========== PREVIEW ANTES DE ADICIONAR ==========
-let previewPlayer = null;
-let previewVideoId = null;
-let pendingSongData = null;
-let previewDurationTimer = null;
-
-function showSongPreview(videoId) {
-  previewVideoId = videoId;
-  pendingSongData = null;
-  clearTimeout(previewDurationTimer);
-
-  $('songUrl').disabled = true;
+  input.disabled = true;
   $('addBtn').disabled = true;
-
-  $('songPreview').classList.remove('hidden');
-  $('previewThumb').style.visibility = 'visible';
-  $('previewThumb').src = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-  $('previewTitle').textContent = 'Buscando informações...';
-  $('previewArtist').textContent = '';
-  $('previewDuration').textContent = '';
-  $('previewConfirmBtn').disabled = true;
 
   fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`)
     .then(r => r.json())
     .then(data => {
-      if (previewVideoId !== videoId) return; // usuário já cancelou ou trocou o link
       const title = data.title || 'Música desconhecida';
       const artist = data.author_name || 'Artista desconhecido';
-      $('previewTitle').textContent = title;
-      $('previewArtist').textContent = artist;
-      pendingSongData = { id: videoId, title, artist, duration: 180 };
-      loadPreviewDuration(videoId);
+      socket.emit('addSong', { id: videoId, title, artist, duration: 180 });
+      lastAddTime = Date.now();
+      input.value = '';
+      startCooldown();
     })
     .catch(() => {
-      if (previewVideoId !== videoId) return;
-      $('previewTitle').textContent = 'Música do YouTube';
-      $('previewArtist').textContent = 'Desconhecido';
-      pendingSongData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: 180 };
-      loadPreviewDuration(videoId);
+      socket.emit('addSong', { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: 180 });
+      lastAddTime = Date.now();
+      input.value = '';
+      startCooldown();
     });
-}
-
-function loadPreviewDuration(videoId) {
-  $('previewDuration').textContent = 'Verificando duração...';
-
-  if (!window.YT || !window.YT.Player) {
-    // API do YouTube ainda não carregou — mantém a duração padrão
-    finalizePreviewDuration(videoId, 180);
-    return;
-  }
-
-  if (previewPlayer && previewPlayer.cueVideoById) {
-    try { previewPlayer.cueVideoById(videoId); } catch(e) { finalizePreviewDuration(videoId, 180); return; }
-    pollPreviewDuration(videoId);
-  } else {
-    previewPlayer = new YT.Player('previewPlayerHost', {
-      height: '1', width: '1',
-      playerVars: { autoplay: 0, controls: 0, disablekb: 1 },
-      events: {
-        onReady: (e) => { e.target.cueVideoById(videoId); pollPreviewDuration(videoId); },
-        onError: () => finalizePreviewDuration(videoId, 180),
-      }
-    });
-  }
-}
-
-function pollPreviewDuration(videoId, attempts = 0) {
-  if (previewVideoId !== videoId) return; // usuário trocou de vídeo enquanto verificava
-  let duration = 0;
-  try { duration = previewPlayer.getDuration ? previewPlayer.getDuration() : 0; } catch(e) {}
-  if (duration > 0) {
-    finalizePreviewDuration(videoId, Math.floor(duration));
-  } else if (attempts < 16) {
-    previewDurationTimer = setTimeout(() => pollPreviewDuration(videoId, attempts + 1), 300);
-  } else {
-    finalizePreviewDuration(videoId, 180);
-  }
-}
-
-function finalizePreviewDuration(videoId, duration) {
-  if (previewVideoId !== videoId || !pendingSongData) return;
-  pendingSongData.duration = duration;
-  $('previewDuration').textContent = `⏱ Duração: ${formatDuration(duration)}`;
-  $('previewConfirmBtn').disabled = false;
-}
-
-function confirmAddSong() {
-  if (!pendingSongData) return;
-  socket.emit('addSong', pendingSongData);
-  lastAddTime = Date.now();
-  $('songUrl').value = '';
-  closeSongPreview();
-  startCooldown();
-}
-
-function cancelSongPreview() {
-  closeSongPreview();
-  $('songUrl').disabled = false;
-  $('addBtn').disabled = false;
-  $('songUrl').focus();
-}
-
-function closeSongPreview() {
-  clearTimeout(previewDurationTimer);
-  $('songPreview').classList.add('hidden');
-  previewVideoId = null;
-  pendingSongData = null;
 }
 
 function startCooldown() {
