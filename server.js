@@ -28,6 +28,7 @@ function createRoom(slug, name, adminName = null) {
     votes: { up: 0, down: 0 },
     bannedUsers: [],
     chatHistory: [],
+    history: [],
     listenerCount: 0,
     lastAddTime: new Map(),
     isPlaying: false,
@@ -54,6 +55,7 @@ function broadcastState(slug) {
     queue: room.queue,
     admin: room.admin,
     isPlaying: room.isPlaying,
+    history: room.history,
   });
 }
 
@@ -95,6 +97,15 @@ function advanceQueue(slug, reason) {
   room.lastAdvanceAt = now;
 
   const finishedTrack = room.queue.shift();
+  if (finishedTrack) {
+    room.history.unshift({
+      id: finishedTrack.id,
+      title: finishedTrack.title,
+      artist: finishedTrack.artist,
+      dj: finishedTrack.dj,
+    });
+    if (room.history.length > 20) room.history.length = 20;
+  }
   room.currentIndex = 0;
   room.startedAt = Date.now();
   room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
