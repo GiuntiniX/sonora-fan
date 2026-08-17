@@ -13,35 +13,28 @@ app.use(express.json());
 // ========== CONFIG ==========
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
-const genres = ['mixed', 'rock', 'pop', 'eletronica', 'indie', 'hiphop', 'jazz'];
 
 // ========== ESTADO ==========
 const rooms = new Map();
 
-function createRoom(slug, name, adminName = null, genre = 'mixed', isPrivate = false, roomPass = null) {
+function createRoom(slug, name, adminName = null) {
   return {
     slug, name,
     admin: adminName,
-    genre,
-    isPrivate,
-    roomPass,
     queue: [],
     currentIndex: 0,
     startedAt: Date.now(),
     votes: { up: 0, down: 0 },
-    skipVotes: new Set(), // votos para pular música
     bannedUsers: [],
     chatHistory: [],
     listenerCount: 0,
     lastAddTime: new Map(),
     isPlaying: false,
-    lastAdvanceAt: 0,
-    history: [],
-    repeatMode: false, // modo repetir fila
+    lastAdvanceAt: 0, // protege contra avanço duplo
   };
 }
 
-rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema', 'mixed'));
+rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
 
 function getPosition(room) {
   const track = room.queue[room.currentIndex];
@@ -60,21 +53,16 @@ function broadcastState(slug) {
     queue: room.queue,
     admin: room.admin,
     isPlaying: room.isPlaying,
-    history: room.history,
-    genre: room.genre,
-    repeatMode: room.repeatMode,
-    skipVotes: Array.from(room.skipVotes),
   });
 }
 
 function broadcastUsers(slug) {
   io.in(slug).fetchSockets().then(sockets => {
     const users = sockets.map(s => ({
-      name: s.userName || 'Anonimo',
+      name: s.userName || 'Anônimo',
       color: s.userColor || '#888',
       isAdmin: s.isAdmin || false,
       avatar: s.userAvatar || '👤',
-      status: s.userStatus || 'online',
     }));
     io.to(slug).emit('users', users);
   });
@@ -94,33 +82,18 @@ function addSystemMsg(slug, text) {
   io.to(slug).emit('chat', msg);
 }
 
+// ========== AVANÇO CENTRALIZADO (evita race condition) ==========
 function advanceQueue(slug, reason) {
   const room = rooms.get(slug);
   if (!room) return false;
   if (!room.isPlaying || room.queue.length === 0) return false;
 
   const now = Date.now();
+  // Proteção de 10s contra avanço duplo (setInterval + videoEnded)
   if (now - room.lastAdvanceAt < 10000) return false;
   room.lastAdvanceAt = now;
-  room.skipVotes.clear();
 
   const finishedTrack = room.queue.shift();
-  if (finishedTrack) {
-    room.history.unshift({
-      title: finishedTrack.title,
-      artist: finishedTrack.artist,
-      id: finishedTrack.id,
-      dj: finishedTrack.dj,
-      playedAt: new Date(),
-    });
-    if (room.history.length > 20) room.history.pop();
-  }
-
-  // Modo repetir: coloca a música de volta no fim
-  if (room.repeatMode && finishedTrack) {
-    room.queue.push(finishedTrack);
-  }
-
   room.currentIndex = 0;
   room.startedAt = Date.now();
   room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
@@ -142,7 +115,7 @@ function advanceQueue(slug, reason) {
   return true;
 }
 
-// ========== AUTO-ADVANCE ==========
+// ========== AUTO-ADVANCE (backup caso nenhum cliente emita videoEnded) ==========
 setInterval(() => {
   for (const [slug, room] of rooms) {
     if (!room.isPlaying || room.queue.length === 0) continue;
@@ -150,6 +123,7 @@ setInterval(() => {
     if (!track) continue;
     const pos = getPosition(room);
     const duration = track.duration || 180;
+    // Avan\u00e7a 2 segundos antes de acabar
     if (pos >= duration - 2) {
       advanceQueue(slug, 'auto');
     }
@@ -160,27 +134,15 @@ setInterval(() => {
 app.get('/api/rooms', (req, res) => {
   const list = Array.from(rooms.values()).map(r => ({
     slug: r.slug, name: r.name, listenerCount: r.listenerCount,
-    genre: r.genre, isPrivate: r.isPrivate,
   }));
   res.json(list);
 });
 
-app.get('/api/rooms/random', (req, res) => {
-  const list = Array.from(rooms.values()).filter(r => r.listenerCount > 0 && !r.isPrivate);
-  if (list.length === 0) {
-    const all = Array.from(rooms.values()).filter(r => !r.isPrivate);
-    if (all.length > 0) return res.json({ slug: all[0].slug });
-    return res.status(404).json({ error: 'Nenhuma sala dispon\u00edvel' });
-  }
-  const top = list.reduce((a, b) => a.listenerCount > b.listenerCount ? a : b);
-  res.json({ slug: top.slug });
-});
-
 app.post('/api/rooms', (req, res) => {
-  const { name, adminName, genre, isPrivate, roomPass } = req.body;
+  const { name, adminName } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome obrigat\u00f3rio' });
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
-  rooms.set(slug, createRoom(slug, name, adminName || null, genre || 'mixed', isPrivate || false, roomPass || null));
+  rooms.set(slug, createRoom(slug, name, adminName || null));
   res.json({ slug, name });
 });
 
@@ -192,23 +154,15 @@ app.get('*', (req, res) => {
 io.on('connection', (socket) => {
   let currentRoom = null;
 
-  socket.on('joinRoom', ({ slug, name, adminPass, avatar, status }) => {
+  socket.on('joinRoom', ({ slug, name, adminPass, avatar }) => {
     const room = rooms.get(slug);
     if (!room) { socket.emit('error', 'Sala n\u00e3o encontrada'); return; }
     if (room.bannedUsers.includes(name)) { socket.emit('error', 'Voc\u00ea foi banido'); return; }
-    if (room.isPrivate && room.roomPass && room.roomPass !== adminPass) {
-      socket.emit('error', 'Sala privada. Senha incorreta.');
-      return;
-    }
 
     if (currentRoom) {
       socket.leave(currentRoom);
       const old = rooms.get(currentRoom);
-      if (old) {
-        old.listenerCount = Math.max(0, old.listenerCount - 1);
-        broadcastUsers(currentRoom);
-        addSystemMsg(currentRoom, `\ud83d\udc48 ${socket.userName || 'Algu\u00e9m'} saiu da sala`);
-      }
+      if (old) old.listenerCount = Math.max(0, old.listenerCount - 1);
     }
 
     currentRoom = slug;
@@ -216,14 +170,18 @@ io.on('connection', (socket) => {
     socket.userName = name;
     socket.userColor = colors[Math.floor(Math.random() * colors.length)];
     socket.userAvatar = avatar || '👤';
-    socket.userStatus = status || 'online';
     room.listenerCount++;
 
+    // Verifica se \u00e9 admin
     const isAdmin = adminPass === ADMIN_PASSWORD;
     socket.isAdmin = isAdmin;
 
-    if (isAdmin && !room.admin) room.admin = name;
-    if (room.admin === name) socket.isAdmin = true;
+    if (isAdmin && !room.admin) {
+      room.admin = name;
+    }
+    if (room.admin === name) {
+      socket.isAdmin = true;
+    }
 
     socket.emit('roomState', {
       slug: room.slug, name: room.name,
@@ -233,15 +191,10 @@ io.on('connection', (socket) => {
       queue: room.queue,
       admin: room.admin,
       isPlaying: room.isPlaying,
-      history: room.history,
-      genre: room.genre,
-      repeatMode: room.repeatMode,
-      skipVotes: Array.from(room.skipVotes),
     });
     socket.emit('chatHistory', room.chatHistory.slice(-150));
     socket.emit('isAdmin', socket.isAdmin);
     broadcastUsers(slug);
-    addSystemMsg(slug, `\ud83d\udc46 ${name} entrou na sala`);
   });
 
   socket.on('chat', ({ text }) => {
@@ -268,59 +221,22 @@ io.on('connection', (socket) => {
     broadcastState(currentRoom);
   });
 
-  socket.on('skipVote', () => {
-    if (!currentRoom) return;
-    const room = rooms.get(currentRoom);
-    if (!room.isPlaying || room.queue.length === 0) return;
-    room.skipVotes.add(socket.userName);
-    const needed = Math.ceil(room.listenerCount / 2);
-    if (room.skipVotes.size >= needed) {
-      addSystemMsg(currentRoom, `\u23ed Vota\u00e7\u00e3o aprovada! Pulando m\u00fasica...`);
-      advanceQueue(currentRoom, 'skipVote');
-    } else {
-      broadcastState(currentRoom);
-      addSystemMsg(currentRoom, `\ud83d\uddf3\ufe0f ${socket.userName} votou para pular (${room.skipVotes.size}/${needed})`);
-    }
-  });
-
-  socket.on('toggleRepeat', () => {
-    if (!currentRoom || !socket.isAdmin) return;
-    const room = rooms.get(currentRoom);
-    room.repeatMode = !room.repeatMode;
-    broadcastState(currentRoom);
-    addSystemMsg(currentRoom, room.repeatMode ? '🔁 Modo repetir ativado' : '➡️ Modo repetir desativado');
-  });
-
-  socket.on('shuffleQueue', () => {
-    if (!currentRoom || !socket.isAdmin) return;
-    const room = rooms.get(currentRoom);
-    if (room.queue.length <= 1) return;
-    const current = room.queue[0];
-    const rest = room.queue.slice(1);
-    for (let i = rest.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [rest[i], rest[j]] = [rest[j], rest[i]];
-    }
-    room.queue = [current, ...rest];
-    broadcastState(currentRoom);
-    addSystemMsg(currentRoom, `\ud83d\udd04 ${socket.userName} embaralhou a fila`);
-  });
-
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
-    if (room.queue.length >= 20) {
-      socket.emit('error', 'Fila cheia (m\u00e1x. 20 m\u00fasicas). Aguarde a pr\u00f3xima rodada.');
-      return;
-    }
     const now = Date.now();
     const lastAdd = room.lastAddTime.get(socket.userName) || 0;
+
     if (now - lastAdd < 10000) {
       const wait = Math.ceil((10000 - (now - lastAdd)) / 1000);
       socket.emit('error', `Aguarde ${wait}s para adicionar outra m\u00fasica`);
       return;
     }
 
+    if (room.queue.length >= 20) {
+      socket.emit('error', 'Fila cheia (máx. 20 músicas). Aguarde a próxima rodada.');
+      return;
+    }
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
@@ -329,7 +245,7 @@ io.on('connection', (socket) => {
       room.isPlaying = true;
       room.currentIndex = 0;
       room.startedAt = Date.now();
-      room.lastAdvanceAt = Date.now();
+      room.lastAdvanceAt = Date.now(); // marca para evitar avan\u00e7o imediato
       addSystemMsg(currentRoom, `\u25b6 ${song.title} \u2014 ${song.artist}`);
     }
 
@@ -361,8 +277,8 @@ io.on('connection', (socket) => {
     }
     const room = rooms.get(currentRoom);
     if (index < 0 || index >= room.queue.length) return;
+
     room.lastAdvanceAt = Date.now();
-    room.skipVotes.clear();
     if (index > 0) room.queue.splice(0, index);
     room.currentIndex = 0;
     room.startedAt = Date.now();
@@ -381,24 +297,11 @@ io.on('connection', (socket) => {
     const track = room.queue[index];
     if (!track) return;
     if (index === room.currentIndex) {
-      room.queue.splice(index, 1);
-      room.currentIndex = 0;
-      room.startedAt = Date.now();
-      room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
-      room.skipVotes.clear();
-      if (room.queue.length > 0) {
-        room.isPlaying = true;
-        broadcastState(currentRoom);
-        addSystemMsg(currentRoom, `\u23ed ${socket.userName} removeu a m\u00fasica atual. Tocando: ${room.queue[0].title}`);
-      } else {
-        room.isPlaying = false;
-        broadcastState(currentRoom);
-        addSystemMsg(currentRoom, `\ud83d\uddd1\ufe0f ${socket.userName} removeu a \u00faltima m\u00fasica. Fila vazia.`);
-        io.to(currentRoom).emit('queueEmpty');
-      }
+      socket.emit('error', 'N\u00e3o pode remover a m\u00fasica que est\u00e1 tocando');
       return;
     }
     const removed = room.queue.splice(index, 1)[0];
+    // Ajusta currentIndex se necess\u00e1rio
     if (index < room.currentIndex) room.currentIndex--;
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `\ud83d\uddd1\ufe0f ${socket.userName} removeu "${removed.title}"`);
@@ -461,12 +364,6 @@ io.on('connection', (socket) => {
     socket.to(currentRoom).emit('typing', { name: socket.userName, isTyping });
   });
 
-  socket.on('setStatus', ({ status }) => {
-    if (!currentRoom) return;
-    socket.userStatus = status;
-    broadcastUsers(currentRoom);
-  });
-
   socket.on('addReaction', ({ msgId, emoji }) => {
     if (!currentRoom || !msgId || !emoji) return;
     const room = rooms.get(currentRoom);
@@ -504,7 +401,6 @@ io.on('connection', (socket) => {
         room.listenerCount = Math.max(0, room.listenerCount - 1);
         broadcastState(currentRoom);
         broadcastUsers(currentRoom);
-        addSystemMsg(currentRoom, `\ud83d\udc48 ${socket.userName || 'Algu\u00e9m'} saiu da sala`);
       }
     }
   });
