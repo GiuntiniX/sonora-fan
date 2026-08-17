@@ -150,7 +150,11 @@ app.get('/api/rooms', (req, res) => {
       slug: r.slug, name: r.name, listenerCount: r.listenerCount,
       isPlaying: r.isPlaying,
       queueLength: r.queue.length,
-      currentTrack: track ? { id: track.id, title: track.title, artist: track.artist } : null,
+      currentTrack: track ? {
+        id: track.id, title: track.title, artist: track.artist,
+        duration: track.duration || 180,
+        position: getPosition(r),
+      } : null,
     };
   });
   res.json(list);
