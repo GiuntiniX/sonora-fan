@@ -392,9 +392,16 @@
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 420px;
+      grid-template-rows: minmax(0, 1fr);
       gap: 0;
       flex: 1;
       min-height: 0;
+    }
+    /* Altura fixa da tela da sala: palco e chat rolam internamente */
+    #screen-room .app {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
     }
     @media (max-width: 1024px) {
       .room-layout { grid-template-columns: 1fr; }
@@ -738,6 +745,106 @@
       padding: 0 18px 8px;
       text-align: center;
     }
+    .song-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 18px 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      min-height: 58px;
+    }
+    .song-preview.hidden { display: none !important; }
+    .song-preview-thumb {
+      width: 64px;
+      height: 44px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 18px;
+      position: relative;
+    }
+    .song-preview-duration {
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.78);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+    .song-preview-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .song-preview-actions.hidden { display: none !important; }
+    .song-preview-confirm {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .song-preview-confirm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+    }
+    .song-preview-cancel {
+      padding: 5px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .song-preview-cancel:hover { color: var(--danger); border-color: var(--danger); }
+    .song-preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .song-preview-info { flex: 1; min-width: 0; }
+    .song-preview-title {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-preview-artist {
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-preview-status {
+      color: var(--text-muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
 
     /* ===== SIDEBAR (RIGHT) ===== */
     .sidebar {
@@ -845,7 +952,29 @@
       display: flex;
       flex-direction: column;
       min-height: 0;
+      position: relative;
     }
+    .new-messages-pill {
+      position: absolute;
+      bottom: 78px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+      font-family: inherit;
+      white-space: nowrap;
+      animation: msgIn 0.25s ease;
+    }
+    .new-messages-pill:hover { filter: brightness(1.1); }
+    .new-messages-pill.hidden { display: none; }
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -1054,10 +1183,12 @@
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 1024px) {
-      .room-layout { grid-template-columns: 1fr; }
+      .room-layout { grid-template-columns: 1fr; grid-template-rows: none; }
       .sidebar { border-left: none; border-top: 1px solid var(--border); }
+      #screen-room .app { height: auto; min-height: 100vh; overflow: visible; }
+      .chat-messages { min-height: 300px; max-height: 55vh; }
       #youtube-player { height: 240px; }
-      .stage { padding: 16px; }
+      .stage { padding: 16px; overflow: visible; }
     }
     @media (max-width: 640px) {
       .header { padding: 12px 16px; }
@@ -1605,8 +1736,20 @@
 
         <!-- ADD SONG -->
         <div class="add-song">
-          <input type="text" id="songUrl" placeholder="Cole um link do YouTube...">
+          <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="handleSongUrlInput()" onpaste="setTimeout(handleSongUrlInput, 0)">
           <button id="addBtn" onclick="addSong()">Adicionar</button>
+        </div>
+        <div class="song-preview hidden" id="songPreview" aria-live="polite">
+          <div class="song-preview-thumb" id="songPreviewThumb">🎵</div>
+          <div class="song-preview-info">
+            <div class="song-preview-title" id="songPreviewTitle">Prévia da música</div>
+            <div class="song-preview-artist" id="songPreviewArtist">Cole um link do YouTube</div>
+            <div class="song-preview-status" id="songPreviewStatus"></div>
+          </div>
+          <div class="song-preview-actions hidden" id="songPreviewActions">
+            <button class="song-preview-confirm" id="songPreviewConfirmBtn" onclick="confirmAddSong()">✓ Adicionar à fila</button>
+            <button class="song-preview-cancel" onclick="cancelSongPreview()">✕ Cancelar</button>
+          </div>
         </div>
         <div class="cooldown-text hidden" id="cooldownText"></div>
       </div>
@@ -1633,6 +1776,7 @@
         </div>
         <div class="chat-panel">
           <div class="chat-messages" id="chatBox"></div>
+          <button class="new-messages-pill hidden" id="newMessagesPill" onclick="scrollChatToBottom()">↓ Novas mensagens</button>
           <div id="clearChatContainer" style="display:none;padding:0 16px 8px;">
             <button class="clear-chat-btn" onclick="clearChat()">🗑️ Limpar chat</button>
           </div>
@@ -1732,6 +1876,11 @@ let myAvatar = '🎸';
 let isTyping = false;
 let typingTimeout = null;
 let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
+let songPreviewTimer = null;
+let songPreviewRequest = 0;
+let songPreviewData = null;
+let songPreviewForUrl = '';
+let chatBulkRender = false;
 
 // ========== CENSOR ==========
 const badWords = [
@@ -1880,6 +2029,7 @@ function joinRoom(slug) {
   socket.emit('joinRoom', { slug, name: myName, adminPass: myAdminPass, avatar: myAvatar });
   showScreen('room');
   $('chatBox').innerHTML = '';
+  hideNewMessagesPill();
   amIAdmin = false;
   hide('adminBadge');
   loadYouTubeAPI();
@@ -2048,7 +2198,11 @@ socket.on('chat', (msg) => { renderMessage(msg); });
 
 socket.on('chatHistory', (messages) => {
   $('chatBox').innerHTML = '';
+  chatBulkRender = true;
   messages.forEach(m => renderMessage(m));
+  chatBulkRender = false;
+  hideNewMessagesPill();
+  scrollChatToBottom();
 });
 
 socket.on('error', (msg) => { toast(msg, 'error'); });
@@ -2088,6 +2242,7 @@ socket.on('chatUpdated', (msg) => {
 
 socket.on('chatCleared', () => {
   $('chatBox').innerHTML = '';
+  hideNewMessagesPill();
   toast('Chat limpo pelo admin', 'success');
 });
 
@@ -2163,10 +2318,185 @@ function removeFromQueue(index) {
 }
 
 // ========== ADD SONG ==========
+function extractYouTubeId(rawUrl) {
+  const url = (rawUrl || '').trim();
+  if (!url) return '';
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+
+  let normalized = url;
+  if (!/^https?:\/\//i.test(normalized) && /^(www\.|m\.|music\.)?(youtube\.com|youtu\.be)/i.test(normalized)) {
+    normalized = 'https://' + normalized;
+  }
+
+  try {
+    const u = new URL(normalized);
+    const host = u.hostname.replace(/^(www\.|m\.|music\.)/i, '');
+    if (host === 'youtu.be') {
+      return u.pathname.split('/').filter(Boolean)[0] || '';
+    }
+    if (host.endsWith('youtube.com')) {
+      const fromQuery = u.searchParams.get('v');
+      if (fromQuery) return fromQuery;
+      const parts = u.pathname.split('/').filter(Boolean);
+      const markers = ['shorts', 'embed', 'live', 'watch'];
+      const markerIndex = parts.findIndex(part => markers.includes(part));
+      if (markerIndex >= 0 && parts[markerIndex + 1]) return parts[markerIndex + 1];
+    }
+  } catch(e) {
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    if (match) return match[1];
+  }
+
+  const fallback = url.match(/[a-zA-Z0-9_-]{11}/);
+  return fallback ? fallback[0] : '';
+}
+
+function setSongPreview(state, data) {
+  const box = $('songPreview');
+  if (!box) return;
+  const thumb = $('songPreviewThumb');
+  const title = $('songPreviewTitle');
+  const artist = $('songPreviewArtist');
+  const status = $('songPreviewStatus');
+  const actions = $('songPreviewActions');
+
+  if (!data && state !== 'loading' && state !== 'error') {
+    box.classList.add('hidden');
+    return;
+  }
+
+  box.classList.remove('hidden');
+  status.textContent = '';
+  if (actions) actions.classList.add('hidden');
+
+  if (state === 'loading') {
+    thumb.textContent = '⏳';
+    title.textContent = 'Buscando música...';
+    artist.textContent = 'Analisando link do YouTube';
+    return;
+  }
+
+  if (state === 'error') {
+    thumb.textContent = '⚠️';
+    title.textContent = 'Link ainda não reconhecido';
+    artist.textContent = 'Confira se é um link ou ID do YouTube';
+    return;
+  }
+
+  const durBadge = data.duration
+    ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>`
+    : '';
+  thumb.innerHTML = `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="Thumbnail do YouTube" onerror="this.parentElement.textContent='🎵'">${durBadge}`;
+  title.textContent = data.title;
+  artist.textContent = data.artist;
+  status.textContent = data.duration ? `⏱ ${formatDuration(data.duration)} — confirme para adicionar` : 'Confirme para adicionar';
+  if (actions) actions.classList.remove('hidden');
+}
+
+function clearSongPreview() {
+  songPreviewData = null;
+  songPreviewForUrl = '';
+  const box = $('songPreview');
+  if (box) box.classList.add('hidden');
+}
+
+function cancelSongPreview() {
+  const input = $('songUrl');
+  input.value = '';
+  clearSongPreview();
+  input.focus();
+}
+
+function handleSongUrlInput() {
+  clearTimeout(songPreviewTimer);
+  songPreviewTimer = setTimeout(previewSongFromInput, 350);
+}
+
+function previewSongFromInput() {
+  const input = $('songUrl');
+  const url = input.value.trim();
+  if (!url) {
+    clearSongPreview();
+    return;
+  }
+
+  const videoId = extractYouTubeId(url);
+  if (!videoId) {
+    songPreviewData = null;
+    songPreviewForUrl = '';
+    setSongPreview('error');
+    return;
+  }
+
+  if (songPreviewForUrl === url && songPreviewData && songPreviewData.id === videoId) {
+    setSongPreview('ready', songPreviewData);
+    return;
+  }
+
+  songPreviewForUrl = url;
+  setSongPreview('loading');
+  const requestId = ++songPreviewRequest;
+
+  // Busca título, canal e duração real no servidor (com fallback para noembed)
+  fetch(`/api/video-info?id=${videoId}`)
+    .then(r => { if (!r.ok) throw new Error('info indisponível'); return r.json(); })
+    .then(data => {
+      if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
+      songPreviewData = {
+        id: videoId,
+        title: (data.title || 'Música do YouTube').trim(),
+        artist: (data.artist || 'Canal desconhecido').trim(),
+        duration: data.duration > 0 ? data.duration : null,
+      };
+      setSongPreview('ready', songPreviewData);
+    })
+    .catch(() => {
+      if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
+      fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
+          songPreviewData = {
+            id: videoId,
+            title: (data.title || 'Música do YouTube').trim(),
+            artist: (data.author_name || 'Canal desconhecido').trim(),
+            duration: null,
+          };
+          setSongPreview('ready', songPreviewData);
+        })
+        .catch(() => {
+          if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
+          songPreviewData = { id: videoId, title: 'Música do YouTube', artist: 'Prévia indisponível', duration: null };
+          setSongPreview('ready', songPreviewData);
+        });
+    });
+}
+
 function addSong() {
   const input = $('songUrl');
   const url = input.value.trim();
   if (!url) return;
+
+  const videoId = extractYouTubeId(url);
+  if (!videoId) {
+    setSongPreview('error');
+    toast('Link inválido. Cole um link do YouTube.', 'error');
+    return;
+  }
+
+  // Prévia pronta para este link → confirma e adiciona
+  if (songPreviewForUrl === url && songPreviewData && songPreviewData.id === videoId) {
+    confirmAddSong();
+    return;
+  }
+
+  // Sem prévia ainda → gera a prévia primeiro; o usuário confirma depois
+  previewSongFromInput();
+  toast('Confira a prévia e confirme para adicionar');
+}
+
+function confirmAddSong() {
+  if (!songPreviewData || !songPreviewData.id) return;
 
   const now = Date.now();
   const timeSinceLast = now - lastAddTime;
@@ -2176,36 +2506,20 @@ function addSong() {
     return;
   }
 
-  let videoId = '';
-  if (url.includes('youtube.com/watch?v=')) {
-    try { videoId = new URL(url).searchParams.get('v'); } catch(e) {}
-  } else if (url.includes('youtu.be/')) {
-    videoId = url.split('youtu.be/')[1].split('?')[0];
-  } else if (url.length === 11 && /^[a-zA-Z0-9_-]+$/.test(url)) {
-    videoId = url;
-  }
-
-  if (!videoId) { toast('Link inválido. Cole um link do YouTube.', 'error'); return; }
-
+  const input = $('songUrl');
   input.disabled = true;
   $('addBtn').disabled = true;
 
-  fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`)
-    .then(r => r.json())
-    .then(data => {
-      const title = data.title || 'Música desconhecida';
-      const artist = data.author_name || 'Artista desconhecido';
-      socket.emit('addSong', { id: videoId, title, artist, duration: 180 });
-      lastAddTime = Date.now();
-      input.value = '';
-      startCooldown();
-    })
-    .catch(() => {
-      socket.emit('addSong', { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: 180 });
-      lastAddTime = Date.now();
-      input.value = '';
-      startCooldown();
-    });
+  socket.emit('addSong', {
+    id: songPreviewData.id,
+    title: songPreviewData.title,
+    artist: songPreviewData.artist,
+    duration: songPreviewData.duration > 0 ? Math.floor(songPreviewData.duration) : 180,
+  });
+  lastAddTime = Date.now();
+  input.value = '';
+  clearSongPreview();
+  startCooldown();
 }
 
 function startCooldown() {
@@ -2267,6 +2581,44 @@ function banUser(name) {
 }
 
 // ========== CHAT ==========
+// Auto-scroll: desce junto com as mensagens quando o usuário está no fim;
+// se estiver lendo mensagens antigas, mostra o botão "Novas mensagens"
+function isChatNearBottom() {
+  const box = $('chatBox');
+  if (!box) return true;
+  return box.scrollHeight - box.scrollTop - box.clientHeight < 90;
+}
+
+function scrollChatToBottom() {
+  const box = $('chatBox');
+  if (!box) return;
+  hideNewMessagesPill();
+  requestAnimationFrame(() => {
+    box.scrollTop = box.scrollHeight;
+    // Segundo frame: garante a posição após render/imagens
+    requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+  });
+}
+
+function showNewMessagesPill() {
+  const pill = $('newMessagesPill');
+  if (pill) pill.classList.remove('hidden');
+}
+
+function hideNewMessagesPill() {
+  const pill = $('newMessagesPill');
+  if (pill) pill.classList.add('hidden');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const box = $('chatBox');
+  if (box) {
+    box.addEventListener('scroll', () => {
+      if (isChatNearBottom()) hideNewMessagesPill();
+    });
+  }
+});
+
 function sendMsg() {
   const input = $('chatInput');
   const text = input.value.trim();
@@ -2290,6 +2642,8 @@ function sendMsg() {
 function renderMessage(msg) {
   const box = $('chatBox');
   const div = document.createElement('div');
+  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
+  const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
 
   if (msg.isMusic) {
     div.className = 'msg msg-music';
@@ -2308,7 +2662,7 @@ function renderMessage(msg) {
       </button>
     `;
     box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
+    if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
     return;
   }
 
@@ -2362,7 +2716,7 @@ function renderMessage(msg) {
     </div>
   `;
   box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
+  if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
 
   // Som de menção
   if (isMentioned && msg.user !== myName) {
@@ -2478,7 +2832,7 @@ function renderHistory(history) {
     div.onmouseleave = () => div.style.background = 'transparent';
     div.onclick = () => {
       $('songUrl').value = 'https://youtube.com/watch?v=' + h.id;
-      addSong();
+      handleSongUrlInput();
     };
     div.innerHTML = `
       <img src="https://img.youtube.com/vi/${h.id}/default.jpg" style="width:40px;height:30px;border-radius:4px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
