@@ -470,6 +470,24 @@
       text-overflow: ellipsis;
       font-weight: 500;
     }
+    .room-mini-progress {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+      z-index: 2;
+    }
+    .room-mini-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .room-time-remaining {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
     .room-card-body {
       padding: 16px 18px 18px;
     }
@@ -2130,6 +2148,15 @@ async function loadRooms() {
         ? `<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>`
         : `<div class="room-live-badge" style="opacity:0.7;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);"></span>PARADA</div>`;
 
+      let miniProgress = '';
+      let timeRemaining = '';
+      if (r.isPlaying && track && track.duration) {
+        const pct = Math.min(100, (track.position / track.duration) * 100);
+        const remaining = Math.max(0, track.duration - track.position);
+        miniProgress = `<div class="room-mini-progress"><div class="room-mini-progress-fill" style="width:${pct}%;"></div></div>`;
+        timeRemaining = `<span class="room-time-remaining">⏱️ ${remaining < 30 ? 'acabando' : formatDuration(remaining) + ' restantes'}</span>`;
+      }
+
       card.innerHTML = `
         <div class="room-thumb">
           ${thumbImg}
@@ -2137,12 +2164,14 @@ async function loadRooms() {
           <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div>
           ${eq}
           ${nowPlaying}
+          ${miniProgress}
         </div>
         <div class="room-card-body">
           <h3>${escapeHtml(r.name)}</h3>
           <div class="meta">
             <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
             <span>🎶 ${r.queueLength || 0} na fila</span>
+            ${timeRemaining}
           </div>
         </div>
       `;
