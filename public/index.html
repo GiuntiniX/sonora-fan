@@ -357,18 +357,19 @@
     }
     .room-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
     }
     .room-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 24px;
       cursor: pointer;
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .room-card::before {
       content: '';
@@ -378,21 +379,108 @@
       background: linear-gradient(90deg, var(--accent), var(--accent2));
       opacity: 0;
       transition: opacity 0.3s;
+      z-index: 2;
     }
     .room-card:hover {
       border-color: var(--border-hover);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.1);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(124,58,237,0.15);
     }
     .room-card:hover::before { opacity: 1; }
-    .room-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+    .room-card:hover .room-thumb img { transform: scale(1.08); }
+    .room-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, var(--accent2-glow), var(--accent-glow)), 
+                  linear-gradient(135deg, var(--bg-elevated), var(--bg-hover));
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .room-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .room-thumb .thumb-fallback {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      opacity: 0.5;
+    }
+    .room-thumb::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
+    }
+    .room-live-badge {
+      position: absolute;
+      top: 10px; left: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px 5px 8px;
+      border-radius: 20px;
+      background: rgba(5,5,10,0.6);
+      backdrop-filter: blur(6px);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text);
+      z-index: 2;
+    }
+    .room-live-badge .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
+    }
+    .room-listeners-badge {
+      position: absolute;
+      top: 10px; right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background: rgba(5,5,10,0.6);
+      backdrop-filter: blur(6px);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      z-index: 2;
+    }
+    .room-thumb .room-eq {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      z-index: 2;
+      height: 16px;
+    }
+    .room-thumb .room-eq .eq-bar { width: 2.5px; }
+    .room-now-playing {
+      position: absolute;
+      bottom: 8px; left: 10px; right: 40px;
+      z-index: 2;
+      font-size: 11px;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .room-card-body {
+      padding: 16px 18px 18px;
+    }
+    .room-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
     .room-card .meta {
       display: flex;
-      gap: 16px;
-      font-size: 13px;
+      gap: 14px;
+      font-size: 12.5px;
       color: var(--text-muted);
-      margin-top: 14px;
     }
+    .room-card .meta span { display: flex; align-items: center; gap: 4px; }
     .empty-state {
       text-align: center;
       padding: 80px 20px;
@@ -400,6 +488,20 @@
       grid-column: 1 / -1;
     }
     .empty-state .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
+    .empty-state p { margin-bottom: 20px; }
+    .empty-state-cta {
+      display: inline-block;
+      padding: 12px 26px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .empty-state-cta:hover { transform: translateY(-1px); filter: brightness(1.08); }
 
     /* ===== ROOM LAYOUT ===== */
     .room-layout {
@@ -1938,6 +2040,12 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   show('screen-' + id);
 }
+
+// Mantém os cards de sala (ao vivo, ouvintes) atualizados enquanto o lobby está visível
+setInterval(() => {
+  const lobbyEl = document.getElementById('screen-lobby');
+  if (lobbyEl && !lobbyEl.classList.contains('hidden')) loadRooms();
+}, 15000);
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -1994,7 +2102,12 @@ async function loadRooms() {
     const rooms = await res.json();
     const grid = $('roomGrid');
     if (rooms.length === 0) {
-      grid.innerHTML = `<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>`;
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🎵</div>
+          <p>Nenhuma sala ainda. Crie a primeira!</p>
+          <button class="empty-state-cta" onclick="showCreateModal()">+ Criar sala</button>
+        </div>`;
       return;
     }
     grid.innerHTML = '';
@@ -2002,11 +2115,35 @@ async function loadRooms() {
       const card = document.createElement('div');
       card.className = 'room-card';
       card.onclick = () => joinRoom(r.slug);
+
+      const track = r.currentTrack;
+      const thumbImg = track
+        ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.style.display='none'">`
+        : `<div class="thumb-fallback">🎧</div>`;
+      const nowPlaying = (r.isPlaying && track)
+        ? `<div class="room-now-playing">${escapeHtml(track.title)}</div>`
+        : '';
+      const eq = r.isPlaying
+        ? `<div class="equalizer room-eq"><div class="eq-bar" style="height:6px;"></div><div class="eq-bar" style="height:12px;"></div><div class="eq-bar" style="height:5px;"></div><div class="eq-bar" style="height:14px;"></div></div>`
+        : '';
+      const liveBadge = r.isPlaying
+        ? `<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>`
+        : `<div class="room-live-badge" style="opacity:0.7;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);"></span>PARADA</div>`;
+
       card.innerHTML = `
-        <h3>${escapeHtml(r.name)}</h3>
-        <div class="meta">
-          <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
-          <span>🎵 Ao vivo</span>
+        <div class="room-thumb">
+          ${thumbImg}
+          ${liveBadge}
+          <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div>
+          ${eq}
+          ${nowPlaying}
+        </div>
+        <div class="room-card-body">
+          <h3>${escapeHtml(r.name)}</h3>
+          <div class="meta">
+            <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
+            <span>🎶 ${r.queueLength || 0} na fila</span>
+          </div>
         </div>
       `;
       grid.appendChild(card);
