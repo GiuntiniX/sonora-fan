@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
+  <!-- Firebase (usado só para salvar os cadastros de interesse da landing page) -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -259,6 +262,235 @@
       box-shadow: 0 8px 30px rgba(124,58,237,0.3);
     }
     .login-card button:active { transform: scale(0.98); }
+
+    /* ===== LANDING SCREEN ===== */
+    .landing-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      overflow-y: auto;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 70% 45% at 50% -5%, rgba(124,58,237,0.22), transparent),
+        radial-gradient(ellipse 50% 35% at 10% 90%, rgba(255,107,53,0.1), transparent),
+        radial-gradient(ellipse 50% 35% at 90% 90%, rgba(124,58,237,0.1), transparent);
+    }
+    .landing-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 64px 24px 80px;
+    }
+    .landing-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 56px;
+    }
+    .landing-logo {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .landing-logo span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .landing-nav-btn {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .landing-nav-btn:hover { border-color: var(--border-hover); background: var(--bg-hover); }
+
+    .landing-hero {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 72px;
+    }
+    .landing-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      margin-bottom: 24px;
+    }
+    .landing-badge .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    .landing-hero h1 {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.08;
+      margin-bottom: 20px;
+    }
+    .landing-hero h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .landing-hero p {
+      color: var(--text-secondary);
+      font-size: 17px;
+      line-height: 1.65;
+      max-width: 560px;
+      margin: 0 auto 36px;
+    }
+    .landing-ctas {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 44px;
+    }
+    .landing-cta-primary, .landing-cta-secondary {
+      padding: 15px 28px;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      border: none;
+    }
+    .landing-cta-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+    .landing-cta-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 34px rgba(124,58,237,0.35); }
+    .landing-cta-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border-hover);
+    }
+    .landing-cta-secondary:hover { background: var(--bg-hover); border-color: var(--accent2); }
+
+    .landing-hero-visual {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 6px;
+      height: 64px;
+    }
+    .landing-hero-visual .eq-bar {
+      width: 6px;
+      border-radius: 4px;
+    }
+    .landing-hero-visual .eq-bar:nth-child(1) { animation-delay: 0s; height: 20px; }
+    .landing-hero-visual .eq-bar:nth-child(2) { animation-delay: 0.2s; height: 40px; }
+    .landing-hero-visual .eq-bar:nth-child(3) { animation-delay: 0.1s; height: 60px; }
+    .landing-hero-visual .eq-bar:nth-child(4) { animation-delay: 0.3s; height: 34px; }
+    .landing-hero-visual .eq-bar:nth-child(5) { animation-delay: 0.15s; height: 50px; }
+    .landing-hero-visual .eq-bar:nth-child(6) { animation-delay: 0.35s; height: 22px; }
+    .landing-hero-visual .eq-bar:nth-child(7) { animation-delay: 0.05s; height: 44px; }
+
+    .landing-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 64px;
+    }
+    .landing-feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: all 0.2s;
+    }
+    .landing-feature-card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
+    .landing-feature-card .icon { font-size: 26px; margin-bottom: 14px; }
+    .landing-feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
+    .landing-feature-card p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
+
+    .landing-cta-band {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .landing-cta-band::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+    }
+    .landing-cta-band h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.4px; }
+    .landing-cta-band p { color: var(--text-secondary); font-size: 14px; margin-bottom: 22px; }
+
+    @media (max-width: 720px) {
+      .landing-hero h1 { font-size: 34px; }
+      .landing-features { grid-template-columns: 1fr; }
+      .landing-inner { padding: 40px 18px 60px; }
+    }
+
+    /* ===== SIGNUP MODAL ===== */
+    .modal-lg { max-width: 460px; max-height: 88vh; overflow-y: auto; }
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      margin-top: 14px;
+    }
+    .form-label:first-of-type { margin-top: 0; }
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .chip {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .chip:hover { border-color: var(--border-hover); }
+    .chip.selected {
+      border-color: var(--accent);
+      background: rgba(255,107,53,0.15);
+      color: var(--text);
+    }
+    .form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+    #signupSubmitBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     /* ===== APP LAYOUT ===== */
     .app { 
@@ -1741,8 +1973,113 @@
   <div class="particle" style="bottom:-10%;left:95%;"></div>
 </div>
 
+<!-- LANDING -->
+<div class="landing-screen" id="landingScreen">
+  <div class="landing-inner">
+    <div class="landing-nav">
+      <div class="landing-logo">🎸 Sonora <span>Fan</span></div>
+      <button class="landing-nav-btn" onclick="enterFromLanding()">Já tenho conta</button>
+    </div>
+
+    <div class="landing-hero">
+      <div class="landing-badge"><span class="dot"></span> Salas ao vivo agora</div>
+      <h1>A pista é sua.<br>A trilha sonora é <span>de todo mundo</span>.</h1>
+      <p>Entre em uma sala, jogue suas músicas favoritas na fila, vote com a galera e converse em tempo real — como um show, mas com você no controle da playlist.</p>
+      <div class="landing-ctas">
+        <button class="landing-cta-primary" onclick="enterFromLanding()">🎤 Entrar na sala</button>
+        <button class="landing-cta-secondary" onclick="openSignupModal()">✍️ Criar meu cadastro</button>
+      </div>
+      <div class="landing-hero-visual">
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+      </div>
+    </div>
+
+    <div class="landing-features">
+      <div class="landing-feature-card">
+        <div class="icon">🎶</div>
+        <h3>Fila colaborativa</h3>
+        <p>Todo mundo adiciona música do YouTube, a fila toca em sincronia pra todos os ouvintes ao mesmo tempo.</p>
+      </div>
+      <div class="landing-feature-card">
+        <div class="icon">💬</div>
+        <h3>Chat ao vivo</h3>
+        <p>Comente a música tocando, reaja com emojis e curta as escolhas dos DJs da sala em tempo real.</p>
+      </div>
+      <div class="landing-feature-card">
+        <div class="icon">🕺</div>
+        <h3>Salas com identidade</h3>
+        <p>Crie sua própria sala, escolha um tema e convide a galera pra construir a vibe com você.</p>
+      </div>
+    </div>
+
+    <div class="landing-cta-band">
+      <h2>Ainda não decidiu? Deixa seu contato.</h2>
+      <p>Cadastre-se e avisamos quando tiver novidade — salas novas, artistas em destaque e mais.</p>
+      <button class="landing-cta-primary" onclick="openSignupModal()">Fazer meu cadastro</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNUP -->
+<div class="modal-overlay" id="signupModal">
+  <div class="modal modal-lg">
+    <h3>Criar cadastro</h3>
+
+    <label class="form-label">Nome</label>
+    <input type="text" id="signupNome" placeholder="Seu nome" maxlength="60">
+
+    <label class="form-label">E-mail</label>
+    <input type="email" id="signupEmail" placeholder="voce@email.com" maxlength="120">
+
+    <label class="form-label">Gênero</label>
+    <select id="signupGenero">
+      <option value="">Selecione</option>
+      <option value="homem">Homem</option>
+      <option value="mulher">Mulher</option>
+      <option value="trans">Trans</option>
+      <option value="nao-binario">Não-binário</option>
+      <option value="prefiro-nao-dizer">Prefiro não dizer</option>
+      <option value="outro">Outro</option>
+    </select>
+
+    <label class="form-label">Região</label>
+    <select id="signupRegiao">
+      <option value="">Selecione</option>
+      <option value="norte">Norte</option>
+      <option value="nordeste">Nordeste</option>
+      <option value="centro-oeste">Centro-Oeste</option>
+      <option value="sudeste">Sudeste</option>
+      <option value="sul">Sul</option>
+      <option value="fora-do-brasil">Fora do Brasil</option>
+    </select>
+
+    <label class="form-label">Estilo de música (escolha um ou mais)</label>
+    <div class="chip-group" id="signupStyles">
+      <div class="chip" data-style="sertanejo" onclick="toggleStyleChip(this)">Sertanejo</div>
+      <div class="chip" data-style="funk" onclick="toggleStyleChip(this)">Funk</div>
+      <div class="chip" data-style="pagode-samba" onclick="toggleStyleChip(this)">Pagode/Samba</div>
+      <div class="chip" data-style="mpb" onclick="toggleStyleChip(this)">MPB</div>
+      <div class="chip" data-style="rock" onclick="toggleStyleChip(this)">Rock</div>
+      <div class="chip" data-style="pop" onclick="toggleStyleChip(this)">Pop</div>
+      <div class="chip" data-style="eletronica" onclick="toggleStyleChip(this)">Eletrônica</div>
+      <div class="chip" data-style="hiphop-rap" onclick="toggleStyleChip(this)">Hip Hop/Rap</div>
+      <div class="chip" data-style="forro" onclick="toggleStyleChip(this)">Forró</div>
+      <div class="chip" data-style="gospel" onclick="toggleStyleChip(this)">Gospel</div>
+      <div class="chip" data-style="indie" onclick="toggleStyleChip(this)">Indie</div>
+      <div class="chip" data-style="reggaeton" onclick="toggleStyleChip(this)">Reggaeton</div>
+    </div>
+    <div class="form-hint">Seus dados ficam salvos com segurança e não são compartilhados.</div>
+
+    <div class="modal-actions" style="margin-top:18px;">
+      <button onclick="closeSignupModal()" style="background:var(--bg-hover);color:var(--text-secondary);">Cancelar</button>
+      <button id="signupSubmitBtn" onclick="submitSignup()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;">Quero entrar na vibe 🎶</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGIN -->
-<div class="login-screen" id="loginScreen">
+<div class="login-screen hidden" id="loginScreen">
   <div class="login-card">
     <div class="logo">🎸</div>
     <h1>Sonora <span>Fan</span></h1>
@@ -2087,6 +2424,88 @@ function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return m + ':' + s.toString().padStart(2,'0');
+}
+
+// ========== FIREBASE (cadastro de interesse da landing) ==========
+// TODO: troque pelas credenciais do SEU projeto Firebase (Configurações do projeto > Config do SDK)
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO",
+  storageBucket: "SEU_PROJETO.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID",
+};
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+} catch (e) {
+  console.warn('Firebase não configurado ainda:', e.message);
+}
+
+// ========== LANDING ==========
+function enterFromLanding() {
+  hide('landingScreen');
+  show('loginScreen');
+}
+
+function openSignupModal() {
+  $('signupModal').classList.add('active');
+}
+function closeSignupModal() {
+  $('signupModal').classList.remove('active');
+}
+function toggleStyleChip(el) {
+  el.classList.toggle('selected');
+}
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function submitSignup() {
+  const nome = $('signupNome').value.trim();
+  const email = $('signupEmail').value.trim();
+  const genero = $('signupGenero').value;
+  const regiao = $('signupRegiao').value;
+  const estilos = Array.from(document.querySelectorAll('#signupStyles .chip.selected')).map(c => c.dataset.style);
+
+  if (nome.length < 2) { toast('Digite seu nome', 'error'); return; }
+  if (!isValidEmail(email)) { toast('Digite um e-mail válido', 'error'); return; }
+  if (!genero) { toast('Selecione um gênero', 'error'); return; }
+  if (!regiao) { toast('Selecione sua região', 'error'); return; }
+  if (estilos.length === 0) { toast('Escolha pelo menos um estilo musical', 'error'); return; }
+
+  if (!db) {
+    toast('Cadastro ainda não configurado (Firebase pendente)', 'error');
+    return;
+  }
+
+  const btn = $('signupSubmitBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    await db.collection('cadastros_interesse').add({
+      nome, email, genero, regiao, estilos,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      origem: 'landing-page',
+    });
+    toast('Cadastro realizado! Bem-vindo(a) 🎉', 'success');
+    closeSignupModal();
+    $('signupNome').value = '';
+    $('signupEmail').value = '';
+    $('signupGenero').value = '';
+    $('signupRegiao').value = '';
+    document.querySelectorAll('#signupStyles .chip.selected').forEach(c => c.classList.remove('selected'));
+  } catch (err) {
+    console.error(err);
+    toast('Erro ao enviar cadastro. Tente novamente.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
 }
 
 // ========== LOGIN ==========
