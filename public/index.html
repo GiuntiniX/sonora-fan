@@ -26,8 +26,97 @@
       --success: #22c55e;
       --danger: #ef4444;
       --warning: #f59e0b;
+      --stage-light: rgba(124,58,237,0.08);
       --radius: 16px;
       --radius-sm: 12px;
+    }
+
+    /* ===== TEMA NEON ===== */
+    [data-theme="neon"] {
+      --bg: #0a0a12;
+      --bg-elevated: #0f0f1a;
+      --bg-card: #12121f;
+      --bg-hover: #1a1a2e;
+      --border: #1e1e35;
+      --border-hover: #2a2a4a;
+      --text: #e0f0ff;
+      --text-secondary: #88aacc;
+      --text-muted: #556677;
+      --accent: #00ff88;
+      --accent-glow: rgba(0,255,136,0.4);
+      --accent2: #ff00ff;
+      --accent2-glow: rgba(255,0,255,0.4);
+      --success: #00ff88;
+      --danger: #ff3366;
+      --warning: #ffcc00;
+    }
+    [data-theme="neon"] .login-card::before,
+    [data-theme="neon"] .modal::before {
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+    }
+    [data-theme="neon"] .room-card::before,
+    [data-theme="neon"] .player-section {
+      background: linear-gradient(180deg, rgba(0,255,136,0.05), transparent);
+    }
+    [data-theme="neon"] .spotlight-left {
+      background: radial-gradient(ellipse at center, rgba(0,255,136,0.12) 0%, transparent 70%);
+    }
+    [data-theme="neon"] .spotlight-right {
+      background: radial-gradient(ellipse at center, rgba(255,0,255,0.12) 0%, transparent 70%);
+    }
+    [data-theme="neon"] .eq-bar {
+      background: linear-gradient(to top, var(--accent), var(--accent2));
+    }
+    [data-theme="neon"] .progress-fill {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent2-glow);
+    }
+
+    /* ===== TEMA VAPORWAVE ===== */
+    [data-theme="vaporwave"] {
+      --bg: #1a0a2e;
+      --bg-elevated: #240e3e;
+      --bg-card: #2d1452;
+      --bg-hover: #3a1a6b;
+      --border: #4a2080;
+      --border-hover: #5a2a99;
+      --text: #ffd6ff;
+      --text-secondary: #c77dff;
+      --text-muted: #9d4edd;
+      --accent: #ff6d00;
+      --accent-glow: rgba(255,109,0,0.4);
+      --accent2: #00b4d8;
+      --accent2-glow: rgba(0,180,216,0.4);
+      --success: #00ff88;
+      --danger: #ff006e;
+      --warning: #ffb703;
+    }
+    [data-theme="vaporwave"] .login-card::before,
+    [data-theme="vaporwave"] .modal::before {
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+    }
+    [data-theme="vaporwave"] .room-card::before,
+    [data-theme="vaporwave"] .player-section {
+      background: linear-gradient(180deg, rgba(255,109,0,0.05), transparent);
+    }
+    [data-theme="vaporwave"] .spotlight-left {
+      background: radial-gradient(ellipse at center, rgba(255,109,0,0.12) 0%, transparent 70%);
+    }
+    [data-theme="vaporwave"] .spotlight-right {
+      background: radial-gradient(ellipse at center, rgba(0,180,216,0.12) 0%, transparent 70%);
+    }
+    [data-theme="vaporwave"] .eq-bar {
+      background: linear-gradient(to top, var(--accent), var(--accent2));
+    }
+    [data-theme="vaporwave"] .progress-fill {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent2-glow);
+    }
+    [data-theme="vaporwave"] .dj-slot.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(255,109,0,0.15), rgba(0,180,216,0.15));
+      color: var(--accent);
+      box-shadow: 0 0 30px rgba(255,109,0,0.2), 0 0 60px rgba(0,180,216,0.1);
     }
 
     body {
@@ -38,6 +127,7 @@
       overflow-x: hidden;
     }
 
+    /* ===== SCROLLBAR TEMÁTICA (segue o tema ativo) ===== */
     * {
       scrollbar-width: thin;
       scrollbar-color: var(--accent) var(--bg-elevated);
@@ -48,7 +138,9 @@
       background: linear-gradient(180deg, var(--accent), var(--accent2));
       border-radius: 10px;
     }
+    ::-webkit-scrollbar-thumb:hover { filter: brightness(1.15); }
 
+    /* ===== STAGE LIGHTS EFFECT ===== */
     .stage-bg {
       position: fixed;
       inset: 0;
@@ -60,10 +152,7 @@
         radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124,58,237,0.08), transparent);
     }
 
-    .hidden { display: none !important; }
-    .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
-
-    /* ===== LOGIN ===== */
+    /* ===== LOGIN SCREEN ===== */
     .login-screen {
       position: fixed;
       inset: 0;
@@ -94,14 +183,29 @@
       height: 3px;
       background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
     }
-    .login-card .logo { font-size: 56px; margin-bottom: 12px; }
-    .login-card h1 { font-size: 32px; font-weight: 800; margin-bottom: 6px; }
+    .login-card .logo {
+      font-size: 56px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 20px var(--accent-glow));
+    }
+    .login-card h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
     .login-card h1 span { 
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .login-card p { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; }
+    .login-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
     .login-card input {
       width: 100%;
       padding: 14px 18px;
@@ -112,9 +216,29 @@
       font-size: 15px;
       outline: none;
       margin-bottom: 12px;
+      transition: all 0.2s;
       font-family: inherit;
     }
-    .login-card input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+    .login-card input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+    }
+    .login-card input::placeholder { color: var(--text-muted); }
+    .login-card .admin-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .login-card .admin-toggle input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+      accent-color: var(--accent2);
+    }
     .login-card button {
       width: 100%;
       padding: 16px;
@@ -125,40 +249,26 @@
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
+      transition: all 0.2s;
       font-family: inherit;
+      position: relative;
+      overflow: hidden;
     }
-    .login-card button:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(124,58,237,0.3); }
-    .admin-toggle {
+    .login-card button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(124,58,237,0.3);
+    }
+    .login-card button:active { transform: scale(0.98); }
+
+    /* ===== APP LAYOUT ===== */
+    .app { 
+      position: relative; 
+      z-index: 1; 
+      min-height: 100vh;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      color: var(--text-secondary);
-      font-size: 13px;
-      cursor: pointer;
+      flex-direction: column;
     }
-    .avatar-picker {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin: 12px 0;
-    }
-    .avatar-option {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: var(--bg-card);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .avatar-option:hover { border-color: var(--accent2); transform: scale(1.15); }
-    .avatar-option.selected { border-color: var(--accent); background: rgba(255,107,53,0.15); }
+    .hidden { display: none !important; }
 
     /* ===== HEADER ===== */
     .header {
@@ -172,7 +282,6 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      flex-shrink: 0;
     }
     .header-left { display: flex; align-items: center; gap: 16px; }
     .header-left button {
@@ -183,16 +292,40 @@
       color: var(--text-secondary);
       font-size: 13px;
       cursor: pointer;
+      transition: all 0.15s;
       font-weight: 500;
     }
-    .header-left button:hover { background: var(--bg-card); color: var(--text); }
-    .header h1 { font-size: 18px; font-weight: 700; }
+    .header-left button:hover { background: var(--bg-card); color: var(--text); border-color: var(--border-hover); }
+    .header h1 { 
+      font-size: 18px; 
+      font-weight: 700; 
+      letter-spacing: -0.3px;
+    }
     .header h1 span { 
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .header-right { display: flex; align-items: center; gap: 16px; }
+    .listener-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .listener-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
     .admin-badge {
       padding: 4px 10px;
       border-radius: 6px;
@@ -201,56 +334,86 @@
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .theme-toggle {
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-secondary);
-      font-size: 18px;
-      cursor: pointer;
-      line-height: 1;
-    }
-    .theme-toggle:hover { background: var(--bg-hover); transform: scale(1.1); }
 
     /* ===== LOBBY ===== */
-    .lobby { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
-    .lobby-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
-    .lobby-top h2 { font-size: 24px; font-weight: 700; }
-    .lobby-top button {
-      padding: 10px 20px;
-      border-radius: 10px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
+    .lobby { 
+      padding: 32px; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      width: 100%;
     }
-    .lobby-top button:hover { transform: translateY(-1px); }
-    .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .lobby-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .lobby-top h2 { 
+      font-size: 24px; 
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .room-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
     .room-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.3s ease;
+      position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .room-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.45); }
+    .room-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 2;
+    }
+    .room-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(124,58,237,0.15);
+    }
+    .room-card:hover::before { opacity: 1; }
+    .room-card:hover .room-thumb img { transform: scale(1.08); }
     .room-thumb {
       position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
-      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-hover));
+      background: linear-gradient(135deg, var(--accent2-glow), var(--accent-glow)), 
+                  linear-gradient(135deg, var(--bg-elevated), var(--bg-hover));
       overflow: hidden;
+      flex-shrink: 0;
     }
-    .room-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .room-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
     .room-thumb .thumb-fallback {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 40px; opacity: 0.5;
+      font-size: 40px;
+      opacity: 0.5;
+    }
+    .room-thumb::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
     }
     .room-live-badge {
       position: absolute;
@@ -258,73 +421,206 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 10px;
+      padding: 5px 10px 5px 8px;
       border-radius: 20px;
-      background: rgba(0,0,0,0.6);
+      background: rgba(5,5,10,0.6);
       backdrop-filter: blur(6px);
       font-size: 11px;
       font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text);
+      z-index: 2;
+    }
+    .room-live-badge .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
     }
     .room-listeners-badge {
       position: absolute;
       top: 10px; right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
       padding: 5px 10px;
       border-radius: 20px;
-      background: rgba(0,0,0,0.6);
+      background: rgba(5,5,10,0.6);
       backdrop-filter: blur(6px);
       font-size: 11px;
       font-weight: 600;
+      color: var(--text);
+      z-index: 2;
     }
-    .room-card-body { padding: 16px 18px 18px; }
-    .room-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-    .room-card .meta { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-muted); }
-    .empty-state { text-align: center; padding: 80px 20px; color: var(--text-muted); grid-column: 1 / -1; }
+    .room-thumb .room-eq {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      z-index: 2;
+      height: 16px;
+    }
+    .room-thumb .room-eq .eq-bar { width: 2.5px; }
+    .room-now-playing {
+      position: absolute;
+      bottom: 8px; left: 10px; right: 40px;
+      z-index: 2;
+      font-size: 11px;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .room-mini-progress {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+      z-index: 2;
+    }
+    .room-mini-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .room-time-remaining {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .room-card-body {
+      padding: 16px 18px 18px;
+    }
+    .room-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
+    .room-card .meta {
+      display: flex;
+      gap: 14px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+    .room-card .meta span { display: flex; align-items: center; gap: 4px; }
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-muted);
+      grid-column: 1 / -1;
+    }
     .empty-state .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
+    .empty-state p { margin-bottom: 20px; }
+    .empty-state-cta {
+      display: inline-block;
+      padding: 12px 26px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .empty-state-cta:hover { transform: translateY(-1px); filter: brightness(1.08); }
 
     /* ===== ROOM LAYOUT ===== */
-    #screen-room .app { height: 100vh; height: 100dvh; overflow: hidden; }
     .room-layout {
       display: grid;
-      grid-template-columns: 1fr 380px;
-      grid-template-rows: 1fr;
+      grid-template-columns: 1fr 420px;
+      grid-template-rows: minmax(0, 1fr);
+      gap: 0;
       flex: 1;
       min-height: 0;
     }
+    /* Altura fixa da tela da sala: palco e chat rolam internamente */
+    #screen-room .app {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
     @media (max-width: 1024px) {
       .room-layout { grid-template-columns: 1fr; }
-      #screen-room .app { height: auto; min-height: 100vh; overflow: visible; }
     }
 
-    /* ===== STAGE ===== */
+    /* ===== STAGE (LEFT) ===== */
     .stage {
       display: flex;
       flex-direction: column;
-      padding: 16px;
-      gap: 16px;
+      padding: 20px 16px;
+      gap: 20px;
       overflow-y: auto;
       min-height: 0;
     }
 
-    /* ===== BANNER ===== */
-    .terra-banner {
-      display: block;
+    /* DJ BOOTH */
+    .dj-booth-section {
+      text-align: center;
+      padding: 20px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      overflow: hidden;
-      background: var(--bg-card);
-      width: 100%;
-      height: 200px;
-      flex-shrink: 0;
-      cursor: pointer;
+      background: linear-gradient(180deg, rgba(124,58,237,0.05), transparent);
+      position: relative;
     }
-    .terra-banner img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
+    .dj-booth-section::before {
+      content: 'CABINES DE DJ';
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      padding: 0 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+    .dj-booth {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: 80px;
+    }
+    .dj-slot {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      font-weight: 600;
+    }
+    .dj-slot.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(124,58,237,0.15));
+      color: var(--accent);
+      box-shadow: 0 0 30px rgba(255,107,53,0.2), 0 0 60px rgba(124,58,237,0.1);
+      transform: scale(1.08);
+    }
+    .dj-slot.occupied {
+      border-color: var(--border-hover);
+      color: var(--text-secondary);
+      cursor: default;
+    }
+    .dj-slot:hover:not(.occupied) {
+      border-color: var(--accent2);
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(124,58,237,0.2);
+    }
+    .dj-slot .dj-name {
+      position: absolute;
+      bottom: -24px;
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-weight: 500;
     }
 
-    /* ===== PLAYER ===== */
+    /* PLAYER */
     .player-section {
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
@@ -336,7 +632,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 16px;
+      padding: 12px 18px;
       border-bottom: 1px solid var(--border);
     }
     .now-playing-label {
@@ -354,6 +650,7 @@
       color: var(--danger);
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 1px;
     }
     .live-dot {
       width: 6px; height: 6px;
@@ -361,18 +658,19 @@
       background: var(--danger);
       animation: pulse 1.5s infinite;
     }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-    #youtube-player { width: 100%; height: 280px; background: #000; }
-
+    #youtube-player {
+      width: 100%;
+      height: 320px;
+      background: #000;
+    }
     .player-info {
       display: flex;
-      gap: 14px;
+      gap: 16px;
       align-items: center;
-      padding: 14px 16px;
+      padding: 18px;
     }
     .cover {
-      width: 64px; height: 64px;
+      width: 72px; height: 72px;
       border-radius: 10px;
       background: var(--bg);
       display: flex;
@@ -382,130 +680,100 @@
       flex-shrink: 0;
       overflow: hidden;
       border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
     .cover img { width: 100%; height: 100%; object-fit: cover; }
     .track-info { flex: 1; min-width: 0; }
     .track-title {
-      font-size: 15px;
+      font-size: 17px;
       font-weight: 700;
+      color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      letter-spacing: -0.3px;
     }
-    .track-artist { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
-    .track-dj { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-
-    .player-controls {
-      padding: 0 16px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .track-artist { 
+      font-size: 14px; 
+      color: var(--text-secondary); 
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .track-dj {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .progress-section {
+      padding: 0 18px 18px;
     }
     .progress-bar {
       width: 100%;
-      height: 4px;
+      height: 5px;
       background: var(--border);
-      border-radius: 2px;
+      border-radius: 3px;
       overflow: hidden;
-      cursor: pointer;
       position: relative;
     }
     .progress-fill {
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
-      border-radius: 2px;
-      transition: width 0.5s linear;
+      border-radius: 3px;
+      transition: width 0.8s linear;
+      box-shadow: 0 0 10px var(--accent-glow);
     }
     .progress-time {
       display: flex;
       justify-content: space-between;
+      margin-top: 8px;
       font-size: 11px;
       color: var(--text-muted);
     }
-    .volume-control {
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
-    .volume-control .vol-icon { font-size: 14px; color: var(--text-muted); }
-    .volume-control input[type="range"] {
-      flex: 1;
-      height: 3px;
-      -webkit-appearance: none;
-      appearance: none;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-      cursor: pointer;
     }
-    .volume-control input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      cursor: pointer;
-    }
-    .volume-control .vol-value {
-      font-size: 11px;
-      color: var(--text-muted);
-      min-width: 32px;
-      text-align: right;
-      font-weight: 600;
     }
 
-    /* ===== QUEUE ===== */
+    /* QUEUE */
     .queue-section {
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-card);
       overflow: hidden;
-      flex-shrink: 0;
-      max-height: 240px;
-      display: flex;
-      flex-direction: column;
     }
     .queue-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 16px;
+      padding: 14px 18px;
       border-bottom: 1px solid var(--border);
       background: var(--bg-elevated);
-      flex-shrink: 0;
     }
     .queue-header span:first-child {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    .queue-header span:last-child {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-    .queue-list {
-      display: flex;
-      flex-direction: column;
+    .queue-list { 
+      display: flex; 
+      flex-direction: column; 
+      max-height: 240px; 
       overflow-y: auto;
-      flex: 1;
-      min-height: 0;
     }
-    .queue-list::-webkit-scrollbar { width: 4px; }
-    .queue-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 2px; }
+    .queue-list::-webkit-scrollbar { width: 5px; }
+    .queue-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 3px; }
     .queue-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
+      gap: 12px;
+      padding: 12px 18px;
       border-bottom: 1px solid var(--border);
-      font-size: 13px;
+      font-size: 14px;
       cursor: pointer;
       transition: all 0.15s;
-      flex-shrink: 0;
+      position: relative;
     }
     .queue-item:last-child { border-bottom: none; }
     .queue-item:hover { background: var(--bg-hover); }
@@ -513,35 +781,41 @@
       background: linear-gradient(90deg, rgba(255,107,53,0.08), transparent);
       border-left: 3px solid var(--accent);
     }
-    .queue-num {
-      width: 24px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 11px;
+    .queue-num { 
+      width: 28px; 
+      text-align: center; 
+      color: var(--text-muted); 
+      font-size: 12px; 
       font-weight: 700;
       flex-shrink: 0;
     }
     .queue-item.playing .queue-num { color: var(--accent); }
     .queue-thumb {
-      width: 32px; height: 24px;
-      border-radius: 4px;
+      width: 40px; height: 30px;
+      border-radius: 6px;
       background: var(--bg);
       overflow: hidden;
       flex-shrink: 0;
       border: 1px solid var(--border);
     }
     .queue-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .queue-title {
-      flex: 1;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      overflow: hidden;
+    .queue-title { 
+      flex: 1; 
+      color: var(--text-secondary); 
+      white-space: nowrap; 
+      overflow: hidden; 
       text-overflow: ellipsis;
       font-weight: 500;
-      font-size: 12px;
     }
-    .queue-item.playing .queue-title { color: var(--text); font-weight: 600; }
-    .queue-dj { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+    .queue-item.playing .queue-title { 
+      color: var(--text); 
+      font-weight: 600;
+    }
+    .queue-dj { 
+      font-size: 11px; 
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
     .queue-remove {
       opacity: 0;
       transition: opacity 0.2s;
@@ -549,73 +823,79 @@
       border: none;
       color: var(--danger);
       cursor: pointer;
-      font-size: 14px;
-      padding: 2px 4px;
+      font-size: 16px;
+      padding: 4px;
       flex-shrink: 0;
     }
     .queue-item:hover .queue-remove { opacity: 1; }
-    .empty-queue {
-      text-align: center;
-      padding: 30px 20px;
-      color: var(--text-muted);
-    }
-    .empty-queue .icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
-    .empty-queue p { font-size: 13px; }
+    .queue-remove:hover { transform: scale(1.2); }
 
-    /* ===== ADD SONG ===== */
+    /* ADD SONG */
     .add-song {
       display: flex;
       gap: 10px;
-      padding: 12px 16px;
+      padding: 18px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-card);
-      flex-shrink: 0;
     }
     .add-song input {
       flex: 1;
-      padding: 10px 14px;
-      border-radius: 8px;
+      padding: 12px 16px;
+      border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text);
-      font-size: 13px;
+      font-size: 14px;
       outline: none;
+      transition: all 0.2s;
       font-family: inherit;
     }
-    .add-song input:focus { border-color: var(--accent2); }
+    .add-song input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
     .add-song input:disabled { opacity: 0.5; cursor: not-allowed; }
     .add-song button {
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 12px 24px;
+      border-radius: 10px;
       border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: #fff;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
       cursor: pointer;
+      transition: all 0.15s;
       white-space: nowrap;
       font-family: inherit;
     }
-    .add-song button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
+    .add-song button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(124,58,237,0.3);
+    }
     .add-song button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .cooldown-text { font-size: 11px; color: var(--text-muted); padding: 4px 16px 0; text-align: center; flex-shrink: 0; }
-
+    .cooldown-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 0 18px 8px;
+      text-align: center;
+    }
     .song-preview {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin: 0 16px 8px;
-      padding: 8px 12px;
-      border-radius: 8px;
+      margin: 0 18px 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg-elevated);
-      flex-shrink: 0;
+      min-height: 58px;
     }
     .song-preview.hidden { display: none !important; }
     .song-preview-thumb {
-      width: 56px; height: 38px;
-      border-radius: 6px;
+      width: 64px;
+      height: 44px;
+      border-radius: 8px;
       overflow: hidden;
       background: var(--bg);
       border: 1px solid var(--border);
@@ -623,53 +903,85 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
       color: var(--text-muted);
+      font-size: 18px;
       position: relative;
     }
-    .song-preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .song-preview-duration {
       position: absolute;
-      right: 2px;
-      bottom: 2px;
-      padding: 0 4px;
-      border-radius: 3px;
-      background: rgba(0,0,0,0.8);
+      right: 3px;
+      bottom: 3px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.78);
       color: #fff;
-      font-size: 9px;
+      font-size: 10px;
       font-weight: 700;
+      line-height: 1.4;
     }
-    .song-preview-info { flex: 1; min-width: 0; }
-    .song-preview-title { color: var(--text); font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .song-preview-artist { color: var(--text-secondary); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .song-preview-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+    .song-preview-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
     .song-preview-actions.hidden { display: none !important; }
     .song-preview-confirm {
-      padding: 6px 12px;
-      border-radius: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
       border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: #fff;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
+      white-space: nowrap;
+      transition: all 0.15s;
     }
-    .song-preview-confirm:hover { transform: translateY(-1px); }
+    .song-preview-confirm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+    }
     .song-preview-cancel {
-      padding: 4px 12px;
-      border-radius: 6px;
+      padding: 5px 14px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       background: transparent;
       color: var(--text-muted);
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
+      white-space: nowrap;
+      transition: all 0.15s;
     }
     .song-preview-cancel:hover { color: var(--danger); border-color: var(--danger); }
+    .song-preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .song-preview-info { flex: 1; min-width: 0; }
+    .song-preview-title {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-preview-artist {
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-preview-status {
+      color: var(--text-muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
 
-    /* ===== SIDEBAR ===== */
+    /* ===== SIDEBAR (RIGHT) ===== */
     .sidebar {
       border-left: 1px solid var(--border);
       display: flex;
@@ -679,92 +991,98 @@
       min-height: 0;
     }
     @media (max-width: 1024px) {
-      .sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 500px; }
+      .sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 600px; }
     }
 
+    /* USERS */
     .users-panel {
-      padding: 12px 16px;
+      padding: 18px;
       border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
     }
     .panel-header {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
     .user-list {
       display: flex;
       flex-direction: column;
-      gap: 3px;
-      max-height: 150px;
+      gap: 4px;
+      max-height: 200px;
       overflow-y: auto;
     }
-    .user-list::-webkit-scrollbar { width: 3px; }
+    .user-list::-webkit-scrollbar { width: 4px; }
+    .user-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 2px; }
     .user {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 4px 8px;
-      border-radius: 8px;
-      font-size: 12px;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 13px;
       color: var(--text-secondary);
+      transition: all 0.15s;
+      position: relative;
     }
     .user:hover { background: var(--bg-card); }
     .user-avatar {
-      width: 26px; height: 26px;
+      width: 32px; height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       flex-shrink: 0;
       border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .user:hover .user-avatar { transform: scale(1.1); }
+    .user .dj-badge {
+      font-size: 10px;
+      color: var(--accent);
+      margin-left: auto;
+      background: rgba(255,107,53,0.12);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
     }
     .user .admin-tag {
-      font-size: 8px;
+      font-size: 9px;
       color: var(--accent2);
       background: rgba(124,58,237,0.12);
-      padding: 1px 5px;
-      border-radius: 3px;
+      padding: 2px 6px;
+      border-radius: 4px;
       font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-left: 4px;
     }
-
-    /* ===== HISTORY ===== */
-    .history-list {
-      display: flex;
-      flex-direction: column;
+    .user-actions {
+      position: absolute;
+      right: 6px;
+      display: none;
       gap: 4px;
-      max-height: 150px;
-      overflow-y: auto;
     }
-    .history-list::-webkit-scrollbar { width: 3px; }
-    .history-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .user:hover .user-actions { display: flex; }
+    .user-actions button {
       padding: 4px 8px;
-      border-radius: 6px;
+      font-size: 10px;
+      border-radius: 5px;
+      border: none;
       cursor: pointer;
-      font-size: 11px;
+      font-weight: 700;
       transition: all 0.15s;
     }
-    .history-item:hover { background: var(--bg-hover); }
-    .history-item img {
-      width: 32px; height: 24px;
-      border-radius: 4px;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-    .history-item .info { flex: 1; min-width: 0; overflow: hidden; }
-    .history-item .title { color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .history-item .sub { color: var(--text-muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .kick-btn { background: var(--danger); color: #fff; }
+    .kick-btn:hover { background: #dc2626; }
+    .ban-btn { background: #7c2d12; color: #fb923c; }
+    .ban-btn:hover { background: #9a3412; }
 
-    /* ===== CHAT ===== */
+    /* CHAT */
     .chat-panel {
       flex: 1;
       display: flex;
@@ -772,260 +1090,135 @@
       min-height: 0;
       position: relative;
     }
+    .new-messages-pill {
+      position: absolute;
+      bottom: 78px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+      font-family: inherit;
+      white-space: nowrap;
+      animation: msgIn 0.25s ease;
+    }
+    .new-messages-pill:hover { filter: brightness(1.1); }
+    .new-messages-pill.hidden { display: none; }
     .chat-messages {
       flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 2px;
-      padding: 12px 14px;
-      font-size: 13px;
+      padding: 16px;
+      font-size: 14px;
       min-height: 0;
     }
-    .chat-messages::-webkit-scrollbar { width: 4px; }
-    .chat-messages::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 2px; }
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 3px; }
     .msg {
       display: flex;
-      gap: 6px;
-      line-height: 1.4;
-      padding: 4px 8px;
-      border-radius: 8px;
+      gap: 8px;
+      line-height: 1.5;
+      padding: 6px 10px;
+      border-radius: 10px;
       animation: msgIn 0.25s ease;
+      transition: background 0.15s;
     }
     .msg:hover { background: rgba(255,255,255,0.02); }
-    @keyframes msgIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-    .msg-user { font-weight: 700; flex-shrink: 0; cursor: pointer; font-size: 12px; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .msg-user { 
+      font-weight: 700; 
+      flex-shrink: 0; 
+      cursor: pointer;
+      font-size: 13px;
+    }
     .msg-admin-badge {
-      font-size: 8px;
+      font-size: 9px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: #fff;
-      padding: 1px 4px;
+      padding: 1px 5px;
       border-radius: 3px;
-      margin-left: 3px;
+      margin-left: 4px;
       font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
-    .msg-text { color: var(--text-secondary); word-break: break-word; font-size: 12px; }
+    .msg-text { 
+      color: var(--text-secondary); 
+      word-break: break-word;
+      font-size: 13px;
+    }
+    .msg-system { 
+      color: var(--text-muted); 
+      font-style: italic; 
+      font-size: 12px; 
+      padding: 4px 10px;
+      text-align: center;
+    }
+    .msg-system .msg-text { color: var(--text-muted); }
     .msg-time {
-      font-size: 9px;
+      font-size: 10px;
       color: var(--text-muted);
       margin-left: auto;
       flex-shrink: 0;
       opacity: 0;
       transition: opacity 0.2s;
+      align-self: flex-start;
+      margin-top: 2px;
     }
     .msg:hover .msg-time { opacity: 1; }
-    .msg-system { color: var(--text-muted); font-style: italic; font-size: 11px; padding: 4px 8px; text-align: center; }
-    .mention-highlight {
-      background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(124,58,237,0.15));
-      border-left: 3px solid var(--accent);
-    }
-    .msg-text .mention { color: var(--accent); font-weight: 700; background: rgba(255,107,53,0.1); padding: 0 3px; border-radius: 3px; }
-    .msg-reactions { display: flex; gap: 3px; margin-top: 3px; flex-wrap: wrap; }
-    .reaction-btn {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1px 6px;
-      font-size: 11px;
-      cursor: pointer;
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-    }
-    .reaction-btn:hover { border-color: var(--accent); background: rgba(255,107,53,0.1); }
-    .reaction-btn.has-reaction { border-color: var(--accent); background: rgba(255,107,53,0.15); }
-    .reaction-add {
-      opacity: 0;
-      font-size: 10px;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 1px 4px;
-      border-radius: 4px;
-    }
-    .msg:hover .reaction-add { opacity: 1; }
-    .reaction-add:hover { background: var(--bg-hover); }
-    .reaction-picker {
-      position: absolute;
-      bottom: 100%;
-      left: 0;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 4px;
-      display: none;
-      gap: 3px;
-      z-index: 50;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-    }
-    .reaction-picker.show { display: flex; }
-    .reaction-emoji {
-      padding: 2px 4px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.1s;
-    }
-    .reaction-emoji:hover { background: var(--bg-hover); transform: scale(1.2); }
-
-    .msg-music {
-      background: linear-gradient(90deg, rgba(255,107,53,0.06), rgba(124,58,237,0.04));
-      border: 1px solid rgba(255,107,53,0.12);
-      border-radius: 10px;
-      padding: 8px 12px;
-      margin: 2px 0;
-    }
-    .msg-music .music-like-btn {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 2px 8px;
-      color: var(--text-muted);
-      font-size: 11px;
-      cursor: pointer;
-      margin-top: 4px;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .msg-music .music-like-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.1); }
-    .msg-music .music-like-btn.liked { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.15); }
-
-    .new-messages-pill {
-      position: absolute;
-      bottom: 70px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 20;
-      padding: 5px 14px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.45);
-      font-family: inherit;
-      white-space: nowrap;
-    }
-    .new-messages-pill.hidden { display: none; }
-
-    .typing-indicator {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 14px;
-      font-size: 11px;
-      color: var(--text-muted);
-      font-style: italic;
-      border-top: 1px solid var(--border);
-      background: var(--bg-card);
-      flex-shrink: 0;
-    }
-    .typing-indicator.show { display: flex; }
-    .typing-dots { display: flex; gap: 2px; }
-    .typing-dot {
-      width: 4px; height: 4px;
-      border-radius: 50%;
-      background: var(--text-muted);
-      animation: typingBounce 1.4s infinite ease-in-out;
-    }
-    .typing-dot:nth-child(1) { animation-delay: 0s; }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typingBounce {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-3px); }
-    }
-
     .chat-input-bar {
-      padding: 10px 14px;
+      padding: 14px 16px;
       border-top: 1px solid var(--border);
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
       background: var(--bg-card);
-      flex-shrink: 0;
-      position: relative;
     }
     .chat-input-bar input {
       flex: 1;
-      padding: 8px 12px;
-      border-radius: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg);
       color: var(--text);
-      font-size: 12px;
+      font-size: 13px;
       outline: none;
+      transition: all 0.2s;
       font-family: inherit;
       min-width: 0;
     }
-    .chat-input-bar input:focus { border-color: var(--accent2); }
+    .chat-input-bar input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
     .chat-input-bar input::placeholder { color: var(--text-muted); }
     .chat-input-bar button {
-      padding: 8px 14px;
-      border-radius: 8px;
+      padding: 10px 16px;
+      border-radius: 10px;
       border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: #fff;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      transition: all 0.15s;
       font-family: inherit;
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .chat-input-bar button:hover { transform: translateY(-1px); }
-    .emoji-btn {
-      padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text-secondary);
-      font-size: 14px;
-      cursor: pointer;
-      line-height: 1;
-      flex-shrink: 0;
+    .chat-input-bar button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
     }
-    .emoji-btn:hover { background: var(--bg-hover); }
-    .emoji-panel {
-      position: absolute;
-      bottom: 52px;
-      right: 14px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 8px;
-      display: none;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 4px;
-      z-index: 100;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-      max-width: 280px;
-    }
-    .emoji-panel.show { display: grid; }
-    .emoji-item {
-      padding: 4px;
-      border-radius: 4px;
-      cursor: pointer;
-      text-align: center;
-      font-size: 18px;
-      transition: all 0.1s;
-    }
-    .emoji-item:hover { background: var(--bg-hover); transform: scale(1.2); }
-
-    .clear-chat-btn {
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--danger);
-      background: transparent;
-      color: var(--danger);
-      font-size: 10px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .clear-chat-btn:hover { background: rgba(239,68,68,0.1); }
 
     /* ===== TOAST ===== */
     .toast {
@@ -1036,9 +1229,9 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 12px 24px;
+      padding: 14px 28px;
       border-radius: var(--radius-sm);
-      font-size: 13px;
+      font-size: 14px;
       z-index: 300;
       opacity: 0;
       transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1069,6 +1262,7 @@
       padding: 28px;
       width: 90%;
       max-width: 420px;
+      animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
       overflow: hidden;
     }
@@ -1079,34 +1273,406 @@
       height: 3px;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
     }
-    .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+    .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.3px; }
     .modal input, .modal select {
       width: 100%;
       padding: 12px 16px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid var(--border);
       background: var(--bg-card);
       color: var(--text);
-      font-size: 14px;
+      font-size: 15px;
       outline: none;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       font-family: inherit;
+      transition: all 0.2s;
     }
-    .modal input:focus, .modal select:focus { border-color: var(--accent2); }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal input:focus, .modal select:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
     .modal-actions button {
       padding: 10px 20px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: none;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
+      transition: all 0.15s;
     }
-    .modal-actions .btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+    .modal-actions .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
     .modal-actions .btn-secondary:hover { background: var(--bg-card); }
-    .modal-actions .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
-    .modal-actions .btn-primary:hover { transform: translateY(-1px); }
+    .modal-actions .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+    .modal-actions .btn-primary:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1024px) {
+      .room-layout { grid-template-columns: 1fr; grid-template-rows: none; }
+      .sidebar { border-left: none; border-top: 1px solid var(--border); }
+      #screen-room .app { height: auto; min-height: 100vh; overflow: visible; }
+      .chat-messages { min-height: 300px; max-height: 55vh; }
+      #youtube-player { height: 240px; }
+      .stage { padding: 16px; overflow: visible; }
+    }
+    @media (max-width: 640px) {
+      .header { padding: 12px 16px; }
+      .header h1 { font-size: 15px; }
+      .lobby { padding: 16px; }
+      .room-grid { grid-template-columns: 1fr; }
+      .login-card { padding: 40px 24px; }
+      .login-card h1 { font-size: 24px; }
+      #youtube-player { height: 200px; }
+      .dj-booth { gap: 8px; }
+      .dj-slot { width: 50px; height: 50px; font-size: 10px; }
+    }
+
+    /* ===== EMPTY QUEUE STATE ===== */
+    .empty-queue {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-queue .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-queue p { font-size: 14px; }
+
+    /* ===== SHOW ANIMATIONS ===== */
+    @keyframes spotlight {
+      0%, 100% { opacity: 0.3; transform: rotate(-15deg) scale(1); }
+      25% { opacity: 0.6; transform: rotate(-10deg) scale(1.1); }
+      50% { opacity: 0.4; transform: rotate(-20deg) scale(0.95); }
+      75% { opacity: 0.7; transform: rotate(-12deg) scale(1.05); }
+    }
+    @keyframes spotlight2 {
+      0%, 100% { opacity: 0.2; transform: rotate(15deg) scale(1); }
+      25% { opacity: 0.5; transform: rotate(20deg) scale(1.15); }
+      50% { opacity: 0.3; transform: rotate(10deg) scale(0.9); }
+      75% { opacity: 0.6; transform: rotate(18deg) scale(1.1); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      50% { transform: translateY(-100vh) rotate(180deg); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 5px var(--accent-glow), 0 0 10px var(--accent2-glow); }
+      50% { box-shadow: 0 0 20px var(--accent-glow), 0 0 40px var(--accent2-glow); }
+    }
+    @keyframes equalizer {
+      0%, 100% { height: 4px; }
+      50% { height: 20px; }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .spotlight-left, .spotlight-right {
+      position: fixed;
+      top: -20%;
+      width: 60vw;
+      height: 120vh;
+      pointer-events: none;
+      z-index: 0;
+      mix-blend-mode: screen;
+    }
+    .spotlight-left {
+      left: -20%;
+      background: radial-gradient(ellipse at center, rgba(255,107,53,0.12) 0%, transparent 70%);
+      animation: spotlight 4s ease-in-out infinite;
+      transform-origin: top left;
+    }
+    .spotlight-right {
+      right: -20%;
+      background: radial-gradient(ellipse at center, rgba(124,58,237,0.12) 0%, transparent 70%);
+      animation: spotlight2 5s ease-in-out infinite;
+      transform-origin: top right;
+    }
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: float 8s linear infinite;
+      opacity: 0;
+    }
+    .particle:nth-child(2n) { background: var(--accent2); animation-duration: 10s; animation-delay: 1s; left: 20%; }
+    .particle:nth-child(3n) { background: var(--success); animation-duration: 12s; animation-delay: 2s; left: 40%; }
+    .particle:nth-child(4n) { background: var(--warning); animation-duration: 9s; animation-delay: 3s; left: 60%; }
+    .particle:nth-child(5n) { background: var(--accent); animation-duration: 11s; animation-delay: 4s; left: 80%; }
+    .particle:nth-child(6n) { background: var(--accent2); animation-duration: 13s; animation-delay: 0.5s; left: 10%; }
+    .particle:nth-child(7n) { background: var(--danger); animation-duration: 7s; animation-delay: 2.5s; left: 30%; }
+    .particle:nth-child(8n) { background: var(--accent); animation-duration: 14s; animation-delay: 1.5s; left: 50%; }
+    .particle:nth-child(9n) { background: var(--accent2); animation-duration: 6s; animation-delay: 3.5s; left: 70%; }
+    .particle:nth-child(10n) { background: var(--warning); animation-duration: 15s; animation-delay: 5s; left: 90%; }
+    .equalizer {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 24px;
+    }
+    .eq-bar {
+      width: 3px;
+      background: linear-gradient(to top, var(--accent), var(--accent2));
+      border-radius: 2px;
+      animation: equalizer 0.8s ease-in-out infinite;
+    }
+    .eq-bar:nth-child(1) { animation-delay: 0s; }
+    .eq-bar:nth-child(2) { animation-delay: 0.1s; }
+    .eq-bar:nth-child(3) { animation-delay: 0.2s; }
+    .eq-bar:nth-child(4) { animation-delay: 0.3s; }
+    .eq-bar:nth-child(5) { animation-delay: 0.15s; }
+    .room-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+      animation: shimmer 3s infinite;
+    }
+    .player-section {
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+    .msg {
+      animation: bounceIn 0.3s ease;
+    }
+    .emoji-btn {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-secondary);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .emoji-btn:hover { background: var(--bg-hover); transform: scale(1.1); }
+    .emoji-panel {
+      position: absolute;
+      bottom: 60px;
+      right: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: none;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      z-index: 100;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      max-width: 320px;
+    }
+    .emoji-panel.show { display: grid; }
+    .emoji-item {
+      padding: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      font-size: 20px;
+      transition: all 0.1s;
+      user-select: none;
+    }
+    .emoji-item:hover { background: var(--bg-hover); transform: scale(1.2); }
+    .msg-music {
+      background: linear-gradient(90deg, rgba(255,107,53,0.08), rgba(124,58,237,0.05));
+      border: 1px solid rgba(255,107,53,0.15);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin: 4px 0;
+    }
+    .msg-music .music-like-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .msg-music .music-like-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,107,53,0.1);
+    }
+    .msg-music .music-like-btn.liked {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,107,53,0.15);
+    }
+
+    /* ===== THEME TOGGLE ===== */
+    .theme-toggle {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .theme-toggle:hover { background: var(--bg-hover); transform: scale(1.1); }
+
+    /* ===== AVATAR EMOJI PICKER ===== */
+    .avatar-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .avatar-option {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .avatar-option:hover { border-color: var(--accent2); transform: scale(1.15); }
+    .avatar-option.selected { border-color: var(--accent); background: rgba(255,107,53,0.15); }
+
+    /* ===== MESSAGE REACTIONS ===== */
+    .msg-reactions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .reaction-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.1s;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .reaction-btn:hover { border-color: var(--accent); background: rgba(255,107,53,0.1); }
+    .reaction-btn.has-reaction { border-color: var(--accent); background: rgba(255,107,53,0.15); }
+    .reaction-add {
+      opacity: 0;
+      transition: opacity 0.15s;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    .msg:hover .reaction-add { opacity: 1; }
+    .reaction-add:hover { background: var(--bg-hover); }
+    .reaction-picker {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      display: none;
+      gap: 4px;
+      z-index: 50;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .reaction-picker.show { display: flex; }
+    .reaction-emoji {
+      padding: 4px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.1s;
+    }
+    .reaction-emoji:hover { background: var(--bg-hover); transform: scale(1.2); }
+
+    /* ===== TYPING INDICATOR ===== */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .typing-indicator.show { display: flex; }
+    .typing-dots {
+      display: flex;
+      gap: 3px;
+    }
+    .typing-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: typingBounce 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-4px); }
+    }
+
+    /* ===== MENTION PING ===== */
+    .mention-highlight {
+      background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(124,58,237,0.2));
+      border-left: 3px solid var(--accent);
+      animation: mentionPulse 2s ease-in-out infinite;
+    }
+    @keyframes mentionPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.2); }
+      50% { box-shadow: 0 0 15px rgba(255,107,53,0.3); }
+    }
+    .msg-text .mention {
+      color: var(--accent);
+      font-weight: 700;
+      background: rgba(255,107,53,0.1);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
 
     /* ===== CONFETTI ===== */
     .confetti-container {
@@ -1118,7 +1684,7 @@
     }
     .confetti-piece {
       position: absolute;
-      width: 6px; height: 6px;
+      width: 8px; height: 8px;
       animation: confettiFall 3s ease-out forwards;
     }
     @keyframes confettiFall {
@@ -1126,30 +1692,54 @@
       100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
     }
 
-    .listener-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-      animation: pulse 2s infinite;
-      display: inline-block;
+    /* ===== FULLSCREEN MODE ===== */
+    }
+    }
+    }
+    }
     }
 
-    .footer {
-      text-align: center;
-      padding: 16px;
-      border-top: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 12px;
-      background: var(--bg-elevated);
-      flex-shrink: 0;
+    /* ===== FAVORITES TAB ===== */
     }
-    .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    }
+    }
+    }
+    }
+
+    /* ===== CLEAR CHAT BUTTON ===== */
+    .clear-chat-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--danger);
+      background: transparent;
+      color: var(--danger);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 600;
+    }
+    .clear-chat-btn:hover { background: rgba(239,68,68,0.1); }
   </style>
+<base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
 <div class="stage-bg"></div>
+<div class="spotlight-left"></div>
+<div class="spotlight-right"></div>
+<div class="particles">
+  <div class="particle" style="bottom:-10%;left:5%;"></div>
+  <div class="particle" style="bottom:-10%;left:15%;"></div>
+  <div class="particle" style="bottom:-10%;left:25%;"></div>
+  <div class="particle" style="bottom:-10%;left:35%;"></div>
+  <div class="particle" style="bottom:-10%;left:45%;"></div>
+  <div class="particle" style="bottom:-10%;left:55%;"></div>
+  <div class="particle" style="bottom:-10%;left:65%;"></div>
+  <div class="particle" style="bottom:-10%;left:75%;"></div>
+  <div class="particle" style="bottom:-10%;left:85%;"></div>
+  <div class="particle" style="bottom:-10%;left:95%;"></div>
+</div>
 
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
@@ -1189,12 +1779,12 @@
       <div class="header-left">
         <h1>🎸 Sonora <span>Fan</span></h1>
       </div>
-      <button onclick="showCreateModal()" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:700;cursor:pointer;">+ Nova sala</button>
+      <button style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'" onclick="showCreateModal()">+ Nova sala</button>
     </div>
     <div class="lobby">
       <div class="lobby-top">
         <h2>Salas disponíveis</h2>
-        <button onclick="joinRandomRoom()">🎲 Sala aleatória</button>
+        <button style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'" onclick="joinRandomRoom()">🎲 Sala aleatória</button>
       </div>
       <div class="room-grid" id="roomGrid">
         <div class="empty-state">
@@ -1215,23 +1805,37 @@
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
-        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        
+        
+        <button class="theme-toggle" onclick="toggleTheme()" title="Tema" id="themeBtn">🌙</button>
+
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
     </div>
 
     <div class="room-layout">
       <div class="stage">
-        <!-- BANNER -->
-        <a href="https://www.instagram.com/terrasonora/" target="_blank" rel="noopener noreferrer" class="terra-banner">
-          <img src="https://iili.io/Ciid52s.jpg" alt="Terra Sonora">
+        <!-- TERRA SONORA BANNER -->
+        <a href="https://www.instagram.com/terrasonora/" target="_blank" rel="noopener noreferrer" class="terra-banner" style="display:block;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);width:100%;height:320px;cursor:pointer;flex-shrink:0;">
+          <img src="https://iili.io/Ciid52s.jpg" 
+               alt="Terra Sonora — Siga no Instagram" 
+               style="width:100%;height:100%;display:block;object-fit:cover;background:linear-gradient(180deg,#0a0a14,#050508);">
         </a>
 
         <!-- PLAYER -->
         <div class="player-section">
           <div class="player-header">
-            <span class="now-playing-label">🎵 Tocando agora</span>
-            <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
+            <span class="now-playing-label">Tocando agora</span>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div class="equalizer" id="equalizer">
+                <div class="eq-bar" style="height:8px;"></div>
+                <div class="eq-bar" style="height:14px;"></div>
+                <div class="eq-bar" style="height:6px;"></div>
+                <div class="eq-bar" style="height:18px;"></div>
+                <div class="eq-bar" style="height:10px;"></div>
+              </div>
+              <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
+            </div>
           </div>
           <div id="youtube-player"></div>
           <div class="player-info">
@@ -1242,34 +1846,28 @@
               <div class="track-dj" id="trackDj"></div>
             </div>
           </div>
-          <div class="player-controls">
-            <div class="progress-bar" id="progressBar" onclick="handleProgressClick(event)">
-              <div class="progress-fill" id="progressFill"></div>
-            </div>
+          <div class="progress-section">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
             <div class="progress-time">
               <span id="currentTime">0:00</span>
               <span id="totalTime">0:00</span>
             </div>
-            <div class="volume-control">
-              <span class="vol-icon">🔊</span>
-              <input type="range" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
-              <span class="vol-value" id="volumeValue">80%</span>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+              <span style="font-size:14px;">🔊</span>
+              <input type="range" id="volumeSlider" min="0" max="100" value="80" style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer;" oninput="setVolume(this.value)">
+              <span id="volumeValue" style="font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;">80%</span>
             </div>
           </div>
+          <!-- Voto removido -->
         </div>
 
         <!-- QUEUE -->
         <div class="queue-section">
           <div class="queue-header">
-            <span>📋 Fila de músicas</span>
-            <span id="queueCount">0 músicas</span>
+            <span>Fila de músicas</span>
+            <span id="queueCount" style="color:var(--text-muted);font-size:13px;font-weight:600;">0 músicas</span>
           </div>
-          <div class="queue-list" id="queueList">
-            <div class="empty-queue">
-              <div class="icon">🎵</div>
-              <p>Fila vazia. Adicione uma música!</p>
-            </div>
-          </div>
+          <div class="queue-list" id="queueList"></div>
         </div>
 
         <!-- ADD SONG -->
@@ -1277,47 +1875,45 @@
           <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="handleSongUrlInput()" onpaste="setTimeout(handleSongUrlInput, 0)">
           <button id="addBtn" onclick="addSong()">Adicionar</button>
         </div>
-        <div class="song-preview hidden" id="songPreview">
+        <div class="song-preview hidden" id="songPreview" aria-live="polite">
           <div class="song-preview-thumb" id="songPreviewThumb">🎵</div>
           <div class="song-preview-info">
-            <div class="song-preview-title" id="songPreviewTitle">Prévia</div>
+            <div class="song-preview-title" id="songPreviewTitle">Prévia da música</div>
             <div class="song-preview-artist" id="songPreviewArtist">Cole um link do YouTube</div>
+            <div class="song-preview-status" id="songPreviewStatus"></div>
           </div>
           <div class="song-preview-actions hidden" id="songPreviewActions">
-            <button class="song-preview-confirm" onclick="confirmAddSong()">✓ Adicionar</button>
-            <button class="song-preview-cancel" onclick="cancelSongPreview()">✕</button>
+            <button class="song-preview-confirm" id="songPreviewConfirmBtn" onclick="confirmAddSong()">✓ Adicionar à fila</button>
+            <button class="song-preview-cancel" onclick="cancelSongPreview()">✕ Cancelar</button>
           </div>
         </div>
         <div class="cooldown-text hidden" id="cooldownText"></div>
       </div>
 
-      <!-- SIDEBAR -->
       <div class="sidebar">
-        <!-- USERS -->
-        <div class="users-panel">
+        <div class="users-panel" style="padding:14px 18px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-secondary);">
-              <span>👥</span>
-              <span id="userCount">0</span> ouvinte<span id="userCountPlural">s</span>
+            <div style="display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:14px;font-weight:600;">
+              <span style="font-size:18px;">👥</span>
+              <span id="userCount">0</span> ouvinte<span id="userCountPlural">s</span> na sala
             </div>
-            <span class="listener-dot"></span>
-          </div>
-          <div class="user-list" id="userList"></div>
-        </div>
-
-        <!-- HISTORY -->
-        <div class="users-panel" style="border-bottom: none; flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
-          <div class="panel-header">🎵 Tocadas recentemente</div>
-          <div class="history-list" id="historyList">
-            <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px 0;">Nenhuma música tocada ainda</div>
+            <span class="listener-dot" style="position:static;"></span>
           </div>
         </div>
 
-        <!-- CHAT -->
-        <div class="chat-panel" style="border-top: 1px solid var(--border); min-height: 200px;">
+        <!-- HISTÓRICO DE MÚSICAS -->
+        <div class="users-panel" style="padding:14px 18px;border-bottom:1px solid var(--border);max-height:200px;overflow-y:auto;">
+          <div class="panel-header" style="display:flex;align-items:center;gap:6px;">
+            <span>🎵</span> Tocadas recentemente
+          </div>
+          <div id="historyList" style="display:flex;flex-direction:column;gap:6px;">
+            <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px 0;">Nenhuma música tocada ainda</div>
+          </div>
+        </div>
+        <div class="chat-panel">
           <div class="chat-messages" id="chatBox"></div>
           <button class="new-messages-pill hidden" id="newMessagesPill" onclick="scrollChatToBottom()">↓ Novas mensagens</button>
-          <div id="clearChatContainer" style="display:none;padding:4px 14px;flex-shrink:0;">
+          <div id="clearChatContainer" style="display:none;padding:0 16px 8px;">
             <button class="clear-chat-btn" onclick="clearChat()">🗑️ Limpar chat</button>
           </div>
           <div class="typing-indicator" id="typingIndicator">
@@ -1328,8 +1924,8 @@
               <div class="typing-dot"></div>
             </div>
           </div>
-          <div class="chat-input-bar">
-            <button class="emoji-btn" onclick="toggleEmojiPanel()">😀</button>
+          <div class="chat-input-bar" style="position:relative;">
+            <button class="emoji-btn" onclick="toggleEmojiPanel()" title="Emojis">😀</button>
             <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()" oninput="handleTyping()">
             <button onclick="sendMsg()">Enviar</button>
             <div class="emoji-panel" id="emojiPanel">
@@ -1373,7 +1969,7 @@
   </div>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL CRIAR SALA -->
 <div class="modal-overlay" id="createModal">
   <div class="modal">
     <h3>Criar nova sala</h3>
@@ -1396,15 +1992,12 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- CONFETTI -->
 <div class="confetti-container" id="confettiContainer"></div>
 
-<!-- RODAPÉ -->
-<div class="footer">
-  Desenvolvido por <a href="https://www.linkedin.com/in/ggiuntini/" target="_blank">Guilherme Giuntini</a>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
 <script>
+
 const socket = io();
 let myName = '';
 let myAdminPass = '';
@@ -1427,13 +2020,28 @@ let chatBulkRender = false;
 
 // ========== CENSOR ==========
 const badWords = [
+  // Português
   'porra','caralho','merda','bosta','puta','viado','bicha','corno','foda','foder',
   'cu','cuzão','cuzona','arrombado','arrombada','filho da puta','fdp','desgraçado',
   'desgraçada','vagabundo','vagabunda','escroto','escrota','idiota','imbecil',
   'retardado','retardada','buceta','pica','rola','pinto','piroca','cacete',
   'punheta','siririca','boquete','anal','xota','xoxota','pepeca','xereca',
-  'fuck','fucking','shit','bitch','asshole','dick','cock','pussy','cunt',
-  'whore','slut','bastard','damn','hell','nigger','nigga','retard','fag','faggot'
+  'caralho','crlh','krl','pqp','pnc','vtnc','vsf','fdp','foda-se','fodase',
+  'cuzao','bct','pkt','pucta','putaria','putinha','putao','viadinho','bichinha',
+  'viadao','bicha','bixinha','bixona','corno','corninho','cornao','otario',
+  'otaria','babaca','babacão','cretino','cretina','estupido','estupida',
+  'imbecil','idiota','lazarento','lazarenta','maldito','maldita','maldicao',
+  'nojento','nojenta','nojentao','sacana','safado','safada','tarado','tarada',
+  'vadia','vadio','vagabundo','vagabunda','xarope','xexelento','xexelenta',
+  // Inglês
+  'fuck','fucking','fucked','fucker','fuckin','shit','shitty','bitch','asshole',
+  'dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger',
+  'nigga','retard','fag','faggot','dyke','twat','wanker','bollocks','arsehole',
+  'cum','jizz','tits','boobs','dildo','blowjob','handjob','milf','anal','rape',
+  'rapist','pedophile','pedo','motherfucker','mf','stfu','gtfo','kys','fk','fck',
+  'sh1t','b1tch','d1ck','c0ck','p0rn','porn','xxx','sex','sexy','nude','naked',
+  'masturbate','masturbation','orgasm','ejaculate','penis','vagina','clitoris',
+  'testicles','scrotum','condom','erection','erect','boner','hardon','wetdream',
 ];
 
 function censorText(text) {
@@ -1454,12 +2062,16 @@ function showScreen(id) {
   show('screen-' + id);
 }
 
+// Mantém os cards de sala (ao vivo, ouvintes) atualizados enquanto o lobby está visível
+setInterval(() => {
+  const lobbyEl = document.getElementById('screen-lobby');
+  if (lobbyEl && !lobbyEl.classList.contains('hidden')) loadRooms();
+}, 15000);
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
-
 function toast(msg, type) {
   const el = $('toast');
   el.textContent = msg;
@@ -1467,12 +2079,10 @@ function toast(msg, type) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3500);
 }
-
 function formatTime(date) {
   const d = new Date(date);
   return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
 }
-
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
@@ -1483,8 +2093,13 @@ function formatDuration(seconds) {
 function toggleAdminField() {
   const check = $('isAdminCheck');
   const pass = $('adminPass');
-  if (check.checked) { show('adminPass'); setTimeout(() => pass.focus(), 100); }
-  else { hide('adminPass'); pass.value = ''; }
+  if (check.checked) {
+    show('adminPass');
+    setTimeout(() => pass.focus(), 100);
+  } else {
+    hide('adminPass');
+    pass.value = '';
+  }
 }
 
 function doLogin() {
@@ -1512,7 +2127,7 @@ async function loadRooms() {
         <div class="empty-state">
           <div class="icon">🎵</div>
           <p>Nenhuma sala ainda. Crie a primeira!</p>
-          <button style="padding:12px 26px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:700;cursor:pointer;" onclick="showCreateModal()">+ Criar sala</button>
+          <button class="empty-state-cta" onclick="showCreateModal()">+ Criar sala</button>
         </div>`;
       return;
     }
@@ -1524,23 +2139,42 @@ async function loadRooms() {
 
       const track = r.currentTrack;
       const thumbImg = track
-        ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">`
+        ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.style.display='none'">`
         : `<div class="thumb-fallback">🎧</div>`;
+      const nowPlaying = (r.isPlaying && track)
+        ? `<div class="room-now-playing">${escapeHtml(track.title)}</div>`
+        : '';
+      const eq = r.isPlaying
+        ? `<div class="equalizer room-eq"><div class="eq-bar" style="height:6px;"></div><div class="eq-bar" style="height:12px;"></div><div class="eq-bar" style="height:5px;"></div><div class="eq-bar" style="height:14px;"></div></div>`
+        : '';
       const liveBadge = r.isPlaying
         ? `<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>`
-        : `<div class="room-live-badge" style="opacity:0.6;">⏸ PARADA</div>`;
+        : `<div class="room-live-badge" style="opacity:0.7;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);"></span>PARADA</div>`;
+
+      let miniProgress = '';
+      let timeRemaining = '';
+      if (r.isPlaying && track && track.duration) {
+        const pct = Math.min(100, (track.position / track.duration) * 100);
+        const remaining = Math.max(0, track.duration - track.position);
+        miniProgress = `<div class="room-mini-progress"><div class="room-mini-progress-fill" style="width:${pct}%;"></div></div>`;
+        timeRemaining = `<span class="room-time-remaining">⏱️ ${remaining < 30 ? 'acabando' : formatDuration(remaining) + ' restantes'}</span>`;
+      }
 
       card.innerHTML = `
         <div class="room-thumb">
           ${thumbImg}
           ${liveBadge}
           <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div>
+          ${eq}
+          ${nowPlaying}
+          ${miniProgress}
         </div>
         <div class="room-card-body">
           <h3>${escapeHtml(r.name)}</h3>
           <div class="meta">
             <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
             <span>🎶 ${r.queueLength || 0} na fila</span>
+            ${timeRemaining}
           </div>
         </div>
       `;
@@ -1569,15 +2203,6 @@ async function createRoom() {
       joinRoom(data.slug);
     }
   } catch(e) { toast('Erro ao criar sala', 'error'); }
-}
-
-async function joinRandomRoom() {
-  try {
-    const res = await fetch('/api/rooms/random');
-    const data = await res.json();
-    if (data.slug) joinRoom(data.slug);
-    else toast('Nenhuma sala disponível', 'error');
-  } catch(e) { toast('Erro ao buscar sala', 'error'); }
 }
 
 // ========== ROOM ==========
@@ -1615,7 +2240,7 @@ function onYouTubeIframeAPIReady() { initPlayer(); }
 function initPlayer() {
   if (player) return;
   player = new YT.Player('youtube-player', {
-    height: '280',
+    height: '320',
     width: '100%',
     playerVars: {
       autoplay: 1,
@@ -1636,20 +2261,27 @@ function initPlayer() {
 
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
+    updateEqualizer(true);
     try {
       const duration = player.getDuration();
       if (duration > 0) socket.emit('videoDuration', { duration: Math.floor(duration) });
     } catch(e) {}
   }
+  if (event.data === YT.PlayerState.PAUSED) updateEqualizer(false);
   if (event.data === YT.PlayerState.ENDED) {
+    updateEqualizer(false);
+    // Notifica servidor que acabou, mas o servidor decide se avança (proteção contra duplo avanço)
     socket.emit('videoEnded');
   }
 }
 
 function onPlayerError(event) {
   console.log('YouTube error:', event.data);
-  toast('Erro no vídeo. Pulando...', 'error');
-  setTimeout(() => socket.emit('videoEnded'), 2000);
+  toast('Este vídeo não permite reprodução. Pulando...', 'error');
+  // Notifica servidor para avançar (o servidor gerencia a fila centralmente)
+  setTimeout(() => {
+    socket.emit('videoEnded');
+  }, 2000);
 }
 
 function syncPlayer(state) {
@@ -1657,18 +2289,22 @@ function syncPlayer(state) {
   currentRoomData = state;
   const track = state.queue[state.currentIndex];
 
+  // SEMPRE renderiza a fila primeiro, mesmo sem track
   renderQueue(state.queue, state.currentIndex);
 
   if (!track) {
+    // Fila vazia - reseta tudo
     currentTrackId = null;
     $('trackTitle').textContent = 'Fila vazia';
-    $('trackArtist').textContent = 'Adicione uma música';
+    $('trackArtist').textContent = 'Adicione uma música do YouTube';
     $('trackDj').textContent = '';
     $('trackCover').innerHTML = '🎵';
     $('progressFill').style.width = '0%';
     $('currentTime').textContent = '0:00';
     $('totalTime').textContent = '0:00';
-    try { if (player && player.stopVideo) player.stopVideo(); } catch(e) {}
+    try {
+      if (player && player.stopVideo) player.stopVideo();
+    } catch(e) {}
     return;
   }
 
@@ -1681,9 +2317,12 @@ function syncPlayer(state) {
         videoId: track.id,
         startSeconds: Math.floor(state.position)
       });
-    } catch(e) { console.error('Erro ao carregar vídeo:', e); }
+    } catch(e) {
+      console.error('Erro ao carregar vídeo:', e);
+    }
     updateTrackInfo(track);
   } else {
+    // Mesma música - só sincroniza posição
     try {
       const currentPos = player.getCurrentTime();
       if (Math.abs(currentPos - state.position) > 4) {
@@ -1696,7 +2335,7 @@ function syncPlayer(state) {
 function updateTrackInfo(track) {
   $('trackTitle').textContent = track.title;
   $('trackArtist').textContent = track.artist;
-  $('trackDj').textContent = '🎧 Adicionado por ' + (track.dj || 'Sistema');
+  onTrackChange(track);
   $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
 }
 
@@ -1706,11 +2345,17 @@ socket.on('roomState', (state) => {
     ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
   const newTrackId = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
 
-  if (newTrackId && newTrackId !== prevTrackId) currentTrackId = null;
+  // Se a música mudou, força recarregamento do player
+  if (newTrackId && newTrackId !== prevTrackId) {
+    currentTrackId = null;
+  }
+
   currentRoomData = state;
   syncPlayer(state);
   renderHistory(state.history);
 });
+
+
 
 socket.on('queueEmpty', () => {
   currentTrackId = null;
@@ -1721,12 +2366,18 @@ socket.on('queueEmpty', () => {
   $('progressFill').style.width = '0%';
   $('currentTime').textContent = '0:00';
   $('totalTime').textContent = '0:00';
-  try { if (player && player.stopVideo) player.stopVideo(); } catch(e) {}
+  try {
+    if (player && player.stopVideo) player.stopVideo();
+  } catch(e) {}
   toast('Fila encerrada! Adicione mais músicas.', 'success');
 });
 
-socket.on('users', (users) => { renderUsers(users); });
+socket.on('users', (users) => {
+  renderUsers(users);
+});
+
 socket.on('chat', (msg) => { renderMessage(msg); });
+
 socket.on('chatHistory', (messages) => {
   $('chatBox').innerHTML = '';
   chatBulkRender = true;
@@ -1735,6 +2386,7 @@ socket.on('chatHistory', (messages) => {
   hideNewMessagesPill();
   scrollChatToBottom();
 });
+
 socket.on('error', (msg) => { toast(msg, 'error'); });
 
 socket.on('isAdmin', (isAdmin) => {
@@ -1761,13 +2413,20 @@ socket.on('typing', ({ name, isTyping }) => {
   }
 });
 
-socket.on('chatUpdated', (msg) => { updateMessageInPlace(msg); });
+socket.on('chatUpdated', (msg) => {
+  // Atualiza reações em mensagens existentes, mantendo a posição no chat
+  updateMessageInPlace(msg);
+});
+
 socket.on('chatCleared', () => {
   $('chatBox').innerHTML = '';
   hideNewMessagesPill();
   toast('Chat limpo pelo admin', 'success');
 });
-socket.on('confetti', () => { launchConfetti(); });
+
+socket.on('confetti', () => {
+  launchConfetti();
+});
 
 socket.on('musicLiked', ({ msgId, likes }) => {
   const btn = document.getElementById('like-' + msgId);
@@ -1791,18 +2450,6 @@ setInterval(() => {
     }
   } catch(e) {}
 }, 1000);
-
-function handleProgressClick(event) {
-  if (!player || !player.getDuration) return;
-  const bar = $('progressBar');
-  const rect = bar.getBoundingClientRect();
-  const x = (event.clientX - rect.left) / rect.width;
-  const duration = player.getDuration();
-  if (duration > 0) {
-    const seekTo = x * duration;
-    socket.emit('seek', { position: seekTo });
-  }
-}
 
 // ========== QUEUE ==========
 function renderQueue(queue, currentIndex) {
@@ -1829,13 +2476,15 @@ function renderQueue(queue, currentIndex) {
       <div class="queue-thumb">
         <img src="https://img.youtube.com/vi/${track.id}/default.jpg" alt="" onerror="this.style.display='none'">
       </div>
-      <span class="queue-title">${escapeHtml(track.title)}</span>
+      <span class="queue-title">${escapeHtml(track.title)} — ${escapeHtml(track.artist)}</span>
       <span class="queue-dj">${escapeHtml(track.dj || 'Sistema')}</span>
       ${showRemove && i !== currentIndex ? `<button class="queue-remove" onclick="event.stopPropagation(); removeFromQueue(${i})" title="Remover">×</button>` : ''}
     `;
     if (i !== currentIndex && amIAdmin) {
       div.onclick = () => socket.emit('skipTo', i);
       div.style.cursor = 'pointer';
+    } else if (i !== currentIndex) {
+      div.style.cursor = 'default';
     }
     list.appendChild(div);
   });
@@ -1860,7 +2509,9 @@ function extractYouTubeId(rawUrl) {
   try {
     const u = new URL(normalized);
     const host = u.hostname.replace(/^(www\.|m\.|music\.)/i, '');
-    if (host === 'youtu.be') return u.pathname.split('/').filter(Boolean)[0] || '';
+    if (host === 'youtu.be') {
+      return u.pathname.split('/').filter(Boolean)[0] || '';
+    }
     if (host.endsWith('youtube.com')) {
       const fromQuery = u.searchParams.get('v');
       if (fromQuery) return fromQuery;
@@ -1884,6 +2535,7 @@ function setSongPreview(state, data) {
   const thumb = $('songPreviewThumb');
   const title = $('songPreviewTitle');
   const artist = $('songPreviewArtist');
+  const status = $('songPreviewStatus');
   const actions = $('songPreviewActions');
 
   if (!data && state !== 'loading' && state !== 'error') {
@@ -1892,6 +2544,7 @@ function setSongPreview(state, data) {
   }
 
   box.classList.remove('hidden');
+  status.textContent = '';
   if (actions) actions.classList.add('hidden');
 
   if (state === 'loading') {
@@ -1903,30 +2556,33 @@ function setSongPreview(state, data) {
 
   if (state === 'error') {
     thumb.textContent = '⚠️';
-    title.textContent = 'Link não reconhecido';
-    artist.textContent = 'Confira o link do YouTube';
+    title.textContent = 'Link ainda não reconhecido';
+    artist.textContent = 'Confira se é um link ou ID do YouTube';
     return;
   }
 
   const durBadge = data.duration
     ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>`
     : '';
-  thumb.innerHTML = `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">${durBadge}`;
+  thumb.innerHTML = `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="Thumbnail do YouTube" onerror="this.parentElement.textContent='🎵'">${durBadge}`;
   title.textContent = data.title;
   artist.textContent = data.artist;
+  status.textContent = data.duration ? `⏱ ${formatDuration(data.duration)} — confirme para adicionar` : 'Confirme para adicionar';
   if (actions) actions.classList.remove('hidden');
 }
 
 function clearSongPreview() {
   songPreviewData = null;
   songPreviewForUrl = '';
-  $('songPreview').classList.add('hidden');
+  const box = $('songPreview');
+  if (box) box.classList.add('hidden');
 }
 
 function cancelSongPreview() {
-  $('songUrl').value = '';
+  const input = $('songUrl');
+  input.value = '';
   clearSongPreview();
-  $('songUrl').focus();
+  input.focus();
 }
 
 function handleSongUrlInput() {
@@ -1937,7 +2593,10 @@ function handleSongUrlInput() {
 function previewSongFromInput() {
   const input = $('songUrl');
   const url = input.value.trim();
-  if (!url) { clearSongPreview(); return; }
+  if (!url) {
+    clearSongPreview();
+    return;
+  }
 
   const videoId = extractYouTubeId(url);
   if (!videoId) {
@@ -1956,6 +2615,7 @@ function previewSongFromInput() {
   setSongPreview('loading');
   const requestId = ++songPreviewRequest;
 
+  // Busca título, canal e duração real no servidor (com fallback para noembed)
   fetch(`/api/video-info?id=${videoId}`)
     .then(r => { if (!r.ok) throw new Error('info indisponível'); return r.json(); })
     .then(data => {
@@ -2002,11 +2662,13 @@ function addSong() {
     return;
   }
 
+  // Prévia pronta para este link → confirma e adiciona
   if (songPreviewForUrl === url && songPreviewData && songPreviewData.id === videoId) {
     confirmAddSong();
     return;
   }
 
+  // Sem prévia ainda → gera a prévia primeiro; o usuário confirma depois
   previewSongFromInput();
   toast('Confira a prévia e confirme para adicionar');
 }
@@ -2064,25 +2726,41 @@ function startCooldown() {
 // ========== USERS ==========
 function renderUsers(users) {
   const count = users.length;
-  $('userCount').textContent = count;
-  $('userCountPlural').textContent = count === 1 ? '' : 's';
+  const countEl = $('userCount');
+  const pluralEl = $('userCountPlural');
+  if (countEl) countEl.textContent = count;
+  if (pluralEl) pluralEl.textContent = count === 1 ? '' : 's';
 
-  const list = $('userList');
-  list.innerHTML = '';
-  users.forEach(u => {
-    const div = document.createElement('div');
-    div.className = 'user';
-    const avatar = u.avatar || '👤';
-    const adminTag = u.isAdmin ? '<span class="admin-tag">Admin</span>' : '';
-    div.innerHTML = `
-      <div class="user-avatar" style="background:${u.color}22;color:${u.color};border-color:${u.color}40;">${avatar}</div>
-      <span>${escapeHtml(u.name)}${adminTag}</span>
-    `;
-    list.appendChild(div);
-  });
+  // Renderiza lista de usuários na sidebar (se houver container)
+  const userList = document.querySelector('.user-list');
+  if (userList) {
+    userList.innerHTML = '';
+    users.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'user';
+      const avatar = u.avatar || '👤';
+      const adminTag = u.isAdmin ? '<span class="admin-tag">Admin</span>' : '';
+      div.innerHTML = `
+        <div class="user-avatar" style="background:${u.color}22;color:${u.color};border-color:${u.color}40;">${avatar}</div>
+        <span>${escapeHtml(u.name)}${adminTag}</span>
+      `;
+      userList.appendChild(div);
+    });
+  }
+}
+
+function kickUser(name) {
+  if (!confirm(`Remover ${name} da sala?`)) return;
+  socket.emit('kick', { targetName: name });
+}
+function banUser(name) {
+  if (!confirm(`Banir ${name} permanentemente?`)) return;
+  socket.emit('ban', { targetName: name });
 }
 
 // ========== CHAT ==========
+// Auto-scroll: desce junto com as mensagens quando o usuário está no fim;
+// se estiver lendo mensagens antigas, mostra o botão "Novas mensagens"
 function isChatNearBottom() {
   const box = $('chatBox');
   if (!box) return true;
@@ -2095,11 +2773,20 @@ function scrollChatToBottom() {
   hideNewMessagesPill();
   requestAnimationFrame(() => {
     box.scrollTop = box.scrollHeight;
+    // Segundo frame: garante a posição após render/imagens
+    requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
   });
 }
 
-function showNewMessagesPill() { $('newMessagesPill').classList.remove('hidden'); }
-function hideNewMessagesPill() { $('newMessagesPill').classList.add('hidden'); }
+function showNewMessagesPill() {
+  const pill = $('newMessagesPill');
+  if (pill) pill.classList.remove('hidden');
+}
+
+function hideNewMessagesPill() {
+  const pill = $('newMessagesPill');
+  if (pill) pill.classList.add('hidden');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const box = $('chatBox');
@@ -2115,6 +2802,7 @@ function sendMsg() {
   const text = input.value.trim();
   if (!text) return;
 
+  // Comandos especiais
   if (text === '/confetti') {
     socket.emit('confetti');
     launchConfetti();
@@ -2137,13 +2825,13 @@ function buildMessageElement(msg) {
     div.id = 'music-' + msg._id;
     const likes = msg.musicLikes || 0;
     div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
-        <span style="font-size:14px;">🎵</span>
-        <span style="font-weight:700;color:var(--accent);font-size:12px;">${escapeHtml(msg.user)}</span>
-        <span style="color:var(--text-muted);font-size:11px;">adicionou</span>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:16px;">🎵</span>
+        <span style="font-weight:700;color:var(--accent);font-size:13px;">${escapeHtml(msg.user)}</span>
+        <span style="color:var(--text-muted);font-size:12px;">adicionou uma música</span>
         <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
       </div>
-      <div style="color:var(--text);font-weight:600;font-size:13px;">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
+      <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px;">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
       <button class="music-like-btn${msg.likedBy && msg.likedBy.includes(myName) ? ' liked' : ''}" id="like-${msg._id}" onclick="likeMusic('${msg._id}')">
         ❤️ <span id="like-count-${msg._id}">${likes}</span> curtida${likes !== 1 ? 's' : ''}
       </button>
@@ -2153,15 +2841,19 @@ function buildMessageElement(msg) {
 
   if (msg.isSystem) return null;
 
+  // Detectar menções
   const isMentioned = msg.text && msg.text.includes('@' + myName);
   div.className = 'msg' + (isMentioned ? ' mention-highlight' : '');
   div.id = 'msg-' + msg._id;
 
+  // Processar menções no texto
   let processedText = escapeHtml(msg.text);
   processedText = processedText.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
 
+  // Avatar
   const avatar = msg.avatar || msg.user[0];
 
+  // Reações
   let reactionsHtml = '';
   if (msg.reactions && Object.keys(msg.reactions).length > 0) {
     reactionsHtml = '<div class="msg-reactions">';
@@ -2173,12 +2865,12 @@ function buildMessageElement(msg) {
   }
 
   div.innerHTML = `
-    <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
-      <div style="width:24px;height:24px;border-radius:50%;background:${msg.color || '#888'}22;color:${msg.color || '#888'};display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;border:2px solid ${msg.color || '#888'}40;">${avatar}</div>
+    <div style="display:flex;align-items:flex-start;gap:8px;width:100%;">
+      <div style="width:28px;height:28px;border-radius:50%;background:${msg.color || '#888'}22;color:${msg.color || '#888'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid ${msg.color || '#888'}40;">${avatar}</div>
       <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:4px;margin-bottom:1px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
           <span class="msg-user" style="color:${msg.color || '#fff'};cursor:pointer;" onclick="mentionUser('${escapeHtml(msg.user)}')">${escapeHtml(msg.user)}${msg.isAdmin ? '<span class="msg-admin-badge">Admin</span>' : ''}</span>
-          <span class="msg-time" style="opacity:0.4;">${formatTime(msg.createdAt)}</span>
+          <span class="msg-time" style="opacity:0.5;">${formatTime(msg.createdAt)}</span>
         </div>
         <span class="msg-text">${processedText}</span>
         ${reactionsHtml}
@@ -2201,6 +2893,7 @@ function buildMessageElement(msg) {
 
 function renderMessage(msg) {
   const box = $('chatBox');
+  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
   const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
 
   const div = buildMessageElement(msg);
@@ -2209,12 +2902,14 @@ function renderMessage(msg) {
   box.appendChild(div);
   if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
 
+  // Som de menção
   const isMentioned = msg.text && msg.text.includes('@' + myName);
   if (!msg.isMusic && isMentioned && msg.user !== myName) {
     playMentionSound();
   }
 }
 
+// Atualiza uma mensagem já existente (ex: reação) sem tirá-la do lugar
 function updateMessageInPlace(msg) {
   const existingId = msg.isMusic ? 'music-' + msg._id : 'msg-' + msg._id;
   const existing = document.getElementById(existingId);
@@ -2222,7 +2917,12 @@ function updateMessageInPlace(msg) {
 
   const newDiv = buildMessageElement(msg);
   if (!newDiv) return;
+
   existing.replaceWith(newDiv);
+}
+
+function addSystemMsg(text) {
+  // Notificações de sistema não são exibidas no chat
 }
 
 // ========== THEME ==========
@@ -2234,6 +2934,7 @@ function applyTheme() {
     document.documentElement.style.setProperty('--bg-card', '#ffffff');
     document.documentElement.style.setProperty('--bg-hover', '#f0f0f5');
     document.documentElement.style.setProperty('--border', '#e0e0e8');
+    document.documentElement.style.setProperty('--border-hover', '#d0d0d8');
     document.documentElement.style.setProperty('--text', '#1a1a2e');
     document.documentElement.style.setProperty('--text-secondary', '#666680');
     document.documentElement.style.setProperty('--text-muted', '#9999aa');
@@ -2244,6 +2945,7 @@ function applyTheme() {
     document.documentElement.style.setProperty('--bg-card', '#12121f');
     document.documentElement.style.setProperty('--bg-hover', '#1a1a2e');
     document.documentElement.style.setProperty('--border', '#1e1e35');
+    document.documentElement.style.setProperty('--border-hover', '#2a2a4a');
     document.documentElement.style.setProperty('--text', '#e0f0ff');
     document.documentElement.style.setProperty('--text-secondary', '#88aacc');
     document.documentElement.style.setProperty('--text-muted', '#556677');
@@ -2254,23 +2956,25 @@ function applyTheme() {
     document.documentElement.style.setProperty('--bg-card', '#2d1452');
     document.documentElement.style.setProperty('--bg-hover', '#3a1a6b');
     document.documentElement.style.setProperty('--border', '#4a2080');
+    document.documentElement.style.setProperty('--border-hover', '#5a2a99');
     document.documentElement.style.setProperty('--text', '#ffd6ff');
     document.documentElement.style.setProperty('--text-secondary', '#c77dff');
     document.documentElement.style.setProperty('--text-muted', '#9d4edd');
     $('themeBtn').textContent = '🌅';
   } else {
+    // dark (padrão)
     document.documentElement.style.setProperty('--bg', '#050508');
     document.documentElement.style.setProperty('--bg-elevated', '#0a0a10');
     document.documentElement.style.setProperty('--bg-card', '#0f0f18');
     document.documentElement.style.setProperty('--bg-hover', '#161620');
     document.documentElement.style.setProperty('--border', '#1e1e2e');
+    document.documentElement.style.setProperty('--border-hover', '#2a2a3e');
     document.documentElement.style.setProperty('--text', '#f0f0f8');
     document.documentElement.style.setProperty('--text-secondary', '#9a9ab0');
     document.documentElement.style.setProperty('--text-muted', '#555570');
     $('themeBtn').textContent = '🌙';
   }
 }
-
 function toggleTheme() {
   const themes = ['dark', 'light', 'neon', 'vaporwave'];
   const idx = themes.indexOf(currentTheme);
@@ -2286,38 +2990,66 @@ function setVolume(val) {
   }
 }
 
+function shareRoom() {
+  if (!currentRoomSlug) return;
+  const url = window.location.origin + '/?room=' + currentRoomSlug;
+  navigator.clipboard.writeText(url).then(() => {
+    toast('Link copiado! Compartilhe com seus amigos.', 'success');
+  }).catch(() => {
+    toast(url, 'success');
+  });
+}
+
+async function joinRandomRoom() {
+  try {
+    const res = await fetch('/api/rooms/random');
+    const data = await res.json();
+    if (data.slug) {
+      joinRoom(data.slug);
+    } else {
+      toast('Nenhuma sala disponível', 'error');
+    }
+  } catch(e) {
+    toast('Erro ao buscar sala', 'error');
+  }
+}
+
 function renderHistory(history) {
   const list = $('historyList');
   if (!list) return;
   if (!history || history.length === 0) {
-    list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px 0;">Nenhuma música tocada ainda</div>';
+    list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px 0;">Nenhuma música tocada ainda</div>';
     return;
   }
   list.innerHTML = '';
   history.slice(0, 10).forEach(h => {
     const div = document.createElement('div');
-    div.className = 'history-item';
+    div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:all 0.15s;font-size:12px;';
+    div.onmouseenter = () => div.style.background = 'var(--bg-hover)';
+    div.onmouseleave = () => div.style.background = 'transparent';
     div.onclick = () => {
       $('songUrl').value = 'https://youtube.com/watch?v=' + h.id;
       handleSongUrlInput();
     };
     div.innerHTML = `
-      <img src="https://img.youtube.com/vi/${h.id}/default.jpg" alt="" onerror="this.style.display='none'">
-      <div class="info">
-        <div class="title">${escapeHtml(h.title)}</div>
-        <div class="sub">${escapeHtml(h.artist)} • ${escapeHtml(h.dj || 'Sistema')}</div>
+      <img src="https://img.youtube.com/vi/${h.id}/default.jpg" style="width:40px;height:30px;border-radius:4px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
+      <div style="flex:1;min-width:0;overflow:hidden;">
+        <div style="color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(h.title)}</div>
+        <div style="color:var(--text-muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(h.artist)} • ${escapeHtml(h.dj || 'Sistema')}</div>
       </div>
     `;
     list.appendChild(div);
   });
 }
 
+// ========== AVATAR ==========
 function selectAvatar(el) {
   document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
   el.classList.add('selected');
   myAvatar = el.dataset.emoji;
 }
 
+// ========== CONFETTI ==========
 function launchConfetti() {
   const container = $('confettiContainer');
   const colors = ['#ff6b35', '#7c3aed', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4'];
@@ -2334,12 +3066,14 @@ function launchConfetti() {
   }
 }
 
+// ========== CLEAR CHAT (admin) ==========
 function clearChat() {
   if (!amIAdmin) return;
   if (!confirm('Limpar todo o histórico de mensagens?')) return;
   socket.emit('clearChat');
 }
 
+// ========== TYPING ==========
 function handleTyping() {
   if (!isTyping) {
     isTyping = true;
@@ -2352,27 +3086,28 @@ function handleTyping() {
   }, 2000);
 }
 
+// ========== REACTIONS ==========
 function toggleReactionPicker(msgId) {
   const picker = document.getElementById('react-picker-' + msgId);
   if (picker) picker.classList.toggle('show');
 }
-
 function addReaction(msgId, emoji) {
   socket.emit('addReaction', { msgId, emoji });
   const picker = document.getElementById('react-picker-' + msgId);
   if (picker) picker.classList.remove('show');
 }
 
+// ========== MENTION ==========
 function mentionUser(name) {
   const input = $('chatInput');
   input.value += '@' + name + ' ';
   input.focus();
 }
 
+// ========== EMOJI PICKER ==========
 function toggleEmojiPanel() {
   $('emojiPanel').classList.toggle('show');
 }
-
 function insertEmoji(emoji) {
   const input = $('chatInput');
   input.value += emoji;
@@ -2380,6 +3115,16 @@ function insertEmoji(emoji) {
   $('emojiPanel').classList.remove('show');
 }
 
+// ========== EQUALIZER ==========
+function updateEqualizer(playing) {
+  const bars = document.querySelectorAll('.eq-bar');
+  bars.forEach(bar => {
+    bar.style.animationPlayState = playing ? 'running' : 'paused';
+    if (!playing) bar.style.height = '4px';
+  });
+}
+
+// ========== MENTION SOUND ==========
 function playMentionSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2397,6 +3142,7 @@ function playMentionSound() {
   } catch(e) {}
 }
 
+// ========== MUSIC LIKE ==========
 function likeMusic(msgId) {
   socket.emit('likeMusic', { msgId });
 }
@@ -2404,5 +3150,11 @@ function likeMusic(msgId) {
 // ========== INIT ==========
 $('loginName').focus();
 </script>
+
+<!-- RODAPÉ -->
+<div style="text-align:center;padding:20px;border-top:1px solid var(--border);color:var(--text-muted);font-size:13px;background:var(--bg-elevated);position:relative;z-index:1;">
+  Desenvolvido por <a href="https://www.linkedin.com/in/ggiuntini/" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600;">Guilherme Giuntini</a>
+</div>
+
 </body>
 </html>
