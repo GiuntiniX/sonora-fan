@@ -3,6 +3,8 @@ const http = require('http');
 const https = require('https');
 const { Server } = require('socket.io');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
@@ -10,6 +12,7 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(cookieParser());
 
 // ========== CONFIG ==========
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
@@ -18,6 +21,7 @@ const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899'
 // ========== AUTENTICAÇÃO LOCAL ==========
 // Em produção, use um banco de dados real!
 const users = new Map(); // email -> { nome, email, senha, genero, regiao, estilos, avatar, criadoEm }
+const sessions = new Map(); // token -> email
 
 // ========== ESTADO ==========
 const rooms = new Map();
@@ -181,7 +185,7 @@ app.post('/api/signup', (req, res) => {
   res.json({ success: true, nome, email });
 });
 
-// LOGIN
+// LOGIN - COM SESSÃO
 app.post('/api/login', (req, res) => {
   const { email, senha } = req.body;
 
@@ -198,21 +202,50 @@ app.post('/api/login', (req, res) => {
     return res.status(401).json({ error: 'Senha incorreta' });
   }
 
-  // Retorna dados do usuário (sem a senha)
+  // Cria token de sessão
+  const token = crypto.randomBytes(64).toString('hex');
+  sessions.set(token, email);
+
+  // Define cookie com o token
+  res.cookie('sessionToken', token, {
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+    sameSite: 'lax',
+    path: '/'
+  });
+
   const { senha: _, ...userData } = user;
   res.json({ success: true, user: userData });
 });
 
-// VERIFICA SESSÃO
-app.post('/api/me', (req, res) => {
-  const { email } = req.body;
-  if (!email) {
+// LOGOUT
+app.post('/api/logout', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (token) {
+    sessions.delete(token);
+  }
+  res.clearCookie('sessionToken');
+  res.json({ success: true });
+});
+
+// VERIFICA SESSÃO - VIA COOKIE
+app.get('/api/me', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) {
     return res.status(401).json({ error: 'Não autenticado' });
   }
+
+  const email = sessions.get(token);
+  if (!email) {
+    return res.status(401).json({ error: 'Sessão inválida' });
+  }
+
   const user = users.get(email);
   if (!user) {
+    sessions.delete(token);
     return res.status(401).json({ error: 'Usuário não encontrado' });
   }
+
   const { senha: _, ...userData } = user;
   res.json({ success: true, user: userData });
 });
