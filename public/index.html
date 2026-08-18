@@ -34,12 +34,22 @@
       --accent2-glow: rgba(124,58,237,0.3);
     }
 
+    /* ===== FIXAR PÁGINA ===== */
+    html, body {
+      overflow: hidden;
+      height: 100%;
+      max-height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      overflow-x: hidden;
+      max-height: 100vh;
+      overflow: hidden;
       background-image: var(--bg-image);
       background-size: cover;
       background-position: center;
@@ -372,15 +382,42 @@
     }
 
     /* ===== APP ===== */
-    .app { position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .app { 
+      position: relative; 
+      z-index: 1; 
+      display: flex; 
+      flex-direction: column; 
+      flex: 1; 
+      min-height: 0;
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+    }
     .hidden { display: none !important; }
-    .screen { display: none; flex-direction: column; flex: 1; }
-    .screen.active { display: flex; }
+    .screen { 
+      display: none; 
+      flex-direction: column; 
+      flex: 1;
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+    }
+    .screen.active { 
+      display: flex;
+      height: 100%;
+      max-height: 100%;
+    }
 
     .header {
-      display: flex; align-items: center; justify-content: space-between; padding: 12px 24px;
-      border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.5); backdrop-filter: blur(20px);
-      position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border); 
+      background: rgba(0,0,0,0.5); 
+      backdrop-filter: blur(20px);
+      flex-shrink: 0;
+      z-index: 50;
     }
     .header-left { display: flex; align-items: center; gap: 16px; }
     .header h1 { font-size: 18px; font-weight: 700; }
@@ -448,7 +485,14 @@
     .admin-badge.hidden { display: none; }
 
     /* ===== LOBBY ===== */
-    .lobby { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
+    .lobby { 
+      padding: 32px; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      width: 100%; 
+      flex: 1;
+      overflow-y: auto;
+    }
     .lobby-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
     .lobby-top h2 { font-size: 24px; font-weight: 700; }
     .lobby-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -483,8 +527,10 @@
       flex: 1;
       min-height: 0;
       height: 100%;
+      max-height: 100%;
+      overflow: hidden;
     }
-    #screen-room .app { height: 100vh; height: 100dvh; overflow: hidden; }
+    #screen-room .app { height: 100%; max-height: 100%; overflow: hidden; }
     @media (max-width: 1024px) { .room-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 420px; } }
 
     .stage {
@@ -496,6 +542,8 @@
       min-height: 0;
       flex: 1;
       background: rgba(0,0,0,0.2);
+      height: 100%;
+      max-height: 100%;
     }
 
     .player-section {
@@ -645,7 +693,7 @@
     .users-panel .user-count { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 14px; font-weight: 600; }
     .users-panel .user-count .icon { font-size: 18px; }
 
-    /* ===== CHAT FIXO - SEM SCROLL VISÍVEL ===== */
+    /* ===== CHAT FIXO - LIMITE DE 10 MENSAGENS ===== */
     .chat-panel {
       flex: 1;
       display: flex;
@@ -677,6 +725,8 @@
       gap: 2px;
       padding: 10px 14px;
       scroll-behavior: smooth;
+      min-height: 0;
+      max-height: 100%;
     }
 
     /* Esconde a barra de rolagem */
@@ -698,7 +748,7 @@
       border-radius: 8px;
       animation: msgIn 0.2s ease;
       flex-shrink: 0;
-      transition: opacity 0.5s ease;
+      transition: all 0.3s ease;
     }
 
     .msg:hover {
@@ -714,12 +764,12 @@
     /* Mensagens removidas */
     .msg.removing {
       opacity: 0;
-      transform: translateY(-10px);
+      transform: translateY(-10px) scale(0.95);
       height: 0;
       padding: 0 8px;
       margin: 0;
       overflow: hidden;
-      transition: all 0.5s ease;
+      transition: all 0.4s ease;
     }
 
     .msg-avatar {
@@ -1214,6 +1264,9 @@ let lastAddTime = 0;
 let songData = null;
 let messageLikes = {};
 let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
+
+// ===== CONSTANTES =====
+const MAX_CHAT_MESSAGES = 10; // Mantém apenas as últimas 10 mensagens
 
 // ===== UTILS =====
 function $(id) { return document.getElementById(id); }
@@ -1842,7 +1895,6 @@ async function previewSong() {
   const videoId = extractYouTubeId(url);
   if (!videoId) { clearPreview(); return; }
 
-  // Mostra loading
   const box = $('songPreview');
   box.classList.remove('hidden');
   $('previewThumb').innerHTML = '⏳';
@@ -2004,9 +2056,7 @@ function startCooldown() {
   }, 1000);
 }
 
-// ===== CHAT FIXO - SEM SCROLL =====
-const MAX_VISIBLE_MESSAGES = 30;
-
+// ===== CHAT FIXO - LIMITE DE 10 MENSAGENS =====
 function renderMessage(msg) {
   const container = document.getElementById('chatMessagesInner');
   if (!container) return;
@@ -2059,23 +2109,23 @@ function renderMessage(msg) {
   }
 
   container.appendChild(div);
-  manageChatHistory(container);
+  limitChatMessages(container);
   updateNewMessagesPill();
 }
 
-function manageChatHistory(container) {
+function limitChatMessages(container) {
   const messages = container.querySelectorAll('.msg');
   const total = messages.length;
   
-  if (total > MAX_VISIBLE_MESSAGES) {
-    const toRemove = total - MAX_VISIBLE_MESSAGES;
+  if (total > MAX_CHAT_MESSAGES) {
+    const toRemove = total - MAX_CHAT_MESSAGES;
     for (let i = 0; i < toRemove; i++) {
       const msg = messages[i];
       if (msg) {
         msg.classList.add('removing');
         setTimeout(() => {
           if (msg.parentNode) msg.remove();
-        }, 500);
+        }, 400);
       }
     }
   }
@@ -2118,14 +2168,12 @@ function markMessagesAsSeen() {
   container.querySelectorAll('.msg').forEach(el => el.classList.add('seen'));
   updateNewMessagesPill();
   
-  // Rola para o final se houver scroll
   container.scrollTo({
     top: container.scrollHeight,
     behavior: 'smooth'
   });
 }
 
-// ===== CHAT FUNCTIONS =====
 function sendMessage() {
   const input = $('chatInput');
   const text = input.value.trim();
@@ -2184,8 +2232,12 @@ socket.on('chatHistory', (messages) => {
   const container = document.getElementById('chatMessagesInner');
   if (!container) return;
   container.innerHTML = '';
-  messages.forEach(m => renderMessage(m));
-  markMessagesAsSeen();
+  
+  const start = Math.max(0, messages.length - MAX_CHAT_MESSAGES);
+  const recentMessages = messages.slice(start);
+  
+  recentMessages.forEach(m => renderMessage(m));
+  setTimeout(markMessagesAsSeen, 100);
 });
 
 socket.on('error', (msg) => toast(msg, 'error'));
