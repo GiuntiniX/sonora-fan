@@ -127,19 +127,6 @@
       overflow-x: hidden;
     }
 
-    /* ===== SCROLLBAR TEMÁTICA (segue o tema ativo) ===== */
-    * {
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent) var(--bg-elevated);
-    }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg, var(--accent), var(--accent2));
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb:hover { filter: brightness(1.15); }
-
     /* ===== STAGE LIGHTS EFFECT ===== */
     .stage-bg {
       position: fixed;
@@ -259,6 +246,84 @@
       box-shadow: 0 8px 30px rgba(124,58,237,0.3);
     }
     .login-card button:active { transform: scale(0.98); }
+    .login-card button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+    /* ===== LANDING / HERO ===== */
+    .landing-screen { background: transparent; padding: 24px; }
+    .hero-content { max-width: 640px; width: 100%; text-align: center; position: relative; z-index: 2; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 16px 7px 12px; border-radius: 999px;
+      border: 1px solid var(--border-hover); background: var(--bg-elevated);
+      color: var(--text-secondary); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 28px;
+    }
+    .hero-badge .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+      box-shadow: 0 0 8px var(--success); animation: pulseDot 1.4s ease-in-out infinite;
+    }
+    @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(0.75); } }
+    .hero-content h1 { font-size: 56px; font-weight: 900; letter-spacing: -1.5px; line-height: 1.08; margin-bottom: 18px; }
+    .hero-content h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-content p.hero-sub { color: var(--text-secondary); font-size: 17px; line-height: 1.7; max-width: 480px; margin: 0 auto 32px; }
+    .hero-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 40px; }
+    .feature-pill {
+      display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+      border-radius: var(--radius-sm); border: 1px solid var(--border);
+      background: var(--bg-card); font-size: 13px; color: var(--text-secondary); font-weight: 500;
+    }
+    .hero-eq { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
+    .cta-group { display: flex; flex-direction: column; gap: 12px; max-width: 340px; margin: 0 auto; }
+    .cta-primary {
+      width: 100%; padding: 17px; border-radius: var(--radius-sm); border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+      font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .cta-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(124,58,237,0.35); }
+    .cta-secondary {
+      width: 100%; padding: 15px; border-radius: var(--radius-sm); border: 1px solid var(--border-hover);
+      background: transparent; color: var(--text); font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+    }
+    .cta-secondary:hover { background: var(--bg-hover); border-color: var(--accent2); }
+    .hero-footnote { margin-top: 24px; font-size: 12px; color: var(--text-muted); }
+
+    /* ===== AUTH FORMS (login / cadastro) ===== */
+    .login-card.wide { max-width: 460px; max-height: 92vh; overflow-y: auto; }
+    .login-card .back-link {
+      position: absolute; top: 20px; left: 20px; color: var(--text-muted);
+      font-size: 13px; cursor: pointer; transition: color 0.2s;
+    }
+    .login-card .back-link:hover { color: var(--text); }
+    .login-card .field-label {
+      text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted);
+      margin: 2px 0 6px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .login-card select {
+      width: 100%; padding: 14px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text); font-size: 15px; outline: none;
+      margin-bottom: 12px; font-family: inherit; transition: all 0.2s;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a9ab0' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 16px center;
+    }
+    .login-card select:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .auth-links { display: flex; justify-content: flex-end; font-size: 13px; margin-top: -2px; margin-bottom: 20px; }
+    .auth-links span.link { color: var(--accent2); cursor: pointer; font-weight: 600; }
+    .auth-links span.link:hover { text-decoration: underline; }
+    .auth-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-muted); }
+    .auth-switch span.link { color: var(--accent2); cursor: pointer; font-weight: 700; }
+    .auth-switch span.link:hover { text-decoration: underline; }
+    .login-card .section-label { text-align: left; font-size: 12px; color: var(--text-muted); margin: 4px 0 8px; }
+    @media (max-width: 520px) {
+      .hero-content h1 { font-size: 36px; }
+      .hero-content p.hero-sub { font-size: 15px; }
+      .feature-pill { font-size: 12px; padding: 8px 12px; }
+    }
 
     /* ===== APP LAYOUT ===== */
     .app { 
@@ -357,19 +422,18 @@
     }
     .room-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
     }
     .room-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
+      padding: 24px;
       cursor: pointer;
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
     }
     .room-card::before {
       content: '';
@@ -379,126 +443,21 @@
       background: linear-gradient(90deg, var(--accent), var(--accent2));
       opacity: 0;
       transition: opacity 0.3s;
-      z-index: 2;
     }
     .room-card:hover {
       border-color: var(--border-hover);
-      transform: translateY(-4px);
-      box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(124,58,237,0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.1);
     }
     .room-card:hover::before { opacity: 1; }
-    .room-card:hover .room-thumb img { transform: scale(1.08); }
-    .room-thumb {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: linear-gradient(135deg, var(--accent2-glow), var(--accent-glow)), 
-                  linear-gradient(135deg, var(--bg-elevated), var(--bg-hover));
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .room-thumb img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.4s ease;
-    }
-    .room-thumb .thumb-fallback {
-      position: absolute; inset: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 40px;
-      opacity: 0.5;
-    }
-    .room-thumb::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
-      pointer-events: none;
-    }
-    .room-live-badge {
-      position: absolute;
-      top: 10px; left: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 10px 5px 8px;
-      border-radius: 20px;
-      background: rgba(5,5,10,0.6);
-      backdrop-filter: blur(6px);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: var(--text);
-      z-index: 2;
-    }
-    .room-live-badge .live-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--danger);
-      animation: pulse 1.5s infinite;
-    }
-    .room-listeners-badge {
-      position: absolute;
-      top: 10px; right: 10px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
-      border-radius: 20px;
-      background: rgba(5,5,10,0.6);
-      backdrop-filter: blur(6px);
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text);
-      z-index: 2;
-    }
-    .room-thumb .room-eq {
-      position: absolute;
-      bottom: 10px; right: 10px;
-      z-index: 2;
-      height: 16px;
-    }
-    .room-thumb .room-eq .eq-bar { width: 2.5px; }
-    .room-now-playing {
-      position: absolute;
-      bottom: 8px; left: 10px; right: 40px;
-      z-index: 2;
-      font-size: 11px;
-      color: rgba(255,255,255,0.85);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-weight: 500;
-    }
-    .room-mini-progress {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 3px;
-      background: rgba(255,255,255,0.15);
-      z-index: 2;
-    }
-    .room-mini-progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-    }
-    .room-time-remaining {
-      font-size: 11px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .room-card-body {
-      padding: 16px 18px 18px;
-    }
-    .room-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
+    .room-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
     .room-card .meta {
       display: flex;
-      gap: 14px;
-      font-size: 12.5px;
+      gap: 16px;
+      font-size: 13px;
       color: var(--text-muted);
+      margin-top: 14px;
     }
-    .room-card .meta span { display: flex; align-items: center; gap: 4px; }
     .empty-state {
       text-align: center;
       padding: 80px 20px;
@@ -506,20 +465,6 @@
       grid-column: 1 / -1;
     }
     .empty-state .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
-    .empty-state p { margin-bottom: 20px; }
-    .empty-state-cta {
-      display: inline-block;
-      padding: 12px 26px;
-      border-radius: 10px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .empty-state-cta:hover { transform: translateY(-1px); filter: brightness(1.08); }
 
     /* ===== ROOM LAYOUT ===== */
     .room-layout {
@@ -761,7 +706,7 @@
       overflow-y: auto;
     }
     .queue-list::-webkit-scrollbar { width: 5px; }
-    .queue-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 3px; }
+    .queue-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     .queue-item {
       display: flex;
       align-items: center;
@@ -1012,7 +957,7 @@
       overflow-y: auto;
     }
     .user-list::-webkit-scrollbar { width: 4px; }
-    .user-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 2px; }
+    .user-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
     .user {
       display: flex;
       align-items: center;
@@ -1119,7 +1064,7 @@
       min-height: 0;
     }
     .chat-messages::-webkit-scrollbar { width: 5px; }
-    .chat-messages::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     .msg {
       display: flex;
       gap: 8px;
@@ -1738,15 +1683,131 @@
   <div class="particle" style="bottom:-10%;left:95%;"></div>
 </div>
 
+<!-- LANDING (primeira página) -->
+<div class="login-screen landing-screen" id="landingScreen">
+  <div class="hero-content">
+    <div class="hero-badge"><span class="live-dot"></span> Salas ao vivo agora</div>
+    <h1>O palco é seu.<br>A trilha é de <span>todo mundo</span>.</h1>
+    <p class="hero-sub">Crie uma sala, chame a galera e monte a playlist juntos — músicas do YouTube tocando em sincronia, com chat ao vivo e reações em tempo real.</p>
+    <div class="hero-features">
+      <div class="feature-pill">🎧 Escuta sincronizada</div>
+      <div class="feature-pill">💬 Chat ao vivo</div>
+      <div class="feature-pill">🎵 Fila colaborativa</div>
+      <div class="feature-pill">
+        <div class="hero-eq">
+          <div class="eq-bar" style="height:6px;"></div>
+          <div class="eq-bar" style="height:14px;"></div>
+          <div class="eq-bar" style="height:9px;"></div>
+          <div class="eq-bar" style="height:16px;"></div>
+          <div class="eq-bar" style="height:7px;"></div>
+        </div>
+        Grátis pra sempre
+      </div>
+    </div>
+    <div class="cta-group">
+      <button class="cta-primary" onclick="showSignupScreen()">Criar minha conta</button>
+      <button class="cta-secondary" onclick="showLoginScreen()">Já tenho conta · Entrar</button>
+    </div>
+    <div class="hero-footnote">Leva menos de 1 minuto pra entrar no palco 🎸</div>
+  </div>
+</div>
+
 <!-- LOGIN -->
-<div class="login-screen" id="loginScreen">
+<div class="login-screen hidden" id="loginScreen">
   <div class="login-card">
+    <div class="back-link" onclick="showLandingScreen()">← voltar</div>
     <div class="logo">🎸</div>
     <h1>Sonora <span>Fan</span></h1>
-    <p>Entre no palco. Ouça música com amigos,<br>adicione do YouTube e converse em tempo real.</p>
-    <input type="text" id="loginName" placeholder="Como quer ser chamado?" maxlength="20" onkeydown="if(event.key==='Enter') doLogin()">
-    <div style="color:var(--text-muted);font-size:12px;margin-bottom:8px;">Escolha seu avatar:</div>
-    <div class="avatar-picker" id="avatarPicker">
+    <p>Entre com seu e-mail e senha para voltar ao palco.</p>
+    <div class="field-label">E-mail</div>
+    <input type="email" id="loginEmail" placeholder="seu@email.com" onkeydown="if(event.key==='Enter') doLogin()">
+    <div class="field-label">Senha</div>
+    <input type="password" id="loginPassword" placeholder="Sua senha" onkeydown="if(event.key==='Enter') doLogin()">
+    <div class="auth-links"><span class="link" onclick="handlePasswordReset()">Esqueci minha senha</span></div>
+    <div class="admin-toggle" onclick="toggleAdminField('login')">
+      <input type="checkbox" id="loginIsAdminCheck">
+      <label for="loginIsAdminCheck">Sou administrador</label>
+    </div>
+    <input type="password" id="loginAdminPass" placeholder="Senha de admin" class="hidden" onkeydown="if(event.key==='Enter') doLogin()">
+    <button onclick="doLogin()" id="loginBtn">Entrar no palco</button>
+    <div class="auth-switch">Ainda não tem conta? <span class="link" onclick="showSignupScreen()">Cadastre-se</span></div>
+  </div>
+</div>
+
+<!-- CADASTRO -->
+<div class="login-screen hidden" id="signupScreen">
+  <div class="login-card wide">
+    <div class="back-link" onclick="showLandingScreen()">← voltar</div>
+    <div class="logo">🎤</div>
+    <h1>Criar <span>conta</span></h1>
+    <p>Leva menos de 1 minuto. Só precisamos de algumas informações.</p>
+
+    <div class="field-label">Nome</div>
+    <input type="text" id="signupName" placeholder="Como quer ser chamado?" maxlength="30">
+
+    <div class="field-label">E-mail</div>
+    <input type="email" id="signupEmail" placeholder="seu@email.com">
+
+    <div class="form-row-2">
+      <div>
+        <div class="field-label">Senha</div>
+        <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div>
+        <div class="field-label">Confirmar</div>
+        <input type="password" id="signupPasswordConfirm" placeholder="Repita a senha" onkeydown="if(event.key==='Enter') doSignup()">
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div>
+        <div class="field-label">Gênero</div>
+        <select id="signupGender">
+          <option value="">Selecione</option>
+          <option value="feminino">Feminino</option>
+          <option value="masculino">Masculino</option>
+          <option value="outro">Outro</option>
+          <option value="prefiro_nao_dizer">Prefiro não dizer</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label">Região</div>
+        <select id="signupRegion">
+          <option value="">Selecione</option>
+          <option value="norte">Norte</option>
+          <option value="nordeste">Nordeste</option>
+          <option value="centro-oeste">Centro-Oeste</option>
+          <option value="sudeste">Sudeste</option>
+          <option value="sul">Sul</option>
+          <option value="fora_brasil">Fora do Brasil</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div>
+        <div class="field-label">Nascimento</div>
+        <input type="date" id="signupBirthdate">
+      </div>
+      <div>
+        <div class="field-label">Estilo favorito</div>
+        <select id="signupGenre">
+          <option value="">Selecione</option>
+          <option value="pop">Pop</option>
+          <option value="rock">Rock</option>
+          <option value="sertanejo">Sertanejo</option>
+          <option value="funk">Funk</option>
+          <option value="mpb">MPB</option>
+          <option value="eletronica">Eletrônica</option>
+          <option value="hiphop">Hip Hop/Rap</option>
+          <option value="pagode_samba">Pagode/Samba</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">Escolha seu avatar</div>
+    <div class="avatar-picker" id="signupAvatarPicker">
       <div class="avatar-option selected" data-emoji="🎸" onclick="selectAvatar(this)">🎸</div>
       <div class="avatar-option" data-emoji="🎤" onclick="selectAvatar(this)">🎤</div>
       <div class="avatar-option" data-emoji="🎧" onclick="selectAvatar(this)">🎧</div>
@@ -1760,12 +1821,15 @@
       <div class="avatar-option" data-emoji="🎼" onclick="selectAvatar(this)">🎼</div>
       <div class="avatar-option" data-emoji="🎬" onclick="selectAvatar(this)">🎬</div>
     </div>
-    <div class="admin-toggle" onclick="toggleAdminField()">
-      <input type="checkbox" id="isAdminCheck">
-      <label for="isAdminCheck">Sou administrador</label>
+
+    <div class="admin-toggle" onclick="toggleAdminField('signup')" style="margin-top:16px;">
+      <input type="checkbox" id="signupIsAdminCheck">
+      <label for="signupIsAdminCheck">Sou administrador</label>
     </div>
-    <input type="password" id="adminPass" placeholder="Senha de admin" class="hidden" onkeydown="if(event.key==='Enter') doLogin()">
-    <button onclick="doLogin()">Entrar no palco</button>
+    <input type="password" id="signupAdminPass" placeholder="Senha de admin" class="hidden">
+
+    <button onclick="doSignup()" id="signupBtn" style="margin-top:6px;">Criar conta e entrar</button>
+    <div class="auth-switch">Já tem conta? <span class="link" onclick="showLoginScreen()">Entrar</span></div>
   </div>
 </div>
 
@@ -1813,11 +1877,11 @@
     <div class="room-layout">
       <div class="stage">
         <!-- TERRA SONORA BANNER -->
-        <a href="https://www.instagram.com/terrasonora/" target="_blank" rel="noopener noreferrer" class="terra-banner" style="display:block;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);width:100%;height:320px;cursor:pointer;">
+        <div class="terra-banner" style="border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);">
           <img src="https://iili.io/Ciid52s.jpg" 
-               alt="Terra Sonora — Siga no Instagram" 
-               style="width:100%;height:100%;display:block;object-fit:cover;background:linear-gradient(180deg,#0a0a14,#050508);">
-        </a>
+               alt="Terra Sonora" 
+               style="width:100%;height:auto;display:block;object-fit:contain;max-height:280px;background:linear-gradient(180deg,#0a0a14,#050508);">
+        </div>
 
         <!-- PLAYER -->
         <div class="player-section">
@@ -1993,7 +2057,45 @@
 <!-- CONFETTI -->
 <div class="confetti-container" id="confettiContainer"></div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
+
+// ========== FIREBASE ==========
+// 1) Crie um projeto em https://console.firebase.google.com
+// 2) Vá em Authentication > Sign-in method e ative "E-mail/senha"
+// 3) Vá em Build > Firestore Database e crie um banco (modo produção)
+// 4) Vá em Configurações do projeto (⚙️) > Geral > "Seus apps" > adicione um app Web
+//    e cole as chaves geradas nos campos abaixo
+const firebaseConfig = {
+  apiKey: "COLE_SUA_API_KEY_AQUI",
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO",
+  storageBucket: "SEU_PROJETO.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+function translateFirebaseError(e) {
+  const map = {
+    'auth/email-already-in-use': 'Esse e-mail já está cadastrado',
+    'auth/invalid-email': 'E-mail inválido',
+    'auth/weak-password': 'Senha muito fraca (mínimo 6 caracteres)',
+    'auth/user-not-found': 'E-mail ou senha incorretos',
+    'auth/wrong-password': 'E-mail ou senha incorretos',
+    'auth/invalid-credential': 'E-mail ou senha incorretos',
+    'auth/too-many-requests': 'Muitas tentativas. Tente novamente em instantes',
+    'auth/network-request-failed': 'Erro de conexão. Verifique sua internet',
+    'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'Firebase ainda não configurado — cole suas chaves no firebaseConfig'
+  };
+  return map[e.code] || (e.message && e.message.includes('API key') ? 'Firebase ainda não configurado — cole suas chaves no firebaseConfig' : 'Ocorreu um erro. Tente novamente');
+}
 
 const socket = io();
 let myName = '';
@@ -2058,12 +2160,6 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   show('screen-' + id);
 }
-
-// Mantém os cards de sala (ao vivo, ouvintes) atualizados enquanto o lobby está visível
-setInterval(() => {
-  const lobbyEl = document.getElementById('screen-lobby');
-  if (lobbyEl && !lobbyEl.classList.contains('hidden')) loadRooms();
-}, 15000);
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -2086,31 +2182,120 @@ function formatDuration(seconds) {
   return m + ':' + s.toString().padStart(2,'0');
 }
 
-// ========== LOGIN ==========
-function toggleAdminField() {
-  const check = $('isAdminCheck');
-  const pass = $('adminPass');
+// ========== LOGIN / CADASTRO ==========
+function toggleAdminField(prefix) {
+  const check = $(prefix + 'IsAdminCheck');
+  const pass = $(prefix + 'AdminPass');
   if (check.checked) {
-    show('adminPass');
+    show(prefix + 'AdminPass');
     setTimeout(() => pass.focus(), 100);
   } else {
-    hide('adminPass');
+    hide(prefix + 'AdminPass');
     pass.value = '';
   }
 }
 
-function doLogin() {
-  const name = $('loginName').value.trim();
-  if (!name) { toast('Digite um nome', 'error'); return; }
-  if (name.length < 2) { toast('Nome muito curto', 'error'); return; }
+function showLandingScreen() {
+  hide('loginScreen'); hide('signupScreen'); show('landingScreen');
+}
+function showLoginScreen() {
+  hide('landingScreen'); hide('signupScreen'); show('loginScreen');
+  setTimeout(() => $('loginEmail').focus(), 100);
+}
+function showSignupScreen() {
+  hide('landingScreen'); hide('loginScreen'); show('signupScreen');
+  setTimeout(() => $('signupName').focus(), 100);
+}
 
-  myName = name;
-  myAdminPass = $('adminPass').value.trim();
-
-  hide('loginScreen');
+function enterApp() {
+  hide('landingScreen'); hide('loginScreen'); hide('signupScreen');
   showScreen('lobby');
   loadRooms();
   applyTheme();
+}
+
+async function doLogin() {
+  const email = $('loginEmail').value.trim();
+  const password = $('loginPassword').value;
+  if (!email) { toast('Digite seu e-mail', 'error'); return; }
+  if (!password) { toast('Digite sua senha', 'error'); return; }
+
+  const btn = $('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+    let profile = {};
+    try {
+      const doc = await db.collection('users').doc(cred.user.uid).get();
+      if (doc.exists) profile = doc.data();
+    } catch(e) {}
+    myName = profile.name || cred.user.displayName || email.split('@')[0];
+    myAvatar = profile.avatar || '🎸';
+    myAdminPass = $('loginAdminPass').value.trim();
+    toast(`Bem-vindo(a) de volta, ${myName}!`, 'success');
+    enterApp();
+  } catch (e) {
+    toast(translateFirebaseError(e), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar no palco';
+  }
+}
+
+async function handlePasswordReset() {
+  const email = $('loginEmail').value.trim();
+  if (!email) { toast('Digite seu e-mail para redefinir a senha', 'error'); return; }
+  try {
+    await auth.sendPasswordResetEmail(email);
+    toast('Enviamos um link de redefinição para seu e-mail', 'success');
+  } catch (e) {
+    toast(translateFirebaseError(e), 'error');
+  }
+}
+
+async function doSignup() {
+  const name = $('signupName').value.trim();
+  const email = $('signupEmail').value.trim();
+  const password = $('signupPassword').value;
+  const passwordConfirm = $('signupPasswordConfirm').value;
+  const gender = $('signupGender').value;
+  const region = $('signupRegion').value;
+  const birthdate = $('signupBirthdate').value;
+  const favoriteGenre = $('signupGenre').value;
+
+  if (!name || name.length < 2) { toast('Digite seu nome', 'error'); return; }
+  if (!email) { toast('Digite seu e-mail', 'error'); return; }
+  if (!password || password.length < 6) { toast('A senha precisa ter no mínimo 6 caracteres', 'error'); return; }
+  if (password !== passwordConfirm) { toast('As senhas não coincidem', 'error'); return; }
+  if (!gender) { toast('Selecione seu gênero', 'error'); return; }
+  if (!region) { toast('Selecione sua região', 'error'); return; }
+
+  const btn = $('signupBtn');
+  btn.disabled = true;
+  btn.textContent = 'Criando conta...';
+
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    try { await cred.user.updateProfile({ displayName: name }); } catch(e) {}
+    await db.collection('users').doc(cred.user.uid).set({
+      name, email, gender, region,
+      birthdate: birthdate || null,
+      favoriteGenre: favoriteGenre || null,
+      avatar: myAvatar,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    myName = name;
+    myAdminPass = $('signupAdminPass').value.trim();
+    toast(`Bem-vindo(a), ${name}!`, 'success');
+    enterApp();
+  } catch (e) {
+    toast(translateFirebaseError(e), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Criar conta e entrar';
+  }
 }
 
 // ========== LOBBY ==========
@@ -2120,12 +2305,7 @@ async function loadRooms() {
     const rooms = await res.json();
     const grid = $('roomGrid');
     if (rooms.length === 0) {
-      grid.innerHTML = `
-        <div class="empty-state">
-          <div class="icon">🎵</div>
-          <p>Nenhuma sala ainda. Crie a primeira!</p>
-          <button class="empty-state-cta" onclick="showCreateModal()">+ Criar sala</button>
-        </div>`;
+      grid.innerHTML = `<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>`;
       return;
     }
     grid.innerHTML = '';
@@ -2133,46 +2313,11 @@ async function loadRooms() {
       const card = document.createElement('div');
       card.className = 'room-card';
       card.onclick = () => joinRoom(r.slug);
-
-      const track = r.currentTrack;
-      const thumbImg = track
-        ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.style.display='none'">`
-        : `<div class="thumb-fallback">🎧</div>`;
-      const nowPlaying = (r.isPlaying && track)
-        ? `<div class="room-now-playing">${escapeHtml(track.title)}</div>`
-        : '';
-      const eq = r.isPlaying
-        ? `<div class="equalizer room-eq"><div class="eq-bar" style="height:6px;"></div><div class="eq-bar" style="height:12px;"></div><div class="eq-bar" style="height:5px;"></div><div class="eq-bar" style="height:14px;"></div></div>`
-        : '';
-      const liveBadge = r.isPlaying
-        ? `<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>`
-        : `<div class="room-live-badge" style="opacity:0.7;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);"></span>PARADA</div>`;
-
-      let miniProgress = '';
-      let timeRemaining = '';
-      if (r.isPlaying && track && track.duration) {
-        const pct = Math.min(100, (track.position / track.duration) * 100);
-        const remaining = Math.max(0, track.duration - track.position);
-        miniProgress = `<div class="room-mini-progress"><div class="room-mini-progress-fill" style="width:${pct}%;"></div></div>`;
-        timeRemaining = `<span class="room-time-remaining">⏱️ ${remaining < 30 ? 'acabando' : formatDuration(remaining) + ' restantes'}</span>`;
-      }
-
       card.innerHTML = `
-        <div class="room-thumb">
-          ${thumbImg}
-          ${liveBadge}
-          <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div>
-          ${eq}
-          ${nowPlaying}
-          ${miniProgress}
-        </div>
-        <div class="room-card-body">
-          <h3>${escapeHtml(r.name)}</h3>
-          <div class="meta">
-            <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
-            <span>🎶 ${r.queueLength || 0} na fila</span>
-            ${timeRemaining}
-          </div>
+        <h3>${escapeHtml(r.name)}</h3>
+        <div class="meta">
+          <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
+          <span>🎵 Ao vivo</span>
         </div>
       `;
       grid.appendChild(card);
@@ -2411,8 +2556,12 @@ socket.on('typing', ({ name, isTyping }) => {
 });
 
 socket.on('chatUpdated', (msg) => {
-  // Atualiza reações em mensagens existentes, mantendo a posição no chat
-  updateMessageInPlace(msg);
+  // Atualiza reações em mensagens existentes
+  const existing = document.getElementById('msg-' + msg._id);
+  if (existing) {
+    renderMessage(msg);
+    existing.remove();
+  }
 });
 
 socket.on('chatCleared', () => {
@@ -2814,8 +2963,11 @@ function sendMsg() {
   socket.emit('typing', { isTyping: false });
 }
 
-function buildMessageElement(msg) {
+function renderMessage(msg) {
+  const box = $('chatBox');
   const div = document.createElement('div');
+  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
+  const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
 
   if (msg.isMusic) {
     div.className = 'msg msg-music';
@@ -2829,14 +2981,16 @@ function buildMessageElement(msg) {
         <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
       </div>
       <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px;">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
-      <button class="music-like-btn${msg.likedBy && msg.likedBy.includes(myName) ? ' liked' : ''}" id="like-${msg._id}" onclick="likeMusic('${msg._id}')">
+      <button class="music-like-btn" id="like-${msg._id}" onclick="likeMusic('${msg._id}')">
         ❤️ <span id="like-count-${msg._id}">${likes}</span> curtida${likes !== 1 ? 's' : ''}
       </button>
     `;
-    return div;
+    box.appendChild(div);
+    if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
+    return;
   }
 
-  if (msg.isSystem) return null;
+  if (msg.isSystem) return;
 
   // Detectar menções
   const isMentioned = msg.text && msg.text.includes('@' + myName);
@@ -2845,7 +2999,7 @@ function buildMessageElement(msg) {
 
   // Processar menções no texto
   let processedText = escapeHtml(msg.text);
-  processedText = processedText.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+  processedText = processedText.replace(/@(\\w+)/g, '<span class="mention">@$1</span>');
 
   // Avatar
   const avatar = msg.avatar || msg.user[0];
@@ -2885,37 +3039,13 @@ function buildMessageElement(msg) {
       </div>
     </div>
   `;
-  return div;
-}
-
-function renderMessage(msg) {
-  const box = $('chatBox');
-  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
-  const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
-
-  const div = buildMessageElement(msg);
-  if (!div) return;
-
   box.appendChild(div);
   if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
 
   // Som de menção
-  const isMentioned = msg.text && msg.text.includes('@' + myName);
-  if (!msg.isMusic && isMentioned && msg.user !== myName) {
+  if (isMentioned && msg.user !== myName) {
     playMentionSound();
   }
-}
-
-// Atualiza uma mensagem já existente (ex: reação) sem tirá-la do lugar
-function updateMessageInPlace(msg) {
-  const existingId = msg.isMusic ? 'music-' + msg._id : 'msg-' + msg._id;
-  const existing = document.getElementById(existingId);
-  if (!existing) { renderMessage(msg); return; }
-
-  const newDiv = buildMessageElement(msg);
-  if (!newDiv) return;
-
-  existing.replaceWith(newDiv);
 }
 
 function addSystemMsg(text) {
@@ -3145,7 +3275,18 @@ function likeMusic(msgId) {
 }
 
 // ========== INIT ==========
-$('loginName').focus();
+auth.onAuthStateChanged(async (user) => {
+  if (!user) return;
+  try {
+    const doc = await db.collection('users').doc(user.uid).get();
+    const profile = doc.exists ? doc.data() : {};
+    myName = profile.name || user.displayName || (user.email ? user.email.split('@')[0] : 'Fã');
+    myAvatar = profile.avatar || '🎸';
+    enterApp();
+  } catch (e) {
+    console.error('Erro ao carregar perfil:', e);
+  }
+});
 </script>
 
 <!-- RODAPÉ -->
