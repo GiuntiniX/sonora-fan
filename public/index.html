@@ -471,8 +471,15 @@
     .users-panel { padding: 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .panel-header { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
     
-    /* ===== CHAT ===== */
-    .chat-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+    /* ===== CHAT - CORREÇÃO DE FIXAÇÃO ===== */
+    .chat-panel { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      min-height: 0; 
+      position: relative; 
+      overflow: hidden; /* Impede que o painel cresça */
+    }
     .chat-messages { 
       flex: 1; 
       overflow-y: auto; 
@@ -482,7 +489,7 @@
       padding: 16px; 
       font-size: 14px; 
       min-height: 0;
-      max-height: 100%; /* Garante que não vai estourar */
+      /* Remove max-height: 100% para deixar o flex controlar */
     }
     .msg { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
     .msg:hover { background: rgba(255,255,255,0.02); }
