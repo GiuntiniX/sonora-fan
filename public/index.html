@@ -476,7 +476,10 @@
       min-height: 0; 
       overflow: hidden; /* Garante que nada vaze */
     }
-    @media (max-width: 1024px) { .sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 600px; } }
+    @media (max-width: 1024px) {
+      .room-layout { grid-template-rows: minmax(0, 1fr) 420px; }
+      .sidebar { border-left: none; border-top: 1px solid var(--border); height: 420px; max-height: 420px; }
+    }
     .users-panel { padding: 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .panel-header { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
     
@@ -494,6 +497,8 @@
     .chat-messages { 
       flex: 1; 
       overflow-y: auto; 
+      overscroll-behavior: contain; /* Impede que o scroll "vaze" pra página */
+      scroll-behavior: smooth; /* Rolagem suave nativa, sem travar em mensagens rápidas */
       display: flex; 
       flex-direction: column; 
       gap: 2px; 
@@ -1966,8 +1971,14 @@ function renderMessage(msg) {
     `;
   }
   
+  const wasNearBottom = isChatNearBottom();
   box.appendChild(div);
-  scrollChatToBottom();
+
+  if (wasNearBottom) {
+    scrollChatToBottom();
+  } else {
+    showNewMessagesPill();
+  }
 }
 
 function toggleLike(msgId, btn) {
@@ -1997,16 +2008,44 @@ function toggleFire(msgId, btn) {
   toast('🔥 Curtida com fogo!', 'success');
 }
 
+const CHAT_NEAR_BOTTOM_PX = 80; // tolerância em pixels pra considerar "está no final"
+
+function isChatNearBottom() {
+  const box = $('chatBox');
+  if (!box) return true;
+  return box.scrollHeight - box.scrollTop - box.clientHeight < CHAT_NEAR_BOTTOM_PX;
+}
+
+function showNewMessagesPill() {
+  const pill = $('newMessagesPill');
+  if (pill) pill.classList.remove('hidden');
+}
+
+function hideNewMessagesPill() {
+  const pill = $('newMessagesPill');
+  if (pill) pill.classList.add('hidden');
+}
+
 function scrollChatToBottom() {
   const box = $('chatBox');
   if (!box) return;
-  requestAnimationFrame(() => { 
-    box.scrollTo({
-      top: box.scrollHeight,
-      behavior: 'smooth'
-    });
+  requestAnimationFrame(() => {
+    box.scrollTop = box.scrollHeight; // com scroll-behavior:smooth no CSS, já anima sozinho
   });
+  hideNewMessagesPill();
 }
+
+// Enquanto o usuário estiver perto do final, o chat continua acompanhando
+// automaticamente. Se ele subir pra ler mensagens antigas, o auto-scroll
+// pausa e some o pill de "novas mensagens" só quando ele voltar pro final.
+(function initChatScrollTracking() {
+  const box = $('chatBox');
+  if (!box || box.dataset.scrollBound) return;
+  box.dataset.scrollBound = '1';
+  box.addEventListener('scroll', () => {
+    if (isChatNearBottom()) hideNewMessagesPill();
+  });
+})();
 
 function handleTyping() {
   if (!isTyping) { isTyping = true; socket.emit('typing', { isTyping: true }); }
