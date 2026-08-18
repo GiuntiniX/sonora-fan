@@ -30,6 +30,8 @@
       --radius-sm: 12px;
       --bg-image: none;
       --bg-overlay: transparent;
+      --accent-glow: rgba(255,107,53,0.3);
+      --accent2-glow: rgba(124,58,237,0.3);
     }
 
     body {
@@ -47,7 +49,6 @@
       transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, background-image 0.4s ease;
     }
 
-    /* Overlay escuro/desfoque sobre a imagem de fundo */
     body::before {
       content: '';
       position: fixed;
@@ -389,6 +390,340 @@
 
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
+    /* ===== MODAL DE BOAS-VINDAS ===== */
+    .welcome-modal {
+      max-width: 640px !important;
+      padding: 32px 36px !important;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .welcome-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .welcome-icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+      display: block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .welcome-modal h2 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .welcome-subtitle {
+      color: var(--text-secondary);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .welcome-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 24px 0 28px;
+    }
+
+    .welcome-step {
+      display: flex;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .welcome-step:hover {
+      border-color: var(--border-hover);
+      transform: translateX(4px);
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-content {
+      display: flex;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .step-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .step-content h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 2px;
+      color: var(--text);
+    }
+
+    .step-content p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .step-example {
+      margin-top: 6px;
+      padding: 4px 10px;
+      background: var(--bg-elevated);
+      border-radius: 6px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .example-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .step-example code {
+      color: var(--accent);
+      background: transparent;
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    .step-tip {
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: rgba(255, 107, 53, 0.08);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .tip-icon {
+      flex-shrink: 0;
+    }
+
+    .quick-tips {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(255, 107, 53, 0.05));
+      border-color: rgba(124, 58, 237, 0.2);
+    }
+
+    .quick-tips-list {
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 16px;
+    }
+
+    .quick-tips-list li {
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      padding: 2px 0;
+      line-height: 1.5;
+    }
+
+    .quick-tips-list li strong {
+      color: var(--text);
+    }
+
+    .welcome-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .welcome-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .welcome-checkbox input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .welcome-start-btn {
+      padding: 12px 32px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .welcome-start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.35);
+    }
+
+    @media (max-width: 640px) {
+      .welcome-modal {
+        padding: 24px 18px !important;
+      }
+      
+      .welcome-step {
+        padding: 12px 14px;
+        flex-direction: column;
+      }
+      
+      .step-content {
+        flex-direction: column;
+        gap: 4px;
+      }
+      
+      .quick-tips-list {
+        grid-template-columns: 1fr;
+      }
+      
+      .welcome-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+      
+      .welcome-checkbox {
+        justify-content: center;
+      }
+    }
+
+    @keyframes slideUpWelcome {
+      from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .welcome-modal {
+      animation: slideUpWelcome 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ===== CONTROLES DO CHAT ===== */
+    .chat-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 8px 16px 4px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .scroll-toggle {
+      padding: 4px 12px;
+      border-radius: 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .scroll-toggle:hover {
+      border-color: var(--accent2);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+
+    .scroll-toggle.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255, 107, 53, 0.1);
+    }
+
+    .scroll-toggle.danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .help-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all 0.2s;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .help-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent2);
+      transform: scale(1.05);
+    }
+
+    .input-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .input-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      padding-left: 4px;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+    }
+
     /* ===== APP ===== */
     .app { position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1; min-height: 0; }
     .hidden { display: none !important; }
@@ -465,16 +800,16 @@
     .add-song button { padding: 12px 24px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
     .add-song button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
 
-    /* ===== SIDEBAR - CORREÇÃO DA FIXAÇÃO ===== */
+    /* ===== SIDEBAR ===== */
     .sidebar { 
       border-left: 1px solid var(--border); 
       display: flex; 
       flex-direction: column; 
       background: rgba(0,0,0,0.6); 
       backdrop-filter: blur(12px); 
-      height: 100%; /* Força a ocupar 100% da altura disponível */
+      height: 100%;
       min-height: 0; 
-      overflow: hidden; /* Garante que nada vaze */
+      overflow: hidden;
     }
     @media (max-width: 1024px) {
       .room-layout { grid-template-rows: minmax(0, 1fr) 420px; }
@@ -483,7 +818,7 @@
     .users-panel { padding: 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .panel-header { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
     
-    /* ===== CHAT - CORREÇÃO DO SCROLL FIXO ===== */
+    /* ===== CHAT ===== */
     .chat-panel { 
       flex: 1; 
       display: flex; 
@@ -491,21 +826,21 @@
       min-height: 0; 
       position: relative; 
       overflow: hidden; 
-      height: 100%; /* Blinda a altura */
-      max-height: 100%; /* Dupla segurança */
+      height: 100%;
+      max-height: 100%;
     }
     .chat-messages { 
       flex: 1; 
       overflow-y: auto; 
-      overscroll-behavior: contain; /* Impede que o scroll "vaze" pra página */
-      scroll-behavior: smooth; /* Rolagem suave nativa, sem travar em mensagens rápidas */
+      overscroll-behavior: contain;
+      scroll-behavior: smooth;
       display: flex; 
       flex-direction: column; 
       gap: 2px; 
       padding: 16px; 
       font-size: 14px; 
       min-height: 0;
-      max-height: 100%; /* Garante o limite máximo */
+      max-height: 100%;
     }
     .msg { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
     .msg:hover { background: rgba(255,255,255,0.02); }
@@ -515,13 +850,12 @@
     .msg-time { font-size: 10px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; align-self: flex-start; margin-top: 2px; }
     .msg:hover .msg-time { opacity: 1; }
     
-    /* ===== BOTÕES DE CURTIR ===== */
     .msg-actions {
       display: flex;
       align-items: center;
       gap: 6px;
       margin-top: 4px;
-      margin-left: 36px; /* Alinhado com o texto */
+      margin-left: 36px;
     }
     .msg-like-btn {
       background: transparent;
@@ -550,36 +884,54 @@
       font-weight: 600;
     }
 
-    .chat-input-bar { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg-card); flex-shrink: 0; }
+    .new-messages-pill {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 4px 20px rgba(255,107,53,0.4);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-family: inherit;
+      animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .new-messages-pill.hidden {
+      display: none;
+    }
+
+    .new-messages-pill:hover {
+      transform: translateX(-50%) scale(1.05);
+      box-shadow: 0 6px 30px rgba(124,58,237,0.5);
+    }
+
+    @keyframes bounceIn {
+      0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+      100% { opacity: 1; transform: translateX(-50%) scale(1); }
+    }
+
+    .chat-input-bar { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg-card); flex-shrink: 0; position: relative; }
     .chat-input-bar input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; outline: none; transition: all 0.2s; font-family: inherit; }
     .chat-input-bar input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
     .chat-input-bar button { padding: 10px 16px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
     .chat-input-bar button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
 
-    @media (max-width: 640px) { .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; } }
-    
-    /* ===== FOOTER ===== */
-    .footer {
-      text-align: center;
-      padding: 20px;
-      border-top: 1px solid var(--border);
-      color: var(--text-muted);
-      font-size: 13px;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(20px);
-      position: relative;
-      z-index: 10;
-      flex-shrink: 0;
-      width: 100%;
-    }
-    .footer a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .footer a:hover { text-decoration: underline; }
-    
-    /* Estilos para o Preview */
+    .emoji-btn { background: transparent; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.15s; flex-shrink: 0; }
+    .emoji-btn:hover { background: var(--bg-hover); }
+    .emoji-panel { display: none; position: absolute; bottom: 100%; left: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; max-width: 280px; max-height: 200px; overflow-y: auto; flex-wrap: wrap; gap: 4px; z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    .emoji-panel.show { display: flex; }
+    .emoji-item { font-size: 22px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.15s; line-height: 1; }
+    .emoji-item:hover { background: var(--bg-hover); }
+
+    /* ===== OUTROS ===== */
     .song-preview { display: flex; gap: 12px; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); align-items: center; margin-top: 8px; }
     .song-preview.hidden { display: none; }
     .song-preview-thumb { width: 60px; height: 45px; border-radius: 8px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; overflow: hidden; position: relative; border: 1px solid var(--border); }
@@ -600,18 +952,31 @@
     .cooldown-text.hidden { display: none; }
     .admin-badge { background: linear-gradient(135deg, var(--accent), var(--accent2)); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; }
     .admin-badge.hidden { display: none; }
-    .emoji-btn { background: transparent; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.15s; flex-shrink: 0; }
-    .emoji-btn:hover { background: var(--bg-hover); }
-    .emoji-panel { display: none; position: absolute; bottom: 100%; left: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; max-width: 280px; max-height: 200px; overflow-y: auto; display: none; flex-wrap: wrap; gap: 4px; z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-    .emoji-panel.show { display: flex; }
-    .emoji-item { font-size: 22px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.15s; line-height: 1; }
-    .emoji-item:hover { background: var(--bg-hover); }
-    .new-messages-pill { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; border: none; border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; cursor: pointer; z-index: 10; box-shadow: 0 4px 20px rgba(255,107,53,0.4); transition: all 0.3s; font-family: inherit; }
-    .new-messages-pill.hidden { display: none; }
-    .new-messages-pill:hover { transform: translateX(-50%) scale(1.05); }
     .eq-bar { width: 4px; border-radius: 2px; background: linear-gradient(to top, var(--accent), var(--accent2)); transition: height 0.3s; }
     @keyframes equalizer { 0%, 100% { height: 4px; } 50% { height: 18px; } }
     @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; } }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13px;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(20px);
+      position: relative;
+      z-index: 10;
+      flex-shrink: 0;
+      width: 100%;
+    }
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) { .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; } }
   </style>
 </head>
 <body>
@@ -773,6 +1138,106 @@
   </div>
 </div>
 
+<!-- WELCOME MODAL -->
+<div class="modal-overlay" id="welcomeModal">
+  <div class="modal welcome-modal">
+    <div class="welcome-header">
+      <div class="welcome-icon">🎸</div>
+      <h2>Bem-vindo ao Sonora Fan!</h2>
+      <p class="welcome-subtitle">A pista é sua. A trilha sonora é de todo mundo.</p>
+    </div>
+
+    <div class="welcome-steps">
+      <div class="welcome-step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <div class="step-icon">🔗</div>
+          <div>
+            <h4>Cole um link do YouTube</h4>
+            <p>Encontre sua música favorita no YouTube, copie o link e cole no campo "Adicionar música".</p>
+            <div class="step-example">
+              <span class="example-label">Exemplo:</span>
+              <code>https://www.youtube.com/watch?v=dQw4w9WgXcQ</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome-step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <div class="step-icon">✅</div>
+          <div>
+            <h4>Confirme a prévia</h4>
+            <p>O sistema mostrará uma prévia da música. Verifique o título e a duração, depois clique em "Adicionar à fila".</p>
+            <div class="step-tip">
+              <span class="tip-icon">⏱️</span>
+              <span><strong>Limite de 10 minutos</strong> por música para manter a fila dinâmica.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome-step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <div class="step-icon">🎵</div>
+          <div>
+            <h4>Acompanhe a fila</h4>
+            <p>Veja todas as músicas na fila ao lado. A música atual é destacada com uma barra laranja.</p>
+            <div class="step-tip">
+              <span class="tip-icon">👑</span>
+              <span><strong>Administradores</strong> podem pular músicas clicando em qualquer música da fila.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome-step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <div class="step-icon">💬</div>
+          <div>
+            <h4>Interaja no chat</h4>
+            <p>Comente as músicas, reaja com emojis e curta as mensagens da galera!</p>
+            <div class="step-tip">
+              <span class="tip-icon">❤️</span>
+              <span>Clique em <strong>🤍</strong> para curtir mensagens e em <strong>🔥</strong> para dar uma curtida com fogo!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome-step quick-tips">
+        <div class="step-number">⭐</div>
+        <div class="step-content">
+          <div class="step-icon">💡</div>
+          <div>
+            <h4>Dicas rápidas</h4>
+            <ul class="quick-tips-list">
+              <li>🎲 <strong>Sala aleatória</strong> - Entre em uma sala aleatória no lobby</li>
+              <li>🎤 <strong>Crie sua sala</strong> - Seja o DJ da sua própria sala</li>
+              <li>⏱️ <strong>Cooldown de 3 minutos</strong> entre cada música que você adiciona</li>
+              <li>🎧 <strong>Controle de volume</strong> - Ajuste o volume no player</li>
+              <li>🌙 <strong>Temas</strong> - Alterne entre temas com o botão no canto superior direito</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="welcome-actions">
+      <div class="welcome-checkbox">
+        <input type="checkbox" id="dontShowWelcomeAgain">
+        <label for="dontShowWelcomeAgain">Não mostrar novamente</label>
+      </div>
+      <button class="btn-primary welcome-start-btn" onclick="closeWelcomeModal()">
+        🚀 Vamos começar!
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- LOBBY -->
 <div class="screen" id="screen-lobby">
   <div class="app">
@@ -811,10 +1276,11 @@
   <div class="app">
     <div class="header">
       <div class="header-left">
-        <button onclick="leaveRoom()">← Voltar</button>
+        <button onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border);padding:8px 16px;border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;">← Voltar</button>
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
+        <button class="help-btn" onclick="showWelcomeAgain()" title="Ajuda e Tutorial">❓</button>
         <button class="theme-toggle" onclick="toggleTheme()" title="Tema" id="themeBtn">🌙</button>
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
@@ -837,7 +1303,7 @@
                 <div class="eq-bar" style="height:18px;"></div>
                 <div class="eq-bar" style="height:10px;"></div>
               </div>
-              <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
+              <span class="live-indicator"><span class="live-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--danger);animation:pulse 1.5s infinite;"></span>Ao vivo</span>
             </div>
           </div>
           <div id="youtube-player"></div>
@@ -863,18 +1329,14 @@
           </div>
         </div>
 
-        <div class="queue-section hidden">
-          <div class="queue-header">
-            <span>Fila de músicas</span>
-            <span id="queueCount" style="color:var(--text-muted);font-size:13px;font-weight:600;">0 músicas</span>
-          </div>
-          <div class="queue-list" id="queueList"></div>
-        </div>
-
         <div class="add-song">
-          <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="handleSongUrlInput()" onpaste="setTimeout(handleSongUrlInput, 0)">
+          <div class="input-wrapper">
+            <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="handleSongUrlInput()" onpaste="setTimeout(handleSongUrlInput, 0)">
+            <span class="input-hint">🔗 Ex: youtube.com/watch?v=... ou youtu.be/...</span>
+          </div>
           <button id="addBtn" onclick="addSong()">Adicionar</button>
         </div>
+
         <div class="song-preview hidden" id="songPreview" aria-live="polite">
           <div class="song-preview-thumb" id="songPreviewThumb">🎵</div>
           <div class="song-preview-info">
@@ -897,7 +1359,6 @@
               <span style="font-size:18px;">👥</span>
               <span id="userCount">0</span> ouvinte<span id="userCountPlural">s</span> na sala
             </div>
-            <span class="listener-dot" style="position:static;"></span>
           </div>
         </div>
 
@@ -913,9 +1374,17 @@
         </div>
 
         <div class="chat-panel">
+          <div class="chat-controls">
+            <button id="toggleAutoScrollBtn" class="scroll-toggle" onclick="toggleAutoScroll()">
+              📌 Auto-scroll: ON
+            </button>
+            <button id="clearChatBtn" class="scroll-toggle danger" onclick="clearChat()" title="Limpar chat (apenas admin)">
+              🗑️ Limpar
+            </button>
+          </div>
           <div class="chat-messages" id="chatBox"></div>
           <button class="new-messages-pill hidden" id="newMessagesPill" onclick="scrollChatToBottom()">↓ Novas mensagens</button>
-          <div class="chat-input-bar" style="position:relative;">
+          <div class="chat-input-bar">
             <button class="emoji-btn" onclick="toggleEmojiPanel()" title="Emojis">😀</button>
             <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()" oninput="handleTyping()">
             <button onclick="sendMsg()">Enviar</button>
@@ -984,7 +1453,7 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- FOOTER (Posicionado no final da página) -->
+<!-- FOOTER -->
 <div class="footer">
   Desenvolvido por <a href="https://www.linkedin.com/in/ggiuntini/" target="_blank">Guilherme Giuntini</a>
 </div>
@@ -994,7 +1463,7 @@
 const socket = io();
 
 // ===== ESTADO DA SESSÃO =====
-let currentUser = null; // { nome, email, avatar, genero, regiao, estilos }
+let currentUser = null;
 let myName = '';
 let myAvatar = '🎸';
 let amIAdmin = false;
@@ -1003,7 +1472,7 @@ let currentRoomData = null;
 let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
-let addCooldown = 180000; // ALTERADO: 3 MINUTOS (180 segundos)
+let addCooldown = 180000;
 let isTyping = false;
 let typingTimeout = null;
 let currentTheme = localStorage.getItem('sonoraTheme') || 'terra-sonora';
@@ -1011,6 +1480,13 @@ let songPreviewTimer = null;
 let songPreviewRequest = 0;
 let songPreviewData = null;
 let songPreviewForUrl = '';
+
+// ===== CONTROLE DE AUTO-SCROLL =====
+let autoScrollEnabled = true;
+let hasSeenWelcome = false;
+let messageLikes = {};
+let unreadCount = 0;
+let isPageVisible = true;
 
 // ===== UTILS =====
 function $(id) { return document.getElementById(id); }
@@ -1047,24 +1523,22 @@ function formatDuration(seconds) {
   return m + ':' + s.toString().padStart(2,'0');
 }
 
-// ===== BAD WORDS CENSOR (EXPANDIDO) =====
+// ===== BAD WORDS CENSOR =====
 const badWords = [
-  // Português (com e sem acento)
-  'porra','poha','poça','caralho','cralho','merda','mrda','bosta','bsta','puta','pta','puta que pariu','pqp',
-  'viado','viadu','bicha','bixa','corno','corno','foda','fuder','fode','cu','cuzão','cuzona','cú','cuzão','cuzona',
-  'arrombado','arrombada','rombado','filho da puta','fdp','desgraçado','desgraçada','desgracado','desgracada',
-  'vagabundo','vagabunda','vadio','escroto','escrota','idiota','imbecil','imbeci','retardado','retardada','retardado',
-  'buceta','bct','pica','pika','rola','pinto','piroca','cacete','cacet','punheta','siririca','boquete','anal',
-  'xota','xoxota','pepeca','xereca','xeroca','bunda','bunduda','rabo',
-  // Inglês
-  'fuck','fucking','fucked','fucker','fck','shit','sh1t','bitch','btch','asshole','ass','dick','d1ck','cock',
-  'pussy','puss','cunt','whore','slut','bastard','bstd','damn','hell','nigger','nigga','retard','fag','faggot'
+  'porra','poha','poça','caralho','cralho','merda','mrda','bosta','bsta','puta','pta',
+  'viado','viadu','bicha','bixa','corno','foda','fuder','fode','cu','cuzão','cuzona',
+  'arrombado','arrombada','rombado','filho da puta','fdp','desgraçado','desgraçada',
+  'vagabundo','vagabunda','vadio','escroto','escrota','idiota','imbecil','retardado',
+  'buceta','bct','pica','pika','rola','pinto','piroca','cacete','punheta','siririca',
+  'xota','xoxota','pepeca','xereca','bunda','bunduda','rabo',
+  'fuck','fucking','fucked','fucker','fck','shit','sh1t','bitch','btch','asshole',
+  'dick','d1ck','cock','pussy','puss','cunt','whore','slut','bastard','damn','hell',
+  'nigger','nigga','retard','fag','faggot'
 ];
 
 function censorText(text) {
   let censored = text;
   badWords.forEach(word => {
-    // Remove acentos para pegar variações
     const cleanWord = word.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const regex = new RegExp('\\b' + cleanWord + '\\b', 'gi');
     censored = censored.replace(regex, '***');
@@ -1134,7 +1608,6 @@ async function doLogin() {
   }
 }
 
-// ===== CHECK PASSWORD STRENGTH =====
 function checkPasswordStrength(password) {
   const fill = $('passwordStrengthFill');
   if (!fill) return;
@@ -1156,7 +1629,6 @@ function checkPasswordStrength(password) {
   else fill.style.background = '#22c55e';
 }
 
-// ===== SIGNUP =====
 function showFieldError(fieldId) {
   const el = document.getElementById(fieldId);
   if (el) el.classList.add('show');
@@ -1252,7 +1724,6 @@ async function submitSignup() {
   }
 }
 
-// ===== LOGOUT =====
 function doLogout() {
   fetch('/api/logout', { method: 'POST' })
     .catch(e => console.error('Erro no logout:', e));
@@ -1270,7 +1741,6 @@ function doLogout() {
   toast('Você saiu da sua conta.', 'success');
 }
 
-// ===== LANDING =====
 function toggleStyleChip(el) { el.classList.toggle('selected'); }
 
 function openSignupModal() {
@@ -1286,7 +1756,7 @@ function closeSignupModal() {
   show('landingScreen');
 }
 
-// ===== NOVO SISTEMA DE TEMAS =====
+// ===== TEMAS =====
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', currentTheme);
   
@@ -1360,6 +1830,50 @@ function toggleTheme() {
   applyTheme();
 }
 
+// ===== MODAL DE BOAS-VINDAS =====
+function showWelcomeModal() {
+  const modal = document.getElementById('welcomeModal');
+  if (!modal) return;
+  
+  const seen = localStorage.getItem('sonoraWelcomeSeen');
+  if (seen === 'true') {
+    hasSeenWelcome = true;
+    return;
+  }
+  
+  setTimeout(() => {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }, 500);
+}
+
+function closeWelcomeModal() {
+  const modal = document.getElementById('welcomeModal');
+  const dontShow = document.getElementById('dontShowWelcomeAgain');
+  
+  if (!modal) return;
+  
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+  
+  if (dontShow && dontShow.checked) {
+    localStorage.setItem('sonoraWelcomeSeen', 'true');
+  }
+  
+  hasSeenWelcome = true;
+  
+  setTimeout(() => {
+    const input = document.getElementById('songUrl');
+    if (input) input.focus();
+  }, 300);
+}
+
+function showWelcomeAgain() {
+  localStorage.removeItem('sonoraWelcomeSeen');
+  hasSeenWelcome = false;
+  showWelcomeModal();
+}
+
 // ===== LOBBY =====
 async function loadRooms() {
   try {
@@ -1380,26 +1894,15 @@ async function loadRooms() {
       const thumbImg = track
         ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.style.display='none'">`
         : `<div class="thumb-fallback">🎧</div>`;
-      const nowPlaying = (r.isPlaying && track)
-        ? `<div class="room-now-playing">${escapeHtml(track.title)}</div>`
-        : '';
       const liveBadge = r.isPlaying
         ? `<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>`
-        : `<div class="room-live-badge" style="opacity:0.7;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);"></span>PARADA</div>`;
-
-      let miniProgress = '';
-      if (r.isPlaying && track && track.duration) {
-        const pct = Math.min(100, (track.position / track.duration) * 100);
-        miniProgress = `<div class="room-mini-progress"><div class="room-mini-progress-fill" style="width:${pct}%;"></div></div>`;
-      }
+        : `<div class="room-live-badge" style="opacity:0.7;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);display:inline-block;"></span>PARADA</div>`;
 
       card.innerHTML = `
         <div class="room-thumb">
           ${thumbImg}
           ${liveBadge}
           <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div>
-          ${nowPlaying}
-          ${miniProgress}
         </div>
         <div class="room-card-body">
           <h3>${escapeHtml(r.name)}</h3>
@@ -1459,6 +1962,7 @@ function joinRoom(slug) {
   amIAdmin = false;
   hide('adminBadge');
   loadYouTubeAPI();
+  showWelcomeModal();
 }
 
 function leaveRoom() {
@@ -1584,7 +2088,7 @@ socket.on('chat', renderMessage);
 socket.on('chatHistory', (messages) => {
   $('chatBox').innerHTML = '';
   messages.forEach(m => renderMessage(m));
-  scrollChatToBottom();
+  setTimeout(scrollChatToBottom, 100);
 });
 socket.on('error', (msg) => toast(msg, 'error'));
 socket.on('isAdmin', (isAdmin) => {
@@ -1593,8 +2097,19 @@ socket.on('isAdmin', (isAdmin) => {
 });
 socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
 socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
+socket.on('chatCleared', () => {
+  const box = $('chatBox');
+  if (box) {
+    box.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'msg msg-system';
+    div.innerHTML = `<span class="msg-text">🧹 O chat foi limpo pelo administrador</span>`;
+    box.appendChild(div);
+  }
+  toast('Chat limpo pelo administrador', 'success');
+});
 
-// ===== QUEUE (APENAS SIDEBAR) =====
+// ===== QUEUE =====
 function renderQueue(queue, currentIndex) {
   const sidebarList = $('queueListSidebar');
   const sidebarCount = $('queueCountSidebar');
@@ -1636,7 +2151,7 @@ function renderQueue(queue, currentIndex) {
   }
 }
 
-// ===== ADD SONG (TRAVA INTELIGENTE DE 10 MINUTOS) =====
+// ===== ADD SONG =====
 function extractYouTubeId(rawUrl) {
   const url = (rawUrl || '').trim();
   if (!url) return '';
@@ -1683,16 +2198,13 @@ function previewSongFromInput() {
   setSongPreview('loading');
   const requestId = ++songPreviewRequest;
 
-  // Tenta pegar a duração pela API oficial
   fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(data => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
       
-      // A duração no oembed vem em segundos
       const duration = data.duration || 0;
       
-      // VERIFICAÇÃO DE DURAÇÃO MÁXIMA (10 minutos = 600 segundos)
       let state = 'ready';
       let statusMsg = '';
       if (duration > 0 && duration > 600) {
@@ -1711,18 +2223,15 @@ function previewSongFromInput() {
     .catch(() => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
       
-      // FALHA NA API: Tenta um método alternativo via fetch direto do HTML
       fetch(`https://www.youtube.com/watch?v=${videoId}`)
         .then(r => r.text())
         .then(html => {
           if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
           
-          // Tenta encontrar a duração no HTML (forma alternativa)
           let duration = 0;
           const match = html.match(/"duration":\s*(\d+)/);
           if (match) duration = parseInt(match[1]);
 
-          // Se ainda não encontrou, tenta a meta tag
           if (!duration) {
             const metaMatch = html.match(/<meta itemprop="duration" content="PT(\d+)M/);
             if (metaMatch) duration = parseInt(metaMatch[1]) * 60;
@@ -1749,7 +2258,6 @@ function previewSongFromInput() {
         .catch(() => {
           if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
           
-          // Último recurso: assume que é curto e libera com aviso
           songPreviewData = { 
             id: videoId, 
             title: 'Música do YouTube', 
@@ -1797,7 +2305,6 @@ function setSongPreview(state, data, customStatus) {
   title.textContent = data.title;
   artist.textContent = data.artist;
 
-  // Verifica se é muito longo e desabilita o botão
   if (state === 'too_long') {
     status.textContent = customStatus || '⛔ Vídeo muito longo! Limite: 10 minutos.';
     status.style.color = 'var(--danger)';
@@ -1837,11 +2344,6 @@ function addSong() {
 function confirmAddSong() {
   if (!songPreviewData || !songPreviewData.id) return;
   
-  // ==========================================
-  // TRAVA INTELIGENTE DE SEGURANÇA
-  // ==========================================
-  // Se a duração for maior que 0 E maior que 600 segundos, BLOQUEIA.
-  // Se for 0 ou null (não foi possível obter), LIBERA com aviso.
   if (songPreviewData.duration > 0 && songPreviewData.duration > 600) {
     toast('⛔ Este vídeo é muito longo! Limite: 10 minutos.', 'error');
     return;
@@ -1859,12 +2361,11 @@ function confirmAddSong() {
   input.disabled = true;
   $('addBtn').disabled = true;
 
-  // Agora só envia se passou por todas as verificações
   socket.emit('addSong', {
     id: songPreviewData.id,
     title: songPreviewData.title,
     artist: songPreviewData.artist,
-    duration: songPreviewData.duration > 0 ? Math.floor(songPreviewData.duration) : null, // Envia null se desconhecido
+    duration: songPreviewData.duration > 0 ? Math.floor(songPreviewData.duration) : null,
   });
   lastAddTime = Date.now();
   input.value = '';
@@ -1876,7 +2377,7 @@ function startCooldown() {
   const input = $('songUrl');
   const btn = $('addBtn');
   const text = $('cooldownText');
-  let remaining = 180; // ALTERADO: 180 segundos (3 minutos)
+  let remaining = 180;
   text.textContent = `Aguarde ${Math.floor(remaining / 60)}m${remaining % 60}s para adicionar outra música`;
   text.classList.remove('hidden');
   const interval = setInterval(() => {
@@ -1899,9 +2400,7 @@ function renderUsers(users) {
   $('userCountPlural').textContent = count === 1 ? '' : 's';
 }
 
-// ===== CHAT (COM SCROLL AUTOMÁTICO E CURTIDAS) =====
-let messageLikes = {};
-
+// ===== CHAT =====
 function sendMsg() {
   const input = $('chatInput');
   const text = input.value.trim();
@@ -1974,9 +2473,9 @@ function renderMessage(msg) {
   const wasNearBottom = isChatNearBottom();
   box.appendChild(div);
 
-  if (wasNearBottom) {
+  if (autoScrollEnabled && wasNearBottom) {
     scrollChatToBottom();
-  } else {
+  } else if (!wasNearBottom) {
     showNewMessagesPill();
   }
 }
@@ -2008,45 +2507,114 @@ function toggleFire(msgId, btn) {
   toast('🔥 Curtida com fogo!', 'success');
 }
 
-const CHAT_NEAR_BOTTOM_PX = 80; // tolerância em pixels pra considerar "está no final"
-
 function isChatNearBottom() {
   const box = $('chatBox');
   if (!box) return true;
-  return box.scrollHeight - box.scrollTop - box.clientHeight < CHAT_NEAR_BOTTOM_PX;
+  return box.scrollHeight - box.scrollTop - box.clientHeight < 100;
 }
 
 function showNewMessagesPill() {
   const pill = $('newMessagesPill');
-  if (pill) pill.classList.remove('hidden');
+  if (pill) {
+    pill.classList.remove('hidden');
+    const unseen = document.querySelectorAll('.msg:not(.seen)').length;
+    if (unseen > 0) {
+      pill.textContent = `↓ ${unseen} novas mensagens`;
+    } else {
+      pill.textContent = '↓ Novas mensagens';
+    }
+  }
+  
+  if (!isPageVisible) {
+    unreadCount++;
+    document.title = `(${unreadCount}) 🎸 Sonora Fan`;
+  }
 }
 
 function hideNewMessagesPill() {
   const pill = $('newMessagesPill');
   if (pill) pill.classList.add('hidden');
+  document.querySelectorAll('.msg').forEach(el => {
+    el.classList.add('seen');
+  });
 }
 
 function scrollChatToBottom() {
   const box = $('chatBox');
   if (!box) return;
-  requestAnimationFrame(() => {
-    box.scrollTop = box.scrollHeight; // com scroll-behavior:smooth no CSS, já anima sozinho
+  box.scrollTo({
+    top: box.scrollHeight,
+    behavior: 'smooth'
   });
   hideNewMessagesPill();
 }
 
-// Enquanto o usuário estiver perto do final, o chat continua acompanhando
-// automaticamente. Se ele subir pra ler mensagens antigas, o auto-scroll
-// pausa e some o pill de "novas mensagens" só quando ele voltar pro final.
+// ===== CONTROLE DE AUTO-SCROLL =====
+function toggleAutoScroll() {
+  autoScrollEnabled = !autoScrollEnabled;
+  const btn = document.getElementById('toggleAutoScrollBtn');
+  
+  if (autoScrollEnabled) {
+    btn.textContent = '📌 Auto-scroll: ON';
+    btn.classList.remove('active');
+    toast('Auto-scroll ativado', 'success');
+    setTimeout(scrollChatToBottom, 100);
+  } else {
+    btn.textContent = '📌 Auto-scroll: OFF';
+    btn.classList.add('active');
+    toast('Auto-scroll desativado. Clique em "↓ Novas mensagens" para rolar.', 'success');
+  }
+  
+  localStorage.setItem('autoScrollEnabled', autoScrollEnabled);
+}
+
+function loadAutoScrollPreference() {
+  const saved = localStorage.getItem('autoScrollEnabled');
+  if (saved !== null) {
+    autoScrollEnabled = saved === 'true';
+    const btn = document.getElementById('toggleAutoScrollBtn');
+    if (btn) {
+      if (autoScrollEnabled) {
+        btn.textContent = '📌 Auto-scroll: ON';
+        btn.classList.remove('active');
+      } else {
+        btn.textContent = '📌 Auto-scroll: OFF';
+        btn.classList.add('active');
+      }
+    }
+  }
+}
+
+// ===== LIMPAR CHAT =====
+function clearChat() {
+  if (!currentRoomSlug) {
+    toast('Você precisa estar em uma sala', 'error');
+    return;
+  }
+  
+  if (!amIAdmin) {
+    toast('Apenas administradores podem limpar o chat', 'error');
+    return;
+  }
+  
+  if (confirm('Tem certeza que deseja limpar todo o histórico do chat?')) {
+    socket.emit('clearChat');
+    toast('Chat limpo!', 'success');
+  }
+}
+
+// ===== CHAT SCROLL TRACKING =====
 (function initChatScrollTracking() {
   const box = $('chatBox');
   if (!box || box.dataset.scrollBound) return;
   box.dataset.scrollBound = '1';
+  
   box.addEventListener('scroll', () => {
     if (isChatNearBottom()) hideNewMessagesPill();
   });
 })();
 
+// ===== TYPING =====
 function handleTyping() {
   if (!isTyping) { isTyping = true; socket.emit('typing', { isTyping: true }); }
   clearTimeout(typingTimeout);
@@ -2056,6 +2624,7 @@ function handleTyping() {
   }, 2000);
 }
 
+// ===== EMOJIS =====
 function toggleEmojiPanel() { $('emojiPanel').classList.toggle('show'); }
 function insertEmoji(emoji) {
   $('chatInput').value += emoji;
@@ -2063,6 +2632,7 @@ function insertEmoji(emoji) {
   $('emojiPanel').classList.remove('show');
 }
 
+// ===== EQUALIZER =====
 function updateEqualizer(playing) {
   document.querySelectorAll('.eq-bar').forEach(bar => {
     bar.style.animationPlayState = playing ? 'running' : 'paused';
@@ -2070,11 +2640,13 @@ function updateEqualizer(playing) {
   });
 }
 
+// ===== VOLUME =====
 function setVolume(val) {
   $('volumeValue').textContent = val + '%';
   if (player && player.setVolume) player.setVolume(parseInt(val));
 }
 
+// ===== CONFETTI =====
 function launchConfetti() {
   const container = document.getElementById('confettiContainer') || document.createElement('div');
   if (!document.getElementById('confettiContainer')) {
@@ -2116,6 +2688,15 @@ setInterval(() => {
   } catch(e) {}
 }, 1000);
 
+// ===== VISIBILITY CHANGE =====
+document.addEventListener('visibilitychange', () => {
+  isPageVisible = !document.hidden;
+  if (isPageVisible) {
+    unreadCount = 0;
+    document.title = '🎸 Sonora Fan';
+  }
+});
+
 // ===== CARREGA SALAS PERIODICAMENTE =====
 setInterval(() => {
   const lobbyEl = document.getElementById('screen-lobby');
@@ -2124,6 +2705,7 @@ setInterval(() => {
 
 // ===== INIT =====
 applyTheme();
+loadAutoScrollPreference();
 
 async function checkSession() {
   try {
@@ -2162,6 +2744,5 @@ if (roomParam) {
 }
 
 </script>
-
 </body>
 </html>
