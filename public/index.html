@@ -127,6 +127,7 @@
       overflow-x: hidden;
     }
 
+    /* ===== SCROLLBAR TEMÁTICA (segue o tema ativo) ===== */
     * {
       scrollbar-width: thin;
       scrollbar-color: var(--accent) var(--bg-elevated);
@@ -139,6 +140,7 @@
     }
     ::-webkit-scrollbar-thumb:hover { filter: brightness(1.15); }
 
+    /* ===== STAGE LIGHTS EFFECT ===== */
     .stage-bg {
       position: fixed;
       inset: 0;
@@ -150,7 +152,7 @@
         radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124,58,237,0.08), transparent);
     }
 
-    /* ===== LOGIN ===== */
+    /* ===== LOGIN SCREEN ===== */
     .login-screen {
       position: fixed;
       inset: 0;
@@ -181,15 +183,29 @@
       height: 3px;
       background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
     }
-    .login-card .logo { font-size: 56px; margin-bottom: 12px; filter: drop-shadow(0 0 20px var(--accent-glow)); }
-    .login-card h1 { font-size: 32px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px; }
+    .login-card .logo {
+      font-size: 56px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 20px var(--accent-glow));
+    }
+    .login-card h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
     .login-card h1 span { 
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .login-card p { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
+    .login-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
     .login-card input {
       width: 100%;
       padding: 14px 18px;
@@ -203,7 +219,10 @@
       transition: all 0.2s;
       font-family: inherit;
     }
-    .login-card input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+    .login-card input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+    }
     .login-card input::placeholder { color: var(--text-muted); }
     .login-card .admin-toggle {
       display: flex;
@@ -215,7 +234,11 @@
       color: var(--text-secondary);
       font-size: 13px;
     }
-    .login-card .admin-toggle input[type="checkbox"] { width: auto; margin: 0; accent-color: var(--accent2); }
+    .login-card .admin-toggle input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+      accent-color: var(--accent2);
+    }
     .login-card button {
       width: 100%;
       padding: 16px;
@@ -231,10 +254,20 @@
       position: relative;
       overflow: hidden;
     }
-    .login-card button:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(124,58,237,0.3); }
+    .login-card button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(124,58,237,0.3);
+    }
     .login-card button:active { transform: scale(0.98); }
 
-    .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    /* ===== APP LAYOUT ===== */
+    .app { 
+      position: relative; 
+      z-index: 1; 
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
     .hidden { display: none !important; }
 
     /* ===== HEADER ===== */
@@ -263,7 +296,11 @@
       font-weight: 500;
     }
     .header-left button:hover { background: var(--bg-card); color: var(--text); border-color: var(--border-hover); }
-    .header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .header h1 { 
+      font-size: 18px; 
+      font-weight: 700; 
+      letter-spacing: -0.3px;
+    }
     .header h1 span { 
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
@@ -301,10 +338,28 @@
     }
 
     /* ===== LOBBY ===== */
-    .lobby { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; }
-    .lobby-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
-    .lobby-top h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
-    .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .lobby { 
+      padding: 32px; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      width: 100%;
+    }
+    .lobby-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .lobby-top h2 { 
+      font-size: 24px; 
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .room-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
     .room-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -326,7 +381,11 @@
       transition: opacity 0.3s;
       z-index: 2;
     }
-    .room-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(124,58,237,0.15); }
+    .room-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(124,58,237,0.15);
+    }
     .room-card:hover::before { opacity: 1; }
     .room-card:hover .room-thumb img { transform: scale(1.08); }
     .room-thumb {
@@ -338,8 +397,18 @@
       overflow: hidden;
       flex-shrink: 0;
     }
-    .room-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
-    .room-thumb .thumb-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; opacity: 0.5; }
+    .room-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .room-thumb .thumb-fallback {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      opacity: 0.5;
+    }
     .room-thumb::after {
       content: '';
       position: absolute; inset: 0;
@@ -362,7 +431,12 @@
       color: var(--text);
       z-index: 2;
     }
-    .room-live-badge .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); animation: pulse 1.5s infinite; }
+    .room-live-badge .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
+    }
     .room-listeners-badge {
       position: absolute;
       top: 10px; right: 10px;
@@ -378,7 +452,12 @@
       color: var(--text);
       z-index: 2;
     }
-    .room-thumb .room-eq { position: absolute; bottom: 10px; right: 10px; z-index: 2; height: 16px; }
+    .room-thumb .room-eq {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      z-index: 2;
+      height: 16px;
+    }
     .room-thumb .room-eq .eq-bar { width: 2.5px; }
     .room-now-playing {
       position: absolute;
@@ -402,10 +481,23 @@
       height: 100%;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
     }
-    .room-time-remaining { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
-    .room-card-body { padding: 16px 18px 18px; }
+    .room-time-remaining {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .room-card-body {
+      padding: 16px 18px 18px;
+    }
     .room-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
-    .room-card .meta { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-muted); }
+    .room-card .meta {
+      display: flex;
+      gap: 14px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
     .room-card .meta span { display: flex; align-items: center; gap: 4px; }
     .empty-state {
       text-align: center;
@@ -438,7 +530,12 @@
       flex: 1;
       min-height: 0;
     }
-    #screen-room .app { height: 100vh; height: 100dvh; overflow: hidden; }
+    /* Altura fixa da tela da sala: palco e chat rolam internamente */
+    #screen-room .app {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
     @media (max-width: 1024px) {
       .room-layout { grid-template-columns: 1fr; }
     }
@@ -450,14 +547,86 @@
       padding: 20px 16px;
       gap: 20px;
       overflow-y: auto;
+      min-height: 0;
     }
 
-    /* ===== PLAYER SECTION ===== */
+    /* DJ BOOTH */
+    .dj-booth-section {
+      text-align: center;
+      padding: 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(124,58,237,0.05), transparent);
+      position: relative;
+    }
+    .dj-booth-section::before {
+      content: 'CABINES DE DJ';
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-elevated);
+      padding: 0 12px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+    .dj-booth {
+      display: flex;
+      gap: 14px;
+      align-items: flex-end;
+      justify-content: center;
+      min-height: 80px;
+    }
+    .dj-slot {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      font-weight: 600;
+    }
+    .dj-slot.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(124,58,237,0.15));
+      color: var(--accent);
+      box-shadow: 0 0 30px rgba(255,107,53,0.2), 0 0 60px rgba(124,58,237,0.1);
+      transform: scale(1.08);
+    }
+    .dj-slot.occupied {
+      border-color: var(--border-hover);
+      color: var(--text-secondary);
+      cursor: default;
+    }
+    .dj-slot:hover:not(.occupied) {
+      border-color: var(--accent2);
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(124,58,237,0.2);
+    }
+    .dj-slot .dj-name {
+      position: absolute;
+      bottom: -24px;
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    /* PLAYER */
     .player-section {
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-card);
       overflow: hidden;
+      flex-shrink: 0;
     }
     .player-header {
       display: flex;
@@ -483,8 +652,17 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); animation: pulse 1.5s infinite; }
-    #youtube-player { width: 100%; height: 320px; background: #000; }
+    .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
+    }
+    #youtube-player {
+      width: 100%;
+      height: 320px;
+      background: #000;
+    }
     .player-info {
       display: flex;
       gap: 16px;
@@ -515,15 +693,19 @@
       text-overflow: ellipsis;
       letter-spacing: -0.3px;
     }
-    .track-artist { font-size: 14px; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
-    .track-dj { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
-
-    /* ===== PROGRESS & VOLUME - SEMPRE VISÍVEL ===== */
-    .player-controls {
+    .track-artist { 
+      font-size: 14px; 
+      color: var(--text-secondary); 
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .track-dj {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .progress-section {
       padding: 0 18px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
     .progress-bar {
       width: 100%;
@@ -532,7 +714,6 @@
       border-radius: 3px;
       overflow: hidden;
       position: relative;
-      cursor: pointer;
     }
     .progress-fill {
       height: 100%;
@@ -545,54 +726,15 @@
     .progress-time {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
+      margin-top: 8px;
+      font-size: 11px;
       color: var(--text-muted);
-      font-weight: 500;
     }
-    .volume-control {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 6px 2px;
     }
-    .volume-control .vol-icon { font-size: 16px; color: var(--text-muted); flex-shrink: 0; }
-    .volume-control input[type="range"] {
-      flex: 1;
-      height: 4px;
-      -webkit-appearance: none;
-      appearance: none;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-      cursor: pointer;
     }
-    .volume-control input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      cursor: pointer;
-      box-shadow: 0 0 10px var(--accent-glow);
-    }
-    .volume-control input[type="range"]::-moz-range-thumb {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      cursor: pointer;
-      box-shadow: 0 0 10px var(--accent-glow);
-    }
-    .volume-control .vol-value {
-      font-size: 12px;
-      color: var(--text-muted);
-      min-width: 32px;
-      text-align: right;
-      font-weight: 600;
     }
 
-    /* ===== QUEUE ===== */
+    /* QUEUE */
     .queue-section {
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
@@ -614,7 +756,12 @@
       text-transform: uppercase;
       letter-spacing: 1px;
     }
-    .queue-list { display: flex; flex-direction: column; max-height: 200px; overflow-y: auto; }
+    .queue-list { 
+      display: flex; 
+      flex-direction: column; 
+      max-height: 240px; 
+      overflow-y: auto;
+    }
     .queue-list::-webkit-scrollbar { width: 5px; }
     .queue-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 3px; }
     .queue-item {
@@ -634,7 +781,14 @@
       background: linear-gradient(90deg, rgba(255,107,53,0.08), transparent);
       border-left: 3px solid var(--accent);
     }
-    .queue-num { width: 28px; text-align: center; color: var(--text-muted); font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .queue-num { 
+      width: 28px; 
+      text-align: center; 
+      color: var(--text-muted); 
+      font-size: 12px; 
+      font-weight: 700;
+      flex-shrink: 0;
+    }
     .queue-item.playing .queue-num { color: var(--accent); }
     .queue-thumb {
       width: 40px; height: 30px;
@@ -645,9 +799,23 @@
       border: 1px solid var(--border);
     }
     .queue-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .queue-title { flex: 1; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-    .queue-item.playing .queue-title { color: var(--text); font-weight: 600; }
-    .queue-dj { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+    .queue-title { 
+      flex: 1; 
+      color: var(--text-secondary); 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .queue-item.playing .queue-title { 
+      color: var(--text); 
+      font-weight: 600;
+    }
+    .queue-dj { 
+      font-size: 11px; 
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
     .queue-remove {
       opacity: 0;
       transition: opacity 0.2s;
@@ -662,11 +830,11 @@
     .queue-item:hover .queue-remove { opacity: 1; }
     .queue-remove:hover { transform: scale(1.2); }
 
-    /* ===== ADD SONG ===== */
+    /* ADD SONG */
     .add-song {
       display: flex;
       gap: 10px;
-      padding: 14px 18px;
+      padding: 18px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-card);
@@ -683,7 +851,10 @@
       transition: all 0.2s;
       font-family: inherit;
     }
-    .add-song input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+    .add-song input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
     .add-song input:disabled { opacity: 0.5; cursor: not-allowed; }
     .add-song button {
       padding: 12px 24px;
@@ -698,9 +869,17 @@
       white-space: nowrap;
       font-family: inherit;
     }
-    .add-song button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
+    .add-song button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(124,58,237,0.3);
+    }
     .add-song button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-    .cooldown-text { font-size: 12px; color: var(--text-muted); padding: 6px 18px 0; text-align: center; }
+    .cooldown-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 0 18px 8px;
+      text-align: center;
+    }
     .song-preview {
       display: flex;
       align-items: center;
@@ -740,7 +919,12 @@
       font-weight: 700;
       line-height: 1.4;
     }
-    .song-preview-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .song-preview-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
     .song-preview-actions.hidden { display: none !important; }
     .song-preview-confirm {
       padding: 8px 14px;
@@ -755,7 +939,10 @@
       white-space: nowrap;
       transition: all 0.15s;
     }
-    .song-preview-confirm:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(124,58,237,0.35); }
+    .song-preview-confirm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+    }
     .song-preview-cancel {
       padding: 5px 14px;
       border-radius: 8px;
@@ -772,24 +959,54 @@
     .song-preview-cancel:hover { color: var(--danger); border-color: var(--danger); }
     .song-preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .song-preview-info { flex: 1; min-width: 0; }
-    .song-preview-title { color: var(--text); font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .song-preview-artist { color: var(--text-secondary); font-size: 12px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .song-preview-status { color: var(--text-muted); font-size: 11px; flex-shrink: 0; }
+    .song-preview-title {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-preview-artist {
+      color: var(--text-secondary);
+      font-size: 12px;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-preview-status {
+      color: var(--text-muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
 
-    /* ===== SIDEBAR ===== */
+    /* ===== SIDEBAR (RIGHT) ===== */
     .sidebar {
       border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       background: var(--bg-elevated);
       height: 100%;
+      min-height: 0;
     }
     @media (max-width: 1024px) {
       .sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 600px; }
     }
 
-    .users-panel { padding: 18px; border-bottom: 1px solid var(--border); }
-    .panel-header { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    /* USERS */
+    .users-panel {
+      padding: 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
     .user-list {
       display: flex;
       flex-direction: column;
@@ -844,7 +1061,12 @@
       letter-spacing: 0.5px;
       margin-left: 4px;
     }
-    .user-actions { position: absolute; right: 6px; display: none; gap: 4px; }
+    .user-actions {
+      position: absolute;
+      right: 6px;
+      display: none;
+      gap: 4px;
+    }
     .user:hover .user-actions { display: flex; }
     .user-actions button {
       padding: 4px 8px;
@@ -860,7 +1082,7 @@
     .ban-btn { background: #7c2d12; color: #fb923c; }
     .ban-btn:hover { background: #9a3412; }
 
-    /* ===== CHAT ===== */
+    /* CHAT */
     .chat-panel {
       flex: 1;
       display: flex;
@@ -912,7 +1134,12 @@
     }
     .msg:hover { background: rgba(255,255,255,0.02); }
     @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .msg-user { font-weight: 700; flex-shrink: 0; cursor: pointer; font-size: 13px; }
+    .msg-user { 
+      font-weight: 700; 
+      flex-shrink: 0; 
+      cursor: pointer;
+      font-size: 13px;
+    }
     .msg-admin-badge {
       font-size: 9px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
@@ -924,8 +1151,18 @@
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
-    .msg-text { color: var(--text-secondary); word-break: break-word; font-size: 13px; }
-    .msg-system { color: var(--text-muted); font-style: italic; font-size: 12px; padding: 4px 10px; text-align: center; }
+    .msg-text { 
+      color: var(--text-secondary); 
+      word-break: break-word;
+      font-size: 13px;
+    }
+    .msg-system { 
+      color: var(--text-muted); 
+      font-style: italic; 
+      font-size: 12px; 
+      padding: 4px 10px;
+      text-align: center;
+    }
     .msg-system .msg-text { color: var(--text-muted); }
     .msg-time {
       font-size: 10px;
@@ -945,7 +1182,6 @@
       gap: 10px;
       align-items: center;
       background: var(--bg-card);
-      position: relative;
     }
     .chat-input-bar input {
       flex: 1;
@@ -960,7 +1196,10 @@
       font-family: inherit;
       min-width: 0;
     }
-    .chat-input-bar input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+    .chat-input-bar input:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
     .chat-input-bar input::placeholder { color: var(--text-muted); }
     .chat-input-bar button {
       padding: 10px 16px;
@@ -976,7 +1215,10 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .chat-input-bar button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+    .chat-input-bar button:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+    }
 
     /* ===== TOAST ===== */
     .toast {
@@ -1045,7 +1287,10 @@
       font-family: inherit;
       transition: all 0.2s;
     }
-    .modal input:focus, .modal select:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+    .modal input:focus, .modal select:focus { 
+      border-color: var(--accent2); 
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
     .modal-actions button {
       padding: 10px 20px;
@@ -1057,10 +1302,20 @@
       font-family: inherit;
       transition: all 0.15s;
     }
-    .modal-actions .btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+    .modal-actions .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
     .modal-actions .btn-secondary:hover { background: var(--bg-card); }
-    .modal-actions .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
-    .modal-actions .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+    .modal-actions .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+    .modal-actions .btn-primary:hover { 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+    }
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 1024px) {
@@ -1078,15 +1333,21 @@
       .room-grid { grid-template-columns: 1fr; }
       .login-card { padding: 40px 24px; }
       .login-card h1 { font-size: 24px; }
-      #youtube-player { height: 180px; }
+      #youtube-player { height: 200px; }
+      .dj-booth { gap: 8px; }
+      .dj-slot { width: 50px; height: 50px; font-size: 10px; }
     }
 
-    /* ===== EMPTY QUEUE ===== */
-    .empty-queue { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    /* ===== EMPTY QUEUE STATE ===== */
+    .empty-queue {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
     .empty-queue .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
     .empty-queue p { font-size: 14px; }
 
-    /* ===== ANIMATIONS ===== */
+    /* ===== SHOW ANIMATIONS ===== */
     @keyframes spotlight {
       0%, 100% { opacity: 0.3; transform: rotate(-15deg) scale(1); }
       25% { opacity: 0.6; transform: rotate(-10deg) scale(1.1); }
@@ -1194,8 +1455,12 @@
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
       animation: shimmer 3s infinite;
     }
-    .player-section { animation: glowPulse 3s ease-in-out infinite; }
-    .msg { animation: bounceIn 0.3s ease; }
+    .player-section {
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+    .msg {
+      animation: bounceIn 0.3s ease;
+    }
     .emoji-btn {
       padding: 8px 10px;
       border-radius: 10px;
@@ -1256,9 +1521,18 @@
       align-items: center;
       gap: 4px;
     }
-    .msg-music .music-like-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.1); }
-    .msg-music .music-like-btn.liked { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.15); }
+    .msg-music .music-like-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,107,53,0.1);
+    }
+    .msg-music .music-like-btn.liked {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,107,53,0.15);
+    }
 
+    /* ===== THEME TOGGLE ===== */
     .theme-toggle {
       padding: 8px 12px;
       border-radius: 10px;
@@ -1272,6 +1546,7 @@
     }
     .theme-toggle:hover { background: var(--bg-hover); transform: scale(1.1); }
 
+    /* ===== AVATAR EMOJI PICKER ===== */
     .avatar-picker {
       display: flex;
       gap: 8px;
@@ -1294,7 +1569,13 @@
     .avatar-option:hover { border-color: var(--accent2); transform: scale(1.15); }
     .avatar-option.selected { border-color: var(--accent); background: rgba(255,107,53,0.15); }
 
-    .msg-reactions { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+    /* ===== MESSAGE REACTIONS ===== */
+    .msg-reactions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
     .reaction-btn {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -1344,6 +1625,7 @@
     }
     .reaction-emoji:hover { background: var(--bg-hover); transform: scale(1.2); }
 
+    /* ===== TYPING INDICATOR ===== */
     .typing-indicator {
       display: none;
       align-items: center;
@@ -1356,7 +1638,10 @@
       background: var(--bg-card);
     }
     .typing-indicator.show { display: flex; }
-    .typing-dots { display: flex; gap: 3px; }
+    .typing-dots {
+      display: flex;
+      gap: 3px;
+    }
     .typing-dot {
       width: 5px; height: 5px;
       border-radius: 50%;
@@ -1371,6 +1656,7 @@
       30% { transform: translateY(-4px); }
     }
 
+    /* ===== MENTION PING ===== */
     .mention-highlight {
       background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(124,58,237,0.2));
       border-left: 3px solid var(--accent);
@@ -1388,6 +1674,7 @@
       border-radius: 4px;
     }
 
+    /* ===== CONFETTI ===== */
     .confetti-container {
       position: fixed;
       inset: 0;
@@ -1405,6 +1692,21 @@
       100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
     }
 
+    /* ===== FULLSCREEN MODE ===== */
+    }
+    }
+    }
+    }
+    }
+
+    /* ===== FAVORITES TAB ===== */
+    }
+    }
+    }
+    }
+    }
+
+    /* ===== CLEAR CHAT BUTTON ===== */
     .clear-chat-btn {
       padding: 6px 12px;
       border-radius: 8px;
@@ -1417,26 +1719,8 @@
       font-weight: 600;
     }
     .clear-chat-btn:hover { background: rgba(239,68,68,0.1); }
-
-    /* ===== TERRA BANNER ===== */
-    .terra-banner {
-      display: block;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      overflow: hidden;
-      background: var(--bg-card);
-      width: 100%;
-      height: 320px;
-      cursor: pointer;
-    }
-    .terra-banner img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
-      background: linear-gradient(180deg, #0a0a14, #050508);
-    }
   </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body>
@@ -1521,7 +1805,10 @@
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
+        
+        
         <button class="theme-toggle" onclick="toggleTheme()" title="Tema" id="themeBtn">🌙</button>
+
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
     </div>
@@ -1529,8 +1816,10 @@
     <div class="room-layout">
       <div class="stage">
         <!-- TERRA SONORA BANNER -->
-        <a href="https://www.instagram.com/terrasonora/" target="_blank" rel="noopener noreferrer" class="terra-banner">
-          <img src="https://iili.io/Ciid52s.jpg" alt="Terra Sonora — Siga no Instagram">
+        <a href="https://www.instagram.com/terrasonora/" target="_blank" rel="noopener noreferrer" class="terra-banner" style="display:block;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);width:100%;height:320px;cursor:pointer;flex-shrink:0;">
+          <img src="https://iili.io/Ciid52s.jpg" 
+               alt="Terra Sonora — Siga no Instagram" 
+               style="width:100%;height:100%;display:block;object-fit:cover;background:linear-gradient(180deg,#0a0a14,#050508);">
         </a>
 
         <!-- PLAYER -->
@@ -1557,21 +1846,19 @@
               <div class="track-dj" id="trackDj"></div>
             </div>
           </div>
-          <!-- CONTROLES: Progresso + Volume SEMPRE VISÍVEIS -->
-          <div class="player-controls">
-            <div class="progress-bar" id="progressBar" onclick="handleProgressClick(event)">
-              <div class="progress-fill" id="progressFill"></div>
-            </div>
+          <div class="progress-section">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
             <div class="progress-time">
               <span id="currentTime">0:00</span>
               <span id="totalTime">0:00</span>
             </div>
-            <div class="volume-control">
-              <span class="vol-icon">🔊</span>
-              <input type="range" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
-              <span class="vol-value" id="volumeValue">80%</span>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+              <span style="font-size:14px;">🔊</span>
+              <input type="range" id="volumeSlider" min="0" max="100" value="80" style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer;" oninput="setVolume(this.value)">
+              <span id="volumeValue" style="font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;">80%</span>
             </div>
           </div>
+          <!-- Voto removido -->
         </div>
 
         <!-- QUEUE -->
@@ -1623,7 +1910,6 @@
             <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px 0;">Nenhuma música tocada ainda</div>
           </div>
         </div>
-
         <div class="chat-panel">
           <div class="chat-messages" id="chatBox"></div>
           <button class="new-messages-pill hidden" id="newMessagesPill" onclick="scrollChatToBottom()">↓ Novas mensagens</button>
@@ -1638,7 +1924,7 @@
               <div class="typing-dot"></div>
             </div>
           </div>
-          <div class="chat-input-bar">
+          <div class="chat-input-bar" style="position:relative;">
             <button class="emoji-btn" onclick="toggleEmojiPanel()" title="Emojis">😀</button>
             <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()" oninput="handleTyping()">
             <button onclick="sendMsg()">Enviar</button>
@@ -1734,6 +2020,7 @@ let chatBulkRender = false;
 
 // ========== CENSOR ==========
 const badWords = [
+  // Português
   'porra','caralho','merda','bosta','puta','viado','bicha','corno','foda','foder',
   'cu','cuzão','cuzona','arrombado','arrombada','filho da puta','fdp','desgraçado',
   'desgraçada','vagabundo','vagabunda','escroto','escrota','idiota','imbecil',
@@ -1746,6 +2033,7 @@ const badWords = [
   'imbecil','idiota','lazarento','lazarenta','maldito','maldita','maldicao',
   'nojento','nojenta','nojentao','sacana','safado','safada','tarado','tarada',
   'vadia','vadio','vagabundo','vagabunda','xarope','xexelento','xexelenta',
+  // Inglês
   'fuck','fucking','fucked','fucker','fuckin','shit','shitty','bitch','asshole',
   'dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger',
   'nigga','retard','fag','faggot','dyke','twat','wanker','bollocks','arsehole',
@@ -1774,17 +2062,16 @@ function showScreen(id) {
   show('screen-' + id);
 }
 
+// Mantém os cards de sala (ao vivo, ouvintes) atualizados enquanto o lobby está visível
 setInterval(() => {
   const lobbyEl = document.getElementById('screen-lobby');
   if (lobbyEl && !lobbyEl.classList.contains('hidden')) loadRooms();
 }, 15000);
-
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
-
 function toast(msg, type) {
   const el = $('toast');
   el.textContent = msg;
@@ -1792,12 +2079,10 @@ function toast(msg, type) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3500);
 }
-
 function formatTime(date) {
   const d = new Date(date);
   return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
 }
-
 function formatDuration(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
@@ -1808,8 +2093,13 @@ function formatDuration(seconds) {
 function toggleAdminField() {
   const check = $('isAdminCheck');
   const pass = $('adminPass');
-  if (check.checked) { show('adminPass'); setTimeout(() => pass.focus(), 100); }
-  else { hide('adminPass'); pass.value = ''; }
+  if (check.checked) {
+    show('adminPass');
+    setTimeout(() => pass.focus(), 100);
+  } else {
+    hide('adminPass');
+    pass.value = '';
+  }
 }
 
 function doLogin() {
@@ -1980,6 +2270,7 @@ function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PAUSED) updateEqualizer(false);
   if (event.data === YT.PlayerState.ENDED) {
     updateEqualizer(false);
+    // Notifica servidor que acabou, mas o servidor decide se avança (proteção contra duplo avanço)
     socket.emit('videoEnded');
   }
 }
@@ -1987,6 +2278,7 @@ function onPlayerStateChange(event) {
 function onPlayerError(event) {
   console.log('YouTube error:', event.data);
   toast('Este vídeo não permite reprodução. Pulando...', 'error');
+  // Notifica servidor para avançar (o servidor gerencia a fila centralmente)
   setTimeout(() => {
     socket.emit('videoEnded');
   }, 2000);
@@ -1997,9 +2289,11 @@ function syncPlayer(state) {
   currentRoomData = state;
   const track = state.queue[state.currentIndex];
 
+  // SEMPRE renderiza a fila primeiro, mesmo sem track
   renderQueue(state.queue, state.currentIndex);
 
   if (!track) {
+    // Fila vazia - reseta tudo
     currentTrackId = null;
     $('trackTitle').textContent = 'Fila vazia';
     $('trackArtist').textContent = 'Adicione uma música do YouTube';
@@ -2008,7 +2302,9 @@ function syncPlayer(state) {
     $('progressFill').style.width = '0%';
     $('currentTime').textContent = '0:00';
     $('totalTime').textContent = '0:00';
-    try { if (player && player.stopVideo) player.stopVideo(); } catch(e) {}
+    try {
+      if (player && player.stopVideo) player.stopVideo();
+    } catch(e) {}
     return;
   }
 
@@ -2021,9 +2317,12 @@ function syncPlayer(state) {
         videoId: track.id,
         startSeconds: Math.floor(state.position)
       });
-    } catch(e) { console.error('Erro ao carregar vídeo:', e); }
+    } catch(e) {
+      console.error('Erro ao carregar vídeo:', e);
+    }
     updateTrackInfo(track);
   } else {
+    // Mesma música - só sincroniza posição
     try {
       const currentPos = player.getCurrentTime();
       if (Math.abs(currentPos - state.position) > 4) {
@@ -2036,7 +2335,7 @@ function syncPlayer(state) {
 function updateTrackInfo(track) {
   $('trackTitle').textContent = track.title;
   $('trackArtist').textContent = track.artist;
-  $('trackDj').textContent = '🎧 Adicionado por ' + (track.dj || 'Sistema');
+  onTrackChange(track);
   $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
 }
 
@@ -2046,11 +2345,17 @@ socket.on('roomState', (state) => {
     ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
   const newTrackId = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
 
-  if (newTrackId && newTrackId !== prevTrackId) currentTrackId = null;
+  // Se a música mudou, força recarregamento do player
+  if (newTrackId && newTrackId !== prevTrackId) {
+    currentTrackId = null;
+  }
+
   currentRoomData = state;
   syncPlayer(state);
   renderHistory(state.history);
 });
+
+
 
 socket.on('queueEmpty', () => {
   currentTrackId = null;
@@ -2061,12 +2366,18 @@ socket.on('queueEmpty', () => {
   $('progressFill').style.width = '0%';
   $('currentTime').textContent = '0:00';
   $('totalTime').textContent = '0:00';
-  try { if (player && player.stopVideo) player.stopVideo(); } catch(e) {}
+  try {
+    if (player && player.stopVideo) player.stopVideo();
+  } catch(e) {}
   toast('Fila encerrada! Adicione mais músicas.', 'success');
 });
 
-socket.on('users', (users) => { renderUsers(users); });
+socket.on('users', (users) => {
+  renderUsers(users);
+});
+
 socket.on('chat', (msg) => { renderMessage(msg); });
+
 socket.on('chatHistory', (messages) => {
   $('chatBox').innerHTML = '';
   chatBulkRender = true;
@@ -2075,6 +2386,7 @@ socket.on('chatHistory', (messages) => {
   hideNewMessagesPill();
   scrollChatToBottom();
 });
+
 socket.on('error', (msg) => { toast(msg, 'error'); });
 
 socket.on('isAdmin', (isAdmin) => {
@@ -2101,13 +2413,20 @@ socket.on('typing', ({ name, isTyping }) => {
   }
 });
 
-socket.on('chatUpdated', (msg) => { updateMessageInPlace(msg); });
+socket.on('chatUpdated', (msg) => {
+  // Atualiza reações em mensagens existentes, mantendo a posição no chat
+  updateMessageInPlace(msg);
+});
+
 socket.on('chatCleared', () => {
   $('chatBox').innerHTML = '';
   hideNewMessagesPill();
   toast('Chat limpo pelo admin', 'success');
 });
-socket.on('confetti', () => { launchConfetti(); });
+
+socket.on('confetti', () => {
+  launchConfetti();
+});
 
 socket.on('musicLiked', ({ msgId, likes }) => {
   const btn = document.getElementById('like-' + msgId);
@@ -2131,19 +2450,6 @@ setInterval(() => {
     }
   } catch(e) {}
 }, 1000);
-
-// Clique na barra de progresso para buscar posição
-function handleProgressClick(event) {
-  if (!player || !player.getDuration) return;
-  const bar = $('progressBar');
-  const rect = bar.getBoundingClientRect();
-  const x = (event.clientX - rect.left) / rect.width;
-  const duration = player.getDuration();
-  if (duration > 0) {
-    const seekTo = x * duration;
-    socket.emit('seek', { position: seekTo });
-  }
-}
 
 // ========== QUEUE ==========
 function renderQueue(queue, currentIndex) {
@@ -2203,7 +2509,9 @@ function extractYouTubeId(rawUrl) {
   try {
     const u = new URL(normalized);
     const host = u.hostname.replace(/^(www\.|m\.|music\.)/i, '');
-    if (host === 'youtu.be') return u.pathname.split('/').filter(Boolean)[0] || '';
+    if (host === 'youtu.be') {
+      return u.pathname.split('/').filter(Boolean)[0] || '';
+    }
     if (host.endsWith('youtube.com')) {
       const fromQuery = u.searchParams.get('v');
       if (fromQuery) return fromQuery;
@@ -2285,7 +2593,10 @@ function handleSongUrlInput() {
 function previewSongFromInput() {
   const input = $('songUrl');
   const url = input.value.trim();
-  if (!url) { clearSongPreview(); return; }
+  if (!url) {
+    clearSongPreview();
+    return;
+  }
 
   const videoId = extractYouTubeId(url);
   if (!videoId) {
@@ -2304,6 +2615,7 @@ function previewSongFromInput() {
   setSongPreview('loading');
   const requestId = ++songPreviewRequest;
 
+  // Busca título, canal e duração real no servidor (com fallback para noembed)
   fetch(`/api/video-info?id=${videoId}`)
     .then(r => { if (!r.ok) throw new Error('info indisponível'); return r.json(); })
     .then(data => {
@@ -2350,11 +2662,13 @@ function addSong() {
     return;
   }
 
+  // Prévia pronta para este link → confirma e adiciona
   if (songPreviewForUrl === url && songPreviewData && songPreviewData.id === videoId) {
     confirmAddSong();
     return;
   }
 
+  // Sem prévia ainda → gera a prévia primeiro; o usuário confirma depois
   previewSongFromInput();
   toast('Confira a prévia e confirme para adicionar');
 }
@@ -2417,6 +2731,7 @@ function renderUsers(users) {
   if (countEl) countEl.textContent = count;
   if (pluralEl) pluralEl.textContent = count === 1 ? '' : 's';
 
+  // Renderiza lista de usuários na sidebar (se houver container)
   const userList = document.querySelector('.user-list');
   if (userList) {
     userList.innerHTML = '';
@@ -2434,7 +2749,18 @@ function renderUsers(users) {
   }
 }
 
+function kickUser(name) {
+  if (!confirm(`Remover ${name} da sala?`)) return;
+  socket.emit('kick', { targetName: name });
+}
+function banUser(name) {
+  if (!confirm(`Banir ${name} permanentemente?`)) return;
+  socket.emit('ban', { targetName: name });
+}
+
 // ========== CHAT ==========
+// Auto-scroll: desce junto com as mensagens quando o usuário está no fim;
+// se estiver lendo mensagens antigas, mostra o botão "Novas mensagens"
 function isChatNearBottom() {
   const box = $('chatBox');
   if (!box) return true;
@@ -2447,6 +2773,7 @@ function scrollChatToBottom() {
   hideNewMessagesPill();
   requestAnimationFrame(() => {
     box.scrollTop = box.scrollHeight;
+    // Segundo frame: garante a posição após render/imagens
     requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
   });
 }
@@ -2475,6 +2802,7 @@ function sendMsg() {
   const text = input.value.trim();
   if (!text) return;
 
+  // Comandos especiais
   if (text === '/confetti') {
     socket.emit('confetti');
     launchConfetti();
@@ -2513,15 +2841,19 @@ function buildMessageElement(msg) {
 
   if (msg.isSystem) return null;
 
+  // Detectar menções
   const isMentioned = msg.text && msg.text.includes('@' + myName);
   div.className = 'msg' + (isMentioned ? ' mention-highlight' : '');
   div.id = 'msg-' + msg._id;
 
+  // Processar menções no texto
   let processedText = escapeHtml(msg.text);
   processedText = processedText.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
 
+  // Avatar
   const avatar = msg.avatar || msg.user[0];
 
+  // Reações
   let reactionsHtml = '';
   if (msg.reactions && Object.keys(msg.reactions).length > 0) {
     reactionsHtml = '<div class="msg-reactions">';
@@ -2561,6 +2893,7 @@ function buildMessageElement(msg) {
 
 function renderMessage(msg) {
   const box = $('chatBox');
+  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
   const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
 
   const div = buildMessageElement(msg);
@@ -2569,12 +2902,14 @@ function renderMessage(msg) {
   box.appendChild(div);
   if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
 
+  // Som de menção
   const isMentioned = msg.text && msg.text.includes('@' + myName);
   if (!msg.isMusic && isMentioned && msg.user !== myName) {
     playMentionSound();
   }
 }
 
+// Atualiza uma mensagem já existente (ex: reação) sem tirá-la do lugar
 function updateMessageInPlace(msg) {
   const existingId = msg.isMusic ? 'music-' + msg._id : 'msg-' + msg._id;
   const existing = document.getElementById(existingId);
@@ -2584,6 +2919,10 @@ function updateMessageInPlace(msg) {
   if (!newDiv) return;
 
   existing.replaceWith(newDiv);
+}
+
+function addSystemMsg(text) {
+  // Notificações de sistema não são exibidas no chat
 }
 
 // ========== THEME ==========
@@ -2623,6 +2962,7 @@ function applyTheme() {
     document.documentElement.style.setProperty('--text-muted', '#9d4edd');
     $('themeBtn').textContent = '🌅';
   } else {
+    // dark (padrão)
     document.documentElement.style.setProperty('--bg', '#050508');
     document.documentElement.style.setProperty('--bg-elevated', '#0a0a10');
     document.documentElement.style.setProperty('--bg-card', '#0f0f18');
@@ -2635,7 +2975,6 @@ function applyTheme() {
     $('themeBtn').textContent = '🌙';
   }
 }
-
 function toggleTheme() {
   const themes = ['dark', 'light', 'neon', 'vaporwave'];
   const idx = themes.indexOf(currentTheme);
@@ -2651,13 +2990,28 @@ function setVolume(val) {
   }
 }
 
+function shareRoom() {
+  if (!currentRoomSlug) return;
+  const url = window.location.origin + '/?room=' + currentRoomSlug;
+  navigator.clipboard.writeText(url).then(() => {
+    toast('Link copiado! Compartilhe com seus amigos.', 'success');
+  }).catch(() => {
+    toast(url, 'success');
+  });
+}
+
 async function joinRandomRoom() {
   try {
     const res = await fetch('/api/rooms/random');
     const data = await res.json();
-    if (data.slug) joinRoom(data.slug);
-    else toast('Nenhuma sala disponível', 'error');
-  } catch(e) { toast('Erro ao buscar sala', 'error'); }
+    if (data.slug) {
+      joinRoom(data.slug);
+    } else {
+      toast('Nenhuma sala disponível', 'error');
+    }
+  } catch(e) {
+    toast('Erro ao buscar sala', 'error');
+  }
 }
 
 function renderHistory(history) {
@@ -2688,12 +3042,14 @@ function renderHistory(history) {
   });
 }
 
+// ========== AVATAR ==========
 function selectAvatar(el) {
   document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
   el.classList.add('selected');
   myAvatar = el.dataset.emoji;
 }
 
+// ========== CONFETTI ==========
 function launchConfetti() {
   const container = $('confettiContainer');
   const colors = ['#ff6b35', '#7c3aed', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4'];
@@ -2710,12 +3066,14 @@ function launchConfetti() {
   }
 }
 
+// ========== CLEAR CHAT (admin) ==========
 function clearChat() {
   if (!amIAdmin) return;
   if (!confirm('Limpar todo o histórico de mensagens?')) return;
   socket.emit('clearChat');
 }
 
+// ========== TYPING ==========
 function handleTyping() {
   if (!isTyping) {
     isTyping = true;
@@ -2728,27 +3086,28 @@ function handleTyping() {
   }, 2000);
 }
 
+// ========== REACTIONS ==========
 function toggleReactionPicker(msgId) {
   const picker = document.getElementById('react-picker-' + msgId);
   if (picker) picker.classList.toggle('show');
 }
-
 function addReaction(msgId, emoji) {
   socket.emit('addReaction', { msgId, emoji });
   const picker = document.getElementById('react-picker-' + msgId);
   if (picker) picker.classList.remove('show');
 }
 
+// ========== MENTION ==========
 function mentionUser(name) {
   const input = $('chatInput');
   input.value += '@' + name + ' ';
   input.focus();
 }
 
+// ========== EMOJI PICKER ==========
 function toggleEmojiPanel() {
   $('emojiPanel').classList.toggle('show');
 }
-
 function insertEmoji(emoji) {
   const input = $('chatInput');
   input.value += emoji;
@@ -2756,6 +3115,7 @@ function insertEmoji(emoji) {
   $('emojiPanel').classList.remove('show');
 }
 
+// ========== EQUALIZER ==========
 function updateEqualizer(playing) {
   const bars = document.querySelectorAll('.eq-bar');
   bars.forEach(bar => {
@@ -2764,6 +3124,7 @@ function updateEqualizer(playing) {
   });
 }
 
+// ========== MENTION SOUND ==========
 function playMentionSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2781,6 +3142,7 @@ function playMentionSound() {
   } catch(e) {}
 }
 
+// ========== MUSIC LIKE ==========
 function likeMusic(msgId) {
   socket.emit('likeMusic', { msgId });
 }
