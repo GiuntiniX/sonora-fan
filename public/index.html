@@ -743,6 +743,27 @@
     .logout-btn { padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all 0.15s; font-weight: 500; }
     .logout-btn:hover { background: rgba(239,68,68,0.1); border-color: var(--danger); color: var(--danger); }
 
+    .admin-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+    }
+
+    .admin-toggle-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent2);
+      transform: scale(1.05);
+    }
+
     /* ===== LOBBY ===== */
     .lobby { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
     .lobby-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
@@ -770,7 +791,7 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM LAYOUT - ESTRUTURA PRINCIPAL ===== */
+    /* ===== ROOM LAYOUT ===== */
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 380px;
@@ -794,7 +815,6 @@
       }
     }
 
-    /* ===== STAGE (LADO ESQUERDO) ===== */
     .stage {
       display: flex;
       flex-direction: column;
@@ -806,7 +826,6 @@
       background: rgba(0,0,0,0.2);
     }
 
-    /* ===== PLAYER ===== */
     .player-section {
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
@@ -965,7 +984,7 @@
       border: none;
     }
 
-    /* ===== LISTA DE MÚSICAS (CENTRO) ===== */
+    /* ===== QUEUE CENTER ===== */
     .queue-center {
       flex: 1;
       min-height: 0;
@@ -1287,7 +1306,7 @@
     }
     .cooldown-text.hidden { display: none; }
 
-    /* ===== SIDEBAR (DIREITA) ===== */
+    /* ===== SIDEBAR ===== */
     .sidebar {
       border-left: 1px solid var(--border);
       display: flex;
@@ -1308,7 +1327,6 @@
       }
     }
 
-    /* ===== USERS ===== */
     .users-panel {
       padding: 12px 18px;
       border-bottom: 1px solid var(--border);
@@ -1618,6 +1636,375 @@
     }
     .footer a:hover { text-decoration: underline; }
 
+    /* ===== PAINEL ADMIN ===== */
+    .admin-panel {
+      max-width: 900px !important;
+      padding: 0 !important;
+      max-height: 95vh;
+      overflow: hidden;
+      animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .admin-header h2 {
+      color: #fff;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .admin-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .admin-close:hover {
+      background: rgba(255,255,255,0.3);
+      transform: rotate(90deg);
+    }
+
+    .admin-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px 0;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .admin-tab {
+      padding: 10px 18px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .admin-tab:hover {
+      color: var(--text);
+      background: var(--bg-hover);
+    }
+
+    .admin-tab.active {
+      color: var(--accent);
+      background: var(--bg);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .admin-content {
+      display: none;
+      padding: 20px 24px;
+      overflow-y: auto;
+      max-height: 60vh;
+      background: var(--bg);
+    }
+
+    .admin-content.active {
+      display: block;
+    }
+
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      font-size: 28px;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(124,58,237,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .admin-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .admin-action-btn {
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .admin-action-btn:hover {
+      border-color: var(--accent2);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+
+    .admin-action-btn.danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .admin-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .admin-table thead {
+      background: var(--bg-card);
+    }
+
+    .admin-table th {
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-secondary);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .admin-table tr:hover td {
+      background: var(--bg-hover);
+    }
+
+    .admin-table .admin-badge-table {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .admin-btn-small {
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .admin-btn-small:hover {
+      border-color: var(--accent2);
+      color: var(--text);
+    }
+
+    .admin-btn-small.danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .admin-search {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .admin-search input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .admin-search input:focus {
+      border-color: var(--accent2);
+    }
+
+    .admin-search button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .admin-settings-group {
+      margin-bottom: 24px;
+      padding: 18px 20px;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .admin-settings-group h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .setting-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      flex-wrap: wrap;
+    }
+
+    .setting-item label {
+      min-width: 180px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .setting-item input[type="number"],
+    .setting-item input[type="email"] {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      width: 120px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .setting-item input:focus {
+      border-color: var(--accent2);
+    }
+
+    .setting-item textarea {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+      min-width: 200px;
+    }
+
+    .setting-item textarea:focus {
+      border-color: var(--accent2);
+    }
+
+    .admin-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: var(--bg);
+      margin-bottom: 4px;
+    }
+
+    .admin-list-item .email {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .admin-list-item .remove-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .admin-list-item .remove-btn:hover {
+      color: var(--danger);
+      background: rgba(239,68,68,0.1);
+    }
+
     @media (max-width: 768px) {
       .header { padding: 10px 14px; flex-wrap: wrap; gap: 6px; }
       .header h1 { font-size: 15px; }
@@ -1630,6 +2017,54 @@
       .queue-center-item .info .title { font-size: 12px; }
       .room-layout { grid-template-rows: 1fr 380px; }
       .sidebar { height: 380px; max-height: 380px; }
+      
+      .admin-panel {
+        padding: 0 !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        max-height: 100vh;
+      }
+      
+      .admin-header h2 {
+        font-size: 18px;
+      }
+      
+      .admin-content {
+        padding: 16px;
+        max-height: 70vh;
+      }
+      
+      .setting-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .setting-item label {
+        min-width: auto;
+      }
+      
+      .setting-item input[type="number"],
+      .setting-item input[type="email"] {
+        width: 100%;
+      }
+      
+      .admin-stats {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .admin-actions-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .admin-tabs {
+        gap: 2px;
+        padding: 8px 8px 0;
+      }
+      
+      .admin-tab {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -1945,7 +2380,8 @@
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
-        <button class="help-btn" onclick="showWelcomeAgain()" title="Ajuda e Tutorial">❓</button>
+        <button class="admin-toggle-btn" onclick="openAdminPanel()" title="Painel Admin">🎛️</button>
+        <button class="help-btn" onclick="showWelcomeAgain()" title="Ajuda">❓</button>
         <button class="theme-toggle" onclick="toggleTheme()" title="Tema" id="themeBtn">🌙</button>
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
@@ -2094,6 +2530,151 @@
   </div>
 </div>
 
+<!-- PAINEL ADMIN -->
+<div class="modal-overlay" id="adminPanel">
+  <div class="modal admin-panel">
+    <div class="admin-header">
+      <h2>🎛️ Painel Administrativo</h2>
+      <button class="admin-close" onclick="closeAdminPanel()">✕</button>
+    </div>
+    
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="dashboard" onclick="switchAdminTab('dashboard')">📊 Dashboard</button>
+      <button class="admin-tab" data-tab="users" onclick="switchAdminTab('users')">👥 Usuários</button>
+      <button class="admin-tab" data-tab="rooms" onclick="switchAdminTab('rooms')">🎵 Salas</button>
+      <button class="admin-tab" data-tab="settings" onclick="switchAdminTab('settings')">⚙️ Configurações</button>
+    </div>
+
+    <div class="admin-content active" id="adminDashboard">
+      <div class="admin-stats">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info">
+            <span class="stat-value" id="adminTotalUsers">0</span>
+            <span class="stat-label">Usuários Totais</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎵</div>
+          <div class="stat-info">
+            <span class="stat-value" id="adminTotalRooms">0</span>
+            <span class="stat-label">Salas Ativas</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🟢</div>
+          <div class="stat-info">
+            <span class="stat-value" id="adminOnlineUsers">0</span>
+            <span class="stat-label">Usuários Online</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎶</div>
+          <div class="stat-info">
+            <span class="stat-value" id="adminTotalSongs">0</span>
+            <span class="stat-label">Músicas na Fila</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="admin-actions-grid">
+        <button class="admin-action-btn" onclick="adminClearAllChats()">🗑️ Limpar Todos os Chats</button>
+        <button class="admin-action-btn danger" onclick="adminClearAllRooms()">🧹 Limpar Todas as Salas</button>
+        <button class="admin-action-btn" onclick="adminExportData()">📥 Exportar Dados</button>
+        <button class="admin-action-btn" onclick="adminBroadcastMessage()">📢 Mensagem para Todos</button>
+      </div>
+    </div>
+
+    <div class="admin-content" id="adminUsers">
+      <div class="admin-search">
+        <input type="text" id="adminUserSearch" placeholder="Buscar usuário..." oninput="filterAdminUsers()">
+        <button onclick="filterAdminUsers()">🔍 Buscar</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>E-mail</th>
+              <th>Gênero</th>
+              <th>Região</th>
+              <th>Estilos</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="adminUsersList">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Carregando usuários...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-content" id="adminRooms">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Sala</th>
+              <th>Admin</th>
+              <th>Ouvintes</th>
+              <th>Na Fila</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="adminRoomsList">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Carregando salas...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-content" id="adminSettings">
+      <div class="admin-settings-group">
+        <h3>🎵 Configurações da Fila</h3>
+        <div class="setting-item">
+          <label>Máximo de músicas na fila</label>
+          <input type="number" id="adminMaxQueue" value="20" min="5" max="50">
+          <button class="admin-btn-small" onclick="adminSaveSetting('maxQueue')">Salvar</button>
+        </div>
+        <div class="setting-item">
+          <label>Tempo de cooldown (segundos)</label>
+          <input type="number" id="adminCooldown" value="180" min="30" max="600">
+          <button class="admin-btn-small" onclick="adminSaveSetting('cooldown')">Salvar</button>
+        </div>
+        <div class="setting-item">
+          <label>Duração máxima da música (segundos)</label>
+          <input type="number" id="adminMaxDuration" value="600" min="60" max="1800">
+          <button class="admin-btn-small" onclick="adminSaveSetting('maxDuration')">Salvar</button>
+        </div>
+      </div>
+
+      <div class="admin-settings-group">
+        <h3>🔧 Moderação</h3>
+        <div class="setting-item">
+          <label>Palavras proibidas</label>
+          <textarea id="adminBadWords" rows="4" placeholder="Palavras separadas por vírgula"></textarea>
+          <button class="admin-btn-small" onclick="adminSaveBadWords()">Salvar</button>
+        </div>
+      </div>
+
+      <div class="admin-settings-group">
+        <h3>👑 Administradores</h3>
+        <div class="setting-item">
+          <label>Adicionar administrador (e-mail)</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input type="email" id="adminAddEmail" placeholder="email@exemplo.com" style="flex:1;min-width:200px;">
+            <button class="admin-btn-small" onclick="adminAddAdmin()">➕ Adicionar</button>
+          </div>
+        </div>
+        <div id="adminList" style="margin-top:10px;">
+          <div style="color:var(--text-muted);font-size:12px;">Carregando administradores...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CRIAR SALA -->
 <div class="modal-overlay" id="createModal">
   <div class="modal">
@@ -2189,7 +2770,7 @@ function formatDuration(seconds) {
 }
 
 // ===== BAD WORDS CENSOR =====
-const badWords = [
+let badWords = [
   'porra','poha','poça','caralho','cralho','merda','mrda','bosta','bsta','puta','pta',
   'viado','viadu','bicha','bixa','corno','foda','fuder','fode','cu','cuzão','cuzona',
   'arrombado','arrombada','rombado','filho da puta','fdp','desgraçado','desgraçada',
@@ -2747,7 +3328,6 @@ function renderQueueCenter(queue, currentIndex) {
     const div = document.createElement('div');
     div.className = 'queue-center-item' + (i === currentIndex ? ' current' : '');
     
-    // Admin pode clicar para pular
     if (i !== currentIndex && amIAdmin) {
       div.classList.add('clickable');
       div.title = 'Clique para pular para esta música';
@@ -2828,6 +3408,22 @@ socket.on('chatCleared', () => {
     box.appendChild(div);
   }
   toast('Chat limpo pelo administrador', 'success');
+});
+socket.on('adminBroadcast', (data) => {
+  toast(`📢 ${data.message}`, 'success');
+  if (currentRoomSlug) {
+    const msg = {
+      user: '📢 Admin',
+      text: data.message,
+      isSystem: true,
+      createdAt: new Date()
+    };
+    renderMessage(msg);
+  }
+});
+socket.on('roomClosed', (msg) => {
+  alert(msg);
+  leaveRoom();
 });
 
 // ===== ADD SONG =====
@@ -3381,6 +3977,459 @@ setInterval(() => {
   const lobbyEl = document.getElementById('screen-lobby');
   if (lobbyEl && lobbyEl.classList.contains('active')) loadRooms();
 }, 15000);
+
+// ===== PAINEL ADMIN =====
+let adminData = {
+  users: [],
+  rooms: [],
+  settings: {}
+};
+
+function openAdminPanel() {
+  const panel = document.getElementById('adminPanel');
+  if (!panel) return;
+  
+  if (!amIAdmin && currentUser?.email !== 'admin@sonora.com') {
+    toast('Acesso negado. Apenas administradores podem acessar.', 'error');
+    return;
+  }
+  
+  panel.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  loadAdminData();
+}
+
+function closeAdminPanel() {
+  const panel = document.getElementById('adminPanel');
+  if (panel) {
+    panel.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.admin-tab[data-tab="${tab}"]`)?.classList.add('active');
+  
+  document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+  const content = document.getElementById(`admin${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+  if (content) content.classList.add('active');
+  
+  if (tab === 'users') loadAdminUsers();
+  if (tab === 'rooms') loadAdminRooms();
+  if (tab === 'settings') loadAdminSettings();
+}
+
+async function loadAdminData() {
+  try {
+    const res = await fetch('/api/admin/stats', {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      document.getElementById('adminTotalUsers').textContent = data.totalUsers || 0;
+      document.getElementById('adminTotalRooms').textContent = data.totalRooms || 0;
+      document.getElementById('adminOnlineUsers').textContent = data.onlineUsers || 0;
+      document.getElementById('adminTotalSongs').textContent = data.totalSongs || 0;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar dados admin:', e);
+  }
+}
+
+async function loadAdminUsers() {
+  try {
+    const res = await fetch('/api/admin/users', {
+      credentials: 'include'
+    });
+    const users = await res.json();
+    
+    const tbody = document.getElementById('adminUsersList');
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">${users.error || 'Erro ao carregar'}</td></tr>`;
+      return;
+    }
+    
+    if (users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Nenhum usuário cadastrado</td></tr>`;
+      return;
+    }
+    
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td><strong>${escapeHtml(u.nome)}</strong> ${u.isAdmin ? '<span class="admin-badge-table">Admin</span>' : ''}</td>
+        <td>${escapeHtml(u.email)}</td>
+        <td>${escapeHtml(u.genero || '-')}</td>
+        <td>${escapeHtml(u.regiao || '-')}</td>
+        <td>${u.estilos ? u.estilos.slice(0, 3).join(', ') + (u.estilos.length > 3 ? '...' : '') : '-'}</td>
+        <td>
+          <button class="admin-btn-small" onclick="adminPromoteUser('${u.email}')">👑 Promover</button>
+          <button class="admin-btn-small danger" onclick="adminDeleteUser('${u.email}')">🗑️</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    console.error('Erro ao carregar usuários:', e);
+  }
+}
+
+async function loadAdminRooms() {
+  try {
+    const res = await fetch('/api/admin/rooms', {
+      credentials: 'include'
+    });
+    const rooms = await res.json();
+    
+    const tbody = document.getElementById('adminRoomsList');
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">${rooms.error || 'Erro ao carregar'}</td></tr>`;
+      return;
+    }
+    
+    if (rooms.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Nenhuma sala ativa</td></tr>`;
+      return;
+    }
+    
+    tbody.innerHTML = rooms.map(r => `
+      <tr>
+        <td><strong>${escapeHtml(r.name)}</strong></td>
+        <td>${escapeHtml(r.admin || 'Sem admin')}</td>
+        <td>${r.listenerCount || 0}</td>
+        <td>${r.queueLength || 0}</td>
+        <td>${r.isPlaying ? '🟢 Ao vivo' : '⏸️ Parada'}</td>
+        <td>
+          <button class="admin-btn-small" onclick="adminSkipRoom('${r.slug}')">⏭️ Pular</button>
+          <button class="admin-btn-small danger" onclick="adminDeleteRoom('${r.slug}')">🗑️</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    console.error('Erro ao carregar salas:', e);
+  }
+}
+
+async function adminPromoteUser(email) {
+  if (!confirm(`Promover ${email} a administrador?`)) return;
+  
+  try {
+    const res = await fetch('/api/admin/promote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast(`✅ ${email} agora é administrador!`, 'success');
+      loadAdminUsers();
+    } else {
+      toast(data.error || 'Erro ao promover', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao promover usuário', 'error');
+  }
+}
+
+async function adminDeleteUser(email) {
+  if (!confirm(`Tem certeza que deseja deletar o usuário ${email}?`)) return;
+  
+  try {
+    const res = await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast(`✅ Usuário ${email} deletado!`, 'success');
+      loadAdminUsers();
+    } else {
+      toast(data.error || 'Erro ao deletar', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao deletar usuário', 'error');
+  }
+}
+
+async function adminDeleteRoom(slug) {
+  if (!confirm(`Tem certeza que deseja deletar a sala?`)) return;
+  
+  try {
+    const res = await fetch(`/api/admin/delete-room/${slug}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast(`✅ Sala deletada!`, 'success');
+      loadAdminRooms();
+      loadRooms();
+    } else {
+      toast(data.error || 'Erro ao deletar', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao deletar sala', 'error');
+  }
+}
+
+async function adminSkipRoom(slug) {
+  try {
+    const res = await fetch(`/api/admin/skip-room/${slug}`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast(`⏭️ Música pulada!`, 'success');
+      loadAdminRooms();
+    } else {
+      toast(data.error || 'Erro ao pular', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao pular música', 'error');
+  }
+}
+
+async function adminClearAllChats() {
+  if (!confirm('Tem certeza que deseja limpar TODOS os chats das salas?')) return;
+  
+  try {
+    const res = await fetch('/api/admin/clear-all-chats', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast('✅ Todos os chats foram limpos!', 'success');
+    } else {
+      toast(data.error || 'Erro ao limpar', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao limpar chats', 'error');
+  }
+}
+
+async function adminClearAllRooms() {
+  if (!confirm('Tem certeza que deseja LIMPAR TODAS as salas? Isso removerá todas as músicas!')) return;
+  
+  try {
+    const res = await fetch('/api/admin/clear-all-rooms', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast('✅ Todas as salas foram limpas!', 'success');
+      loadAdminRooms();
+      loadRooms();
+    } else {
+      toast(data.error || 'Erro ao limpar', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao limpar salas', 'error');
+  }
+}
+
+async function adminExportData() {
+  try {
+    const res = await fetch('/api/admin/export-data', {
+      credentials: 'include'
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sonora-fan-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('✅ Dados exportados com sucesso!', 'success');
+    } else {
+      toast(data.error || 'Erro ao exportar', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao exportar dados', 'error');
+  }
+}
+
+function adminBroadcastMessage() {
+  const msg = prompt('Digite a mensagem que será enviada para TODOS os usuários:');
+  if (!msg) return;
+  
+  socket.emit('adminBroadcast', { message: msg });
+  toast('📢 Mensagem enviada para todos!', 'success');
+}
+
+async function loadAdminSettings() {
+  try {
+    const res = await fetch('/api/admin/settings', {
+      credentials: 'include'
+    });
+    const settings = await res.json();
+    
+    if (res.ok) {
+      document.getElementById('adminMaxQueue').value = settings.maxQueue || 20;
+      document.getElementById('adminCooldown').value = settings.cooldown || 180;
+      document.getElementById('adminMaxDuration').value = settings.maxDuration || 600;
+      document.getElementById('adminBadWords').value = (settings.badWords || []).join(', ');
+      loadAdminList();
+    }
+  } catch (e) {
+    console.error('Erro ao carregar configurações:', e);
+  }
+}
+
+async function adminSaveSetting(setting) {
+  const valueMap = {
+    maxQueue: document.getElementById('adminMaxQueue').value,
+    cooldown: document.getElementById('adminCooldown').value,
+    maxDuration: document.getElementById('adminMaxDuration').value
+  };
+  
+  try {
+    const res = await fetch('/api/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ [setting]: valueMap[setting] })
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast(`✅ Configuração salva!`, 'success');
+    } else {
+      toast(data.error || 'Erro ao salvar', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao salvar configuração', 'error');
+  }
+}
+
+async function adminSaveBadWords() {
+  const words = document.getElementById('adminBadWords').value
+    .split(',')
+    .map(w => w.trim().toLowerCase())
+    .filter(w => w);
+  
+  try {
+    const res = await fetch('/api/admin/bad-words', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ words })
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast(`✅ ${words.length} palavras proibidas salvas!`, 'success');
+      badWords.length = 0;
+      badWords.push(...words);
+    } else {
+      toast(data.error || 'Erro ao salvar', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao salvar palavras', 'error');
+  }
+}
+
+async function loadAdminList() {
+  try {
+    const res = await fetch('/api/admin/list', {
+      credentials: 'include'
+    });
+    const admins = await res.json();
+    
+    const container = document.getElementById('adminList');
+    if (!res.ok) {
+      container.innerHTML = `<div style="color:var(--text-muted);font-size:12px;">${admins.error || 'Erro ao carregar'}</div>`;
+      return;
+    }
+    
+    container.innerHTML = admins.map(email => `
+      <div class="admin-list-item">
+        <span class="email">${escapeHtml(email)}</span>
+        ${email !== 'admin@sonora.com' ? `<button class="remove-btn" onclick="adminRemoveAdmin('${email}')">✕</button>` : '<span style="color:var(--text-muted);font-size:11px;">(Super Admin)</span>'}
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('Erro ao carregar admins:', e);
+  }
+}
+
+async function adminAddAdmin() {
+  const email = document.getElementById('adminAddEmail').value.trim();
+  if (!email) {
+    toast('Digite um e-mail válido', 'error');
+    return;
+  }
+  
+  try {
+    const res = await fetch('/api/admin/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast(`✅ ${email} adicionado como administrador!`, 'success');
+      document.getElementById('adminAddEmail').value = '';
+      loadAdminList();
+    } else {
+      toast(data.error || 'Erro ao adicionar', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao adicionar administrador', 'error');
+  }
+}
+
+async function adminRemoveAdmin(email) {
+  if (!confirm(`Remover ${email} da lista de administradores?`)) return;
+  
+  try {
+    const res = await fetch('/api/admin/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      toast(`✅ ${email} removido!`, 'success');
+      loadAdminList();
+    } else {
+      toast(data.error || 'Erro ao remover', 'error');
+    }
+  } catch (e) {
+    toast('Erro ao remover administrador', 'error');
+  }
+}
+
+function filterAdminUsers() {
+  const search = document.getElementById('adminUserSearch').value.toLowerCase();
+  const rows = document.querySelectorAll('#adminUsersList tr');
+  
+  rows.forEach(row => {
+    if (row.cells.length < 6) return;
+    const name = row.cells[0]?.textContent?.toLowerCase() || '';
+    const email = row.cells[1]?.textContent?.toLowerCase() || '';
+    const match = name.includes(search) || email.includes(search);
+    row.style.display = match ? '' : 'none';
+  });
+}
 
 // ===== INIT =====
 applyTheme();
