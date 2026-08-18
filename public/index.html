@@ -468,12 +468,22 @@
     /* ===== SIDEBAR ===== */
     .sidebar { border-left: 1px solid var(--border); display: flex; flex-direction: column; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); height: 100%; min-height: 0; }
     @media (max-width: 1024px) { .sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 600px; } }
-    .users-panel { padding: 18px; border-bottom: 1px solid var(--border); }
+    .users-panel { padding: 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .panel-header { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
     
     /* ===== CHAT ===== */
     .chat-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
-    .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 16px; font-size: 14px; min-height: 0; scroll-behavior: smooth; }
+    .chat-messages { 
+      flex: 1; 
+      overflow-y: auto; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 2px; 
+      padding: 16px; 
+      font-size: 14px; 
+      min-height: 0;
+      max-height: 100%; /* Garante que não vai estourar */
+    }
     .msg { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
     .msg:hover { background: rgba(255,255,255,0.02); }
     @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
