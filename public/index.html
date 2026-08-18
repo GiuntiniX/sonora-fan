@@ -127,6 +127,19 @@
       overflow-x: hidden;
     }
 
+    /* ===== SCROLLBAR TEMÁTICA (segue o tema ativo) ===== */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) var(--bg-elevated);
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover { filter: brightness(1.15); }
+
     /* ===== STAGE LIGHTS EFFECT ===== */
     .stage-bg {
       position: fixed;
@@ -344,18 +357,19 @@
     }
     .room-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
     }
     .room-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 24px;
       cursor: pointer;
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .room-card::before {
       content: '';
@@ -365,21 +379,126 @@
       background: linear-gradient(90deg, var(--accent), var(--accent2));
       opacity: 0;
       transition: opacity 0.3s;
+      z-index: 2;
     }
     .room-card:hover {
       border-color: var(--border-hover);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.1);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(124,58,237,0.15);
     }
     .room-card:hover::before { opacity: 1; }
-    .room-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+    .room-card:hover .room-thumb img { transform: scale(1.08); }
+    .room-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, var(--accent2-glow), var(--accent-glow)), 
+                  linear-gradient(135deg, var(--bg-elevated), var(--bg-hover));
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .room-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .room-thumb .thumb-fallback {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      opacity: 0.5;
+    }
+    .room-thumb::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
+      pointer-events: none;
+    }
+    .room-live-badge {
+      position: absolute;
+      top: 10px; left: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px 5px 8px;
+      border-radius: 20px;
+      background: rgba(5,5,10,0.6);
+      backdrop-filter: blur(6px);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text);
+      z-index: 2;
+    }
+    .room-live-badge .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
+    }
+    .room-listeners-badge {
+      position: absolute;
+      top: 10px; right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background: rgba(5,5,10,0.6);
+      backdrop-filter: blur(6px);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      z-index: 2;
+    }
+    .room-thumb .room-eq {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      z-index: 2;
+      height: 16px;
+    }
+    .room-thumb .room-eq .eq-bar { width: 2.5px; }
+    .room-now-playing {
+      position: absolute;
+      bottom: 8px; left: 10px; right: 40px;
+      z-index: 2;
+      font-size: 11px;
+      color: rgba(255,255,255,0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+    .room-mini-progress {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+      z-index: 2;
+    }
+    .room-mini-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .room-time-remaining {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .room-card-body {
+      padding: 16px 18px 18px;
+    }
+    .room-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
     .room-card .meta {
       display: flex;
-      gap: 16px;
-      font-size: 13px;
+      gap: 14px;
+      font-size: 12.5px;
       color: var(--text-muted);
-      margin-top: 14px;
     }
+    .room-card .meta span { display: flex; align-items: center; gap: 4px; }
     .empty-state {
       text-align: center;
       padding: 80px 20px;
@@ -387,6 +506,20 @@
       grid-column: 1 / -1;
     }
     .empty-state .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
+    .empty-state p { margin-bottom: 20px; }
+    .empty-state-cta {
+      display: inline-block;
+      padding: 12px 26px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .empty-state-cta:hover { transform: translateY(-1px); filter: brightness(1.08); }
 
     /* ===== ROOM LAYOUT ===== */
     .room-layout {
@@ -414,10 +547,7 @@
       padding: 20px 16px;
       gap: 20px;
       overflow-y: auto;
-      min-height: 0;
     }
-    .stage::-webkit-scrollbar { width: 6px; }
-    .stage::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     /* DJ BOOTH */
     .dj-booth-section {
@@ -528,13 +658,9 @@
     }
     #youtube-player {
       width: 100%;
-      aspect-ratio: 16 / 9;
-      height: auto;
-      max-height: 260px;
+      height: 320px;
       background: #000;
-      overflow: hidden;
     }
-    #youtube-player iframe { width: 100% !important; height: 100% !important; display: block; }
     .player-info {
       display: flex;
       gap: 16px;
@@ -635,7 +761,7 @@
       overflow-y: auto;
     }
     .queue-list::-webkit-scrollbar { width: 5px; }
-    .queue-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .queue-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 3px; }
     .queue-item {
       display: flex;
       align-items: center;
@@ -886,7 +1012,7 @@
       overflow-y: auto;
     }
     .user-list::-webkit-scrollbar { width: 4px; }
-    .user-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .user-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 2px; }
     .user {
       display: flex;
       align-items: center;
@@ -993,7 +1119,7 @@
       min-height: 0;
     }
     .chat-messages::-webkit-scrollbar { width: 5px; }
-    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 3px; }
     .msg {
       display: flex;
       gap: 8px;
@@ -1687,11 +1813,11 @@
     <div class="room-layout">
       <div class="stage">
         <!-- TERRA SONORA BANNER -->
-        <div class="terra-banner" style="border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);">
+        <a href="https://www.instagram.com/terrasonora/" target="_blank" rel="noopener noreferrer" class="terra-banner" style="display:block;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);width:100%;height:320px;cursor:pointer;">
           <img src="https://iili.io/Ciid52s.jpg" 
-               alt="Terra Sonora" 
-               style="width:100%;height:auto;display:block;object-fit:contain;max-height:120px;background:linear-gradient(180deg,#0a0a14,#050508);">
-        </div>
+               alt="Terra Sonora — Siga no Instagram" 
+               style="width:100%;height:100%;display:block;object-fit:cover;background:linear-gradient(180deg,#0a0a14,#050508);">
+        </a>
 
         <!-- PLAYER -->
         <div class="player-section">
@@ -1932,6 +2058,12 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
   show('screen-' + id);
 }
+
+// Mantém os cards de sala (ao vivo, ouvintes) atualizados enquanto o lobby está visível
+setInterval(() => {
+  const lobbyEl = document.getElementById('screen-lobby');
+  if (lobbyEl && !lobbyEl.classList.contains('hidden')) loadRooms();
+}, 15000);
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -1988,7 +2120,12 @@ async function loadRooms() {
     const rooms = await res.json();
     const grid = $('roomGrid');
     if (rooms.length === 0) {
-      grid.innerHTML = `<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>`;
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🎵</div>
+          <p>Nenhuma sala ainda. Crie a primeira!</p>
+          <button class="empty-state-cta" onclick="showCreateModal()">+ Criar sala</button>
+        </div>`;
       return;
     }
     grid.innerHTML = '';
@@ -1996,11 +2133,46 @@ async function loadRooms() {
       const card = document.createElement('div');
       card.className = 'room-card';
       card.onclick = () => joinRoom(r.slug);
+
+      const track = r.currentTrack;
+      const thumbImg = track
+        ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.style.display='none'">`
+        : `<div class="thumb-fallback">🎧</div>`;
+      const nowPlaying = (r.isPlaying && track)
+        ? `<div class="room-now-playing">${escapeHtml(track.title)}</div>`
+        : '';
+      const eq = r.isPlaying
+        ? `<div class="equalizer room-eq"><div class="eq-bar" style="height:6px;"></div><div class="eq-bar" style="height:12px;"></div><div class="eq-bar" style="height:5px;"></div><div class="eq-bar" style="height:14px;"></div></div>`
+        : '';
+      const liveBadge = r.isPlaying
+        ? `<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>`
+        : `<div class="room-live-badge" style="opacity:0.7;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);"></span>PARADA</div>`;
+
+      let miniProgress = '';
+      let timeRemaining = '';
+      if (r.isPlaying && track && track.duration) {
+        const pct = Math.min(100, (track.position / track.duration) * 100);
+        const remaining = Math.max(0, track.duration - track.position);
+        miniProgress = `<div class="room-mini-progress"><div class="room-mini-progress-fill" style="width:${pct}%;"></div></div>`;
+        timeRemaining = `<span class="room-time-remaining">⏱️ ${remaining < 30 ? 'acabando' : formatDuration(remaining) + ' restantes'}</span>`;
+      }
+
       card.innerHTML = `
-        <h3>${escapeHtml(r.name)}</h3>
-        <div class="meta">
-          <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
-          <span>🎵 Ao vivo</span>
+        <div class="room-thumb">
+          ${thumbImg}
+          ${liveBadge}
+          <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div>
+          ${eq}
+          ${nowPlaying}
+          ${miniProgress}
+        </div>
+        <div class="room-card-body">
+          <h3>${escapeHtml(r.name)}</h3>
+          <div class="meta">
+            <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
+            <span>🎶 ${r.queueLength || 0} na fila</span>
+            ${timeRemaining}
+          </div>
         </div>
       `;
       grid.appendChild(card);
@@ -2239,12 +2411,8 @@ socket.on('typing', ({ name, isTyping }) => {
 });
 
 socket.on('chatUpdated', (msg) => {
-  // Atualiza reações em mensagens existentes
-  const existing = document.getElementById('msg-' + msg._id);
-  if (existing) {
-    renderMessage(msg);
-    existing.remove();
-  }
+  // Atualiza reações em mensagens existentes, mantendo a posição no chat
+  updateMessageInPlace(msg);
 });
 
 socket.on('chatCleared', () => {
@@ -2646,11 +2814,8 @@ function sendMsg() {
   socket.emit('typing', { isTyping: false });
 }
 
-function renderMessage(msg) {
-  const box = $('chatBox');
+function buildMessageElement(msg) {
   const div = document.createElement('div');
-  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
-  const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
 
   if (msg.isMusic) {
     div.className = 'msg msg-music';
@@ -2664,16 +2829,14 @@ function renderMessage(msg) {
         <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
       </div>
       <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px;">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
-      <button class="music-like-btn" id="like-${msg._id}" onclick="likeMusic('${msg._id}')">
+      <button class="music-like-btn${msg.likedBy && msg.likedBy.includes(myName) ? ' liked' : ''}" id="like-${msg._id}" onclick="likeMusic('${msg._id}')">
         ❤️ <span id="like-count-${msg._id}">${likes}</span> curtida${likes !== 1 ? 's' : ''}
       </button>
     `;
-    box.appendChild(div);
-    if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
-    return;
+    return div;
   }
 
-  if (msg.isSystem) return;
+  if (msg.isSystem) return null;
 
   // Detectar menções
   const isMentioned = msg.text && msg.text.includes('@' + myName);
@@ -2682,7 +2845,7 @@ function renderMessage(msg) {
 
   // Processar menções no texto
   let processedText = escapeHtml(msg.text);
-  processedText = processedText.replace(/@(\\w+)/g, '<span class="mention">@$1</span>');
+  processedText = processedText.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
 
   // Avatar
   const avatar = msg.avatar || msg.user[0];
@@ -2722,13 +2885,37 @@ function renderMessage(msg) {
       </div>
     </div>
   `;
+  return div;
+}
+
+function renderMessage(msg) {
+  const box = $('chatBox');
+  // Decide ANTES de adicionar: desce junto se for minha msg ou se estou no fim
+  const stickToBottom = chatBulkRender || msg.user === myName || isChatNearBottom();
+
+  const div = buildMessageElement(msg);
+  if (!div) return;
+
   box.appendChild(div);
   if (stickToBottom) scrollChatToBottom(); else showNewMessagesPill();
 
   // Som de menção
-  if (isMentioned && msg.user !== myName) {
+  const isMentioned = msg.text && msg.text.includes('@' + myName);
+  if (!msg.isMusic && isMentioned && msg.user !== myName) {
     playMentionSound();
   }
+}
+
+// Atualiza uma mensagem já existente (ex: reação) sem tirá-la do lugar
+function updateMessageInPlace(msg) {
+  const existingId = msg.isMusic ? 'music-' + msg._id : 'msg-' + msg._id;
+  const existing = document.getElementById(existingId);
+  if (!existing) { renderMessage(msg); return; }
+
+  const newDiv = buildMessageElement(msg);
+  if (!newDiv) return;
+
+  existing.replaceWith(newDiv);
 }
 
 function addSystemMsg(text) {
