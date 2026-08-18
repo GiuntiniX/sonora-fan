@@ -330,7 +330,9 @@ io.on('connection', (socket) => {
     socket.userAvatar = avatar || '👤';
     room.listenerCount++;
 
-    const email = sessions.get(socket.handshake.headers.cookie?.match(/sessionToken=([^;]+)/)?.[1] || '');
+    const cookie = socket.handshake.headers.cookie || '';
+    const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
+    const email = tokenMatch ? sessions.get(tokenMatch[1]) : null;
     const isAdmin = adminEmails.has(email) || room.admin === name;
     socket.isAdmin = isAdmin;
 
