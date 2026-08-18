@@ -410,6 +410,33 @@
       transform: scale(1.05);
     }
 
+    .theme-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+      background: var(--bg-card);
+    }
+
+    .theme-toggle-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent2);
+      transform: scale(1.1) rotate(15deg);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .theme-toggle-btn:active {
+      transform: scale(0.95);
+    }
+
     .admin-badge {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       padding: 3px 10px;
@@ -618,32 +645,95 @@
     .users-panel .user-count { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 14px; font-weight: 600; }
     .users-panel .user-count .icon { font-size: 18px; }
 
-    /* ===== CHAT ===== */
-    .chat-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; overflow: hidden; }
-    .chat-controls { display: flex; justify-content: flex-end; gap: 8px; padding: 6px 14px; flex-shrink: 0; background: var(--bg-card); border-bottom: 1px solid var(--border); }
-    .chat-controls button { padding: 3px 10px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary); font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
-    .chat-controls button:hover { border-color: var(--accent2); color: var(--text); }
-    .chat-controls button.danger:hover { border-color: var(--danger); color: var(--danger); }
-    .chat-controls button.active { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.1); }
+    /* ===== CHAT FIXO - SEM SCROLL VISÍVEL ===== */
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+      max-height: 100%;
+    }
 
     .chat-messages {
       flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      min-height: 0;
+      max-height: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .chat-messages-inner {
+      flex: 1;
       overflow-y: auto;
-      overscroll-behavior: contain;
       display: flex;
       flex-direction: column;
       gap: 2px;
       padding: 10px 14px;
-      font-size: 14px;
-      min-height: 0;
-      max-height: 100%;
+      scroll-behavior: smooth;
     }
 
-    .msg { display: flex; gap: 8px; line-height: 1.5; padding: 4px 8px; border-radius: 8px; animation: msgIn 0.2s ease; }
-    .msg:hover { background: rgba(255,255,255,0.02); }
-    @keyframes msgIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    /* Esconde a barra de rolagem */
+    .chat-messages-inner::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+    .chat-messages-inner {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
 
-    .msg-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 2px solid transparent; }
+    /* Mensagens */
+    .msg {
+      display: flex;
+      gap: 8px;
+      line-height: 1.5;
+      padding: 4px 8px;
+      border-radius: 8px;
+      animation: msgIn 0.2s ease;
+      flex-shrink: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .msg:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* Mensagens não vistas têm destaque sutil */
+    .msg:not(.seen) {
+      border-left: 2px solid var(--accent);
+      padding-left: 6px;
+    }
+
+    /* Mensagens removidas */
+    .msg.removing {
+      opacity: 0;
+      transform: translateY(-10px);
+      height: 0;
+      padding: 0 8px;
+      margin: 0;
+      overflow: hidden;
+      transition: all 0.5s ease;
+    }
+
+    .msg-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      border: 2px solid transparent;
+    }
+
     .msg-content { flex: 1; min-width: 0; }
     .msg-header { display: flex; align-items: center; gap: 6px; margin-bottom: 1px; }
     .msg-user { font-weight: 700; font-size: 12px; cursor: pointer; }
@@ -659,8 +749,7 @@
     .msg-like-btn.liked { color: var(--accent); background: rgba(255,107,53,0.1); }
     .msg-like-count { font-size: 10px; font-weight: 600; }
 
-    .msg.unseen { opacity: 0.7; }
-
+    /* ===== PILL DE NOVAS MENSAGENS ===== */
     .new-messages-pill {
       position: absolute;
       bottom: 70px;
@@ -680,14 +769,22 @@
       font-family: inherit;
       animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .new-messages-pill.hidden { display: none; }
-    .new-messages-pill:hover { transform: translateX(-50%) scale(1.05); }
+
+    .new-messages-pill.hidden {
+      display: none;
+    }
+
+    .new-messages-pill:hover {
+      transform: translateX(-50%) scale(1.05);
+      box-shadow: 0 6px 30px rgba(124,58,237,0.5);
+    }
 
     @keyframes bounceIn {
       0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
       100% { opacity: 1; transform: translateX(-50%) scale(1); }
     }
 
+    /* ===== INPUT DO CHAT ===== */
     .chat-input-bar {
       padding: 8px 12px;
       border-top: 1px solid var(--border);
@@ -939,6 +1036,7 @@
           <span id="userDisplayName">Usuário</span>
         </div>
         <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtn" style="display:none;">🎛️</button>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtn">🌙</button>
         <button class="logout-btn" onclick="doLogout()">Sair</button>
       </div>
     </div>
@@ -967,6 +1065,7 @@
       </div>
       <div class="header-right">
         <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom" style="display:none;">🎛️</button>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtnRoom">🌙</button>
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
     </div>
@@ -1037,12 +1136,12 @@
         </div>
 
         <div class="chat-panel">
-          <div class="chat-controls">
-            <button onclick="toggleAutoScroll()" id="scrollBtn">📌 Auto-scroll: OFF</button>
-            <button class="danger" onclick="clearChat()">🗑️ Limpar</button>
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-messages-inner" id="chatMessagesInner">
+              <!-- Mensagens aparecem aqui -->
+            </div>
           </div>
-          <div class="chat-messages" id="chatBox"></div>
-          <button class="new-messages-pill hidden" id="newMsgPill" onclick="scrollToBottom()">↓ Novas mensagens</button>
+          <button class="new-messages-pill hidden" id="newMsgPill" onclick="markMessagesAsSeen();">↓ Novas mensagens</button>
           <div class="chat-input-bar">
             <button class="emoji-btn" onclick="toggleEmojis()">😀</button>
             <input type="text" id="chatInput" placeholder="Mensagem..." onkeydown="if(event.key==='Enter') sendMessage()">
@@ -1112,9 +1211,9 @@ let currentRoomData = null;
 let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
-let autoScroll = false;
 let songData = null;
 let messageLikes = {};
+let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
 
 // ===== UTILS =====
 function $(id) { return document.getElementById(id); }
@@ -1161,6 +1260,90 @@ function censorText(text) {
     censored = censored.replace(regex, '***');
   });
   return censored;
+}
+
+// ===== TEMAS =====
+function applyTheme() {
+  const themes = {
+    'dark': {
+      btn: '🌙',
+      bg: '#050508',
+      card: '#0f0f18',
+      hover: '#161620',
+      border: '#1e1e2e',
+      text: '#f0f0f8',
+      textSec: '#9a9ab0',
+      accent: '#ff6b35',
+      accent2: '#7c3aed',
+      bgImage: 'none',
+      overlay: 'transparent'
+    },
+    'light': {
+      btn: '☀️',
+      bg: '#f5f5fa',
+      card: '#ffffff',
+      hover: '#f0f0f5',
+      border: '#e0e0e8',
+      text: '#1a1a2e',
+      textSec: '#666680',
+      accent: '#e65c00',
+      accent2: '#5b2c8e',
+      bgImage: 'none',
+      overlay: 'transparent'
+    },
+    'neon': {
+      btn: '🟢',
+      bg: '#070a12',
+      card: '#111827',
+      hover: '#1a2236',
+      border: '#1f2a4a',
+      text: '#e0f0ff',
+      textSec: '#88aacc',
+      accent: '#22d3ee',
+      accent2: '#10b981',
+      bgImage: 'none',
+      overlay: 'transparent'
+    },
+    'terra-sonora': {
+      btn: '🌄',
+      bg: '#140a05',
+      card: '#2a180e',
+      hover: '#3a2216',
+      border: '#4a2e1e',
+      text: '#fcf3ee',
+      textSec: '#cbaa98',
+      accent: '#e85d3a',
+      accent2: '#d94a20',
+      bgImage: 'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")',
+      overlay: 'rgba(0,0,0,0.65)'
+    }
+  };
+
+  const t = themes[currentTheme] || themes['dark'];
+  
+  document.documentElement.style.setProperty('--bg', t.bg);
+  document.documentElement.style.setProperty('--bg-card', t.card);
+  document.documentElement.style.setProperty('--bg-hover', t.hover);
+  document.documentElement.style.setProperty('--border', t.border);
+  document.documentElement.style.setProperty('--text', t.text);
+  document.documentElement.style.setProperty('--text-secondary', t.textSec);
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--accent2', t.accent2);
+  document.documentElement.style.setProperty('--bg-image', t.bgImage);
+  document.documentElement.style.setProperty('--bg-overlay', t.overlay);
+  
+  const btns = document.querySelectorAll('#themeBtn, #themeBtnRoom');
+  btns.forEach(btn => { if (btn) btn.textContent = t.btn; });
+  
+  localStorage.setItem('sonoraTheme', currentTheme);
+}
+
+function toggleTheme() {
+  const keys = ['dark', 'light', 'neon', 'terra-sonora'];
+  const idx = keys.indexOf(currentTheme);
+  currentTheme = keys[(idx + 1) % keys.length];
+  applyTheme();
+  toast('Tema: ' + currentTheme, 'success');
 }
 
 // ===== AUTENTICAÇÃO =====
@@ -1517,7 +1700,7 @@ function joinRoom(slug) {
   currentRoom = slug;
   socket.emit('joinRoom', { slug, name: myName, avatar: myAvatar });
   showScreen('room');
-  $('chatBox').innerHTML = '';
+  document.getElementById('chatMessagesInner').innerHTML = '';
   amIAdmin = false;
   $('adminBadge').classList.add('hidden');
   loadYouTubeAPI();
@@ -1633,7 +1816,7 @@ function renderQueue(queue, currentIndex) {
   });
 }
 
-// ===== ADD SONG - CORRIGIDO =====
+// ===== ADD SONG =====
 function extractYouTubeId(url) {
   if (!url) return '';
   if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
@@ -1669,7 +1852,6 @@ async function previewSong() {
   $('previewActions').classList.add('hidden');
 
   try {
-    // Tenta via oembed do YouTube
     const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
     if (res.ok) {
       const data = await res.json();
@@ -1684,7 +1866,6 @@ async function previewSong() {
     }
   } catch (e) {}
 
-  // Fallback: tenta via nossa API
   try {
     const res = await fetch(`/api/video-info?id=${videoId}`);
     const data = await res.json();
@@ -1700,7 +1881,6 @@ async function previewSong() {
     }
   } catch (e) {}
 
-  // Último recurso: tenta do HTML da página
   try {
     const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
     const html = await res.text();
@@ -1718,7 +1898,6 @@ async function previewSong() {
     }
   } catch (e) {}
 
-  // Se tudo falhar
   songData = {
     id: videoId,
     title: 'Música do YouTube',
@@ -1741,13 +1920,19 @@ function showPreview(data) {
   $('previewTitle').textContent = data.title || 'Música do YouTube';
   $('previewArtist').textContent = data.artist || 'Desconhecido';
   
-  if (data.duration > 0 && data.duration > 600) {
-    $('previewStatus').textContent = '⛔ Muito longo! Limite: 10 min';
-    $('previewStatus').style.color = 'var(--danger)';
-    document.querySelector('.song-preview-confirm').disabled = true;
+  if (data.duration > 0) {
+    if (data.duration > 600) {
+      $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > 10 min`;
+      $('previewStatus').style.color = 'var(--danger)';
+      document.querySelector('.song-preview-confirm').disabled = true;
+    } else {
+      $('previewStatus').textContent = `✅ ${formatDuration(data.duration)} - dentro do limite`;
+      $('previewStatus').style.color = 'var(--success)';
+      document.querySelector('.song-preview-confirm').disabled = false;
+    }
   } else {
-    $('previewStatus').textContent = data.duration > 0 ? `⏱ ${formatDuration(data.duration)}` : '⚠️ Duração não verificada';
-    $('previewStatus').style.color = 'var(--text-muted)';
+    $('previewStatus').textContent = '⚠️ Duração não verificada';
+    $('previewStatus').style.color = 'var(--warning)';
     document.querySelector('.song-preview-confirm').disabled = false;
   }
   
@@ -1761,10 +1946,12 @@ function clearPreview() {
 
 function confirmAdd() {
   if (!songData || !songData.id) return;
-  if (songData.duration && songData.duration > 600) {
+  
+  if (songData.duration > 0 && songData.duration > 600) {
     toast('⛔ Vídeo muito longo! Limite: 10 min', 'error');
     return;
   }
+  
   const now = Date.now();
   if (now - lastAddTime < 180000) {
     const wait = Math.ceil((180000 - (now - lastAddTime)) / 1000);
@@ -1782,6 +1969,7 @@ function confirmAdd() {
   $('songUrl').value = '';
   clearPreview();
   startCooldown();
+  toast('🎵 Música adicionada!', 'success');
 }
 
 function addSong() {
@@ -1816,37 +2004,33 @@ function startCooldown() {
   }, 1000);
 }
 
-// ===== CHAT - SCROLL FIXO =====
-function sendMessage() {
-  const input = $('chatInput');
-  const text = input.value.trim();
-  if (!text) return;
-  socket.emit('chat', { text: censorText(text) });
-  input.value = '';
-}
+// ===== CHAT FIXO - SEM SCROLL =====
+const MAX_VISIBLE_MESSAGES = 30;
 
 function renderMessage(msg) {
-  const box = $('chatBox');
+  const container = document.getElementById('chatMessagesInner');
+  if (!container) return;
+  
   const div = document.createElement('div');
+  div.className = 'msg';
 
   if (msg.isMusic) {
-    div.className = 'msg msg-music';
+    div.classList.add('msg-music');
     div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;width:100%;">
         <span style="font-size:14px;">🎵</span>
         <span style="font-weight:700;color:var(--accent);font-size:12px;">${escapeHtml(msg.user)}</span>
         <span style="color:var(--text-muted);font-size:11px;">adicionou</span>
-        <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
+        <span class="msg-time" style="opacity:1;margin-left:auto;font-size:10px;color:var(--text-muted);">${formatTime(msg.createdAt)}</span>
       </div>
-      <div class="music-info">${escapeHtml(msg.musicTitle || 'Música')} — ${escapeHtml(msg.musicArtist || 'Desconhecido')}</div>
+      <div class="music-info" style="color:var(--text);font-weight:600;font-size:13px;">${escapeHtml(msg.musicTitle || 'Música')} — ${escapeHtml(msg.musicArtist || 'Desconhecido')}</div>
     `;
   } else if (msg.isSystem) {
-    div.className = 'msg msg-system';
-    div.innerHTML = `<span class="msg-text">${escapeHtml(msg.text)}</span>`;
+    div.classList.add('msg-system');
+    div.innerHTML = `<span class="msg-text" style="color:var(--text-muted);font-style:italic;font-size:12px;">${escapeHtml(msg.text)}</span>`;
   } else {
     const avatar = msg.avatar || '👤';
     const color = msg.color || '#888';
-    div.className = 'msg';
     let text = escapeHtml(msg.text);
     text = text.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
     
@@ -1874,14 +2058,27 @@ function renderMessage(msg) {
     `;
   }
 
-  // ADICIONA A MENSAGEM SEM ROLAR
-  box.appendChild(div);
-  
-  // Marca como não vista
-  div.classList.add('unseen');
-  
-  // SEMPRE mostra o pill de novas mensagens
+  container.appendChild(div);
+  manageChatHistory(container);
   updateNewMessagesPill();
+}
+
+function manageChatHistory(container) {
+  const messages = container.querySelectorAll('.msg');
+  const total = messages.length;
+  
+  if (total > MAX_VISIBLE_MESSAGES) {
+    const toRemove = total - MAX_VISIBLE_MESSAGES;
+    for (let i = 0; i < toRemove; i++) {
+      const msg = messages[i];
+      if (msg) {
+        msg.classList.add('removing');
+        setTimeout(() => {
+          if (msg.parentNode) msg.remove();
+        }, 500);
+      }
+    }
+  }
 }
 
 function likeMessage(msgId, btn) {
@@ -1903,7 +2100,10 @@ function likeMessage(msgId, btn) {
 
 function updateNewMessagesPill() {
   const pill = $('newMsgPill');
-  const unseen = document.querySelectorAll('.msg.unseen').length;
+  const container = document.getElementById('chatMessagesInner');
+  if (!pill || !container) return;
+  
+  const unseen = container.querySelectorAll('.msg:not(.seen)').length;
   if (unseen > 0) {
     pill.textContent = `↓ ${unseen} novas mensagens`;
     pill.classList.remove('hidden');
@@ -1912,39 +2112,26 @@ function updateNewMessagesPill() {
   }
 }
 
-function isChatNearBottom() {
-  const box = $('chatBox');
-  if (!box) return true;
-  return box.scrollHeight - box.scrollTop - box.clientHeight < 50;
+function markMessagesAsSeen() {
+  const container = document.getElementById('chatMessagesInner');
+  if (!container) return;
+  container.querySelectorAll('.msg').forEach(el => el.classList.add('seen'));
+  updateNewMessagesPill();
+  
+  // Rola para o final se houver scroll
+  container.scrollTo({
+    top: container.scrollHeight,
+    behavior: 'smooth'
+  });
 }
 
-function scrollToBottom() {
-  const box = $('chatBox');
-  if (!box) return;
-  box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
-  // Marca todas as mensagens como vistas
-  document.querySelectorAll('.msg').forEach(el => el.classList.remove('unseen'));
-  $('newMsgPill').classList.add('hidden');
-}
-
-function toggleAutoScroll() {
-  autoScroll = !autoScroll;
-  const btn = $('scrollBtn');
-  btn.textContent = autoScroll ? '📌 Auto-scroll: ON' : '📌 Auto-scroll: OFF';
-  btn.classList.toggle('active', autoScroll);
-  if (autoScroll) {
-    scrollToBottom();
-    toast('Auto-scroll ativado', 'success');
-  } else {
-    toast('Auto-scroll desativado', 'success');
-  }
-  localStorage.setItem('autoScroll', autoScroll);
-}
-
-function clearChat() {
-  if (!amIAdmin) return toast('Apenas admin', 'error');
-  if (!confirm('Limpar o chat?')) return;
-  socket.emit('clearChat');
+// ===== CHAT FUNCTIONS =====
+function sendMessage() {
+  const input = $('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  socket.emit('chat', { text: censorText(text) });
+  input.value = '';
 }
 
 function toggleEmojis() {
@@ -1994,10 +2181,11 @@ socket.on('users', (users) => {
 socket.on('chat', renderMessage);
 
 socket.on('chatHistory', (messages) => {
-  $('chatBox').innerHTML = '';
+  const container = document.getElementById('chatMessagesInner');
+  if (!container) return;
+  container.innerHTML = '';
   messages.forEach(m => renderMessage(m));
-  // Não rola automaticamente - deixa o usuário controlar
-  updateNewMessagesPill();
+  markMessagesAsSeen();
 });
 
 socket.on('error', (msg) => toast(msg, 'error'));
@@ -2014,11 +2202,14 @@ socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
 socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
 
 socket.on('chatCleared', () => {
-  $('chatBox').innerHTML = '';
-  const div = document.createElement('div');
-  div.className = 'msg msg-system';
-  div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>';
-  $('chatBox').appendChild(div);
+  const container = document.getElementById('chatMessagesInner');
+  if (container) {
+    container.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'msg msg-system';
+    div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>';
+    container.appendChild(div);
+  }
   toast('Chat limpo!', 'success');
 });
 
@@ -2047,22 +2238,20 @@ setInterval(() => {
 }, 1000);
 
 // ===== CHAT SCROLL =====
-$('chatBox')?.addEventListener('scroll', () => {
-  if (isChatNearBottom()) {
-    document.querySelectorAll('.msg').forEach(el => el.classList.remove('unseen'));
-    $('newMsgPill').classList.add('hidden');
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('chatMessagesInner');
+  if (container) {
+    container.addEventListener('scroll', () => {
+      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 20) {
+        markMessagesAsSeen();
+      }
+    });
   }
 });
 
-// ===== RESTAURAR PREFERÊNCIA =====
-const savedScroll = localStorage.getItem('autoScroll');
-if (savedScroll !== null) {
-  autoScroll = savedScroll === 'true';
-  $('scrollBtn').textContent = autoScroll ? '📌 Auto-scroll: ON' : '📌 Auto-scroll: OFF';
-  $('scrollBtn').classList.toggle('active', autoScroll);
-}
-
 // ===== INIT =====
+applyTheme();
+
 async function init() {
   try {
     const res = await fetch('/api/me');
@@ -2095,7 +2284,6 @@ async function init() {
 
 init();
 
-// Carregar salas a cada 15s
 setInterval(() => {
   if ($('screen-lobby').classList.contains('active')) loadRooms();
 }, 15000);
