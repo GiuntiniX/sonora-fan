@@ -428,17 +428,32 @@ io.on('connection', (socket) => {
   });
 
   socket.on('removeFromQueue', (index) => {
-    if (!currentRoom || !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin');
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
+      return;
+    }
+    if (!socket.isAdmin) {
+      socket.emit('error', 'Apenas administradores podem remover músicas');
       return;
     }
     const room = rooms.get(currentRoom);
-    const track = room.queue[index];
-    if (!track || index === room.currentIndex) return;
-    room.queue.splice(index, 1);
+    if (!room) {
+      socket.emit('error', 'Sala não encontrada');
+      return;
+    }
+    if (index < 0 || index >= room.queue.length) {
+      socket.emit('error', 'Música não encontrada');
+      return;
+    }
+    if (index === room.currentIndex) {
+      socket.emit('error', 'Não pode remover a música que está tocando');
+      return;
+    }
+    const removed = room.queue.splice(index, 1)[0];
     if (index < room.currentIndex) room.currentIndex--;
     broadcastState(currentRoom);
-    addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
+    addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${removed.title}" da fila`);
+    socket.emit('songRemoved', { index, title: removed.title });
   });
 
   socket.on('videoDuration', ({ duration }) => {
