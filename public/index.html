@@ -1660,15 +1660,19 @@ function previewSongFromInput() {
   setSongPreview('loading');
   const requestId = ++songPreviewRequest;
 
-  fetch(`/api/video-info?id=${videoId}`)
+  // ALTERAÇÃO PRINCIPAL: Usa o oembed oficial do YouTube para garantir a duração correta
+  fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(data => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
       
+      // A duração no oembed vem em segundos
+      const duration = data.duration || 0;
+      
       // VERIFICAÇÃO DE DURAÇÃO MÁXIMA (10 minutos = 600 segundos)
       let state = 'ready';
       let statusMsg = '';
-      if (data.duration > 0 && data.duration > 600) {
+      if (duration > 0 && duration > 600) {
         state = 'too_long';
         statusMsg = '⛔ Vídeo muito longo! Limite: 10 minutos.';
       }
@@ -1676,31 +1680,17 @@ function previewSongFromInput() {
       songPreviewData = {
         id: videoId,
         title: (data.title || 'Música do YouTube').trim(),
-        artist: (data.artist || 'Canal desconhecido').trim(),
-        duration: data.duration > 0 ? data.duration : null,
+        artist: (data.author_name || 'Canal desconhecido').trim(),
+        duration: duration,
       };
       setSongPreview(state, songPreviewData, statusMsg);
     })
     .catch(() => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-      fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`)
-        .then(r => r.json())
-        .then(data => {
-          if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-          songPreviewData = {
-            id: videoId,
-            title: (data.title || 'Música do YouTube').trim(),
-            artist: (data.author_name || 'Canal desconhecido').trim(),
-            duration: null,
-          };
-          // Se não conseguirmos a duração, permitimos, mas deixamos um aviso sutil
-          setSongPreview('ready', songPreviewData, '⚠️ Duração desconhecida, verifique se é curta.');
-        })
-        .catch(() => {
-          if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-          songPreviewData = { id: videoId, title: 'Música do YouTube', artist: 'Prévia indisponível', duration: null };
-          setSongPreview('ready', songPreviewData);
-        });
+      
+      // Fallback caso a API oficial falhe (não libera o vídeo, pois não temos a duração)
+      songPreviewData = { id: videoId, title: 'Música do YouTube', artist: 'Prévia indisponível', duration: 0 };
+      setSongPreview('too_long', songPreviewData, '⛔ Não foi possível verificar a duração. Limite: 10 min.');
     });
 }
 
