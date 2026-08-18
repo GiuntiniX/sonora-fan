@@ -526,7 +526,7 @@
     }
     .queue-center-header span { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
     .queue-center-header .count { color: var(--text-muted); font-size: 12px; font-weight: 600; }
-    #queueCenterList { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+    #queueList { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
 
     .queue-item {
       display: flex;
@@ -624,6 +624,7 @@
     .chat-controls button { padding: 3px 10px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary); font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
     .chat-controls button:hover { border-color: var(--accent2); color: var(--text); }
     .chat-controls button.danger:hover { border-color: var(--danger); color: var(--danger); }
+    .chat-controls button.active { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.1); }
 
     .chat-messages {
       flex: 1;
@@ -658,6 +659,8 @@
     .msg-like-btn.liked { color: var(--accent); background: rgba(255,107,53,0.1); }
     .msg-like-count { font-size: 10px; font-weight: 600; }
 
+    .msg.unseen { opacity: 0.7; }
+
     .new-messages-pill {
       position: absolute;
       bottom: 70px;
@@ -667,7 +670,7 @@
       color: #fff;
       border: none;
       border-radius: 20px;
-      padding: 5px 14px;
+      padding: 6px 16px;
       font-size: 11px;
       font-weight: 700;
       cursor: pointer;
@@ -675,9 +678,15 @@
       box-shadow: 0 4px 20px rgba(255,107,53,0.4);
       transition: all 0.3s;
       font-family: inherit;
+      animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .new-messages-pill.hidden { display: none; }
     .new-messages-pill:hover { transform: translateX(-50%) scale(1.05); }
+
+    @keyframes bounceIn {
+      0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+      100% { opacity: 1; transform: translateX(-50%) scale(1); }
+    }
 
     .chat-input-bar {
       padding: 8px 12px;
@@ -929,7 +938,7 @@
           <span id="userAvatar">🎸</span>
           <span id="userDisplayName">Usuário</span>
         </div>
-        <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtn">🎛️</button>
+        <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtn" style="display:none;">🎛️</button>
         <button class="logout-btn" onclick="doLogout()">Sair</button>
       </div>
     </div>
@@ -957,7 +966,7 @@
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
-        <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom">🎛️</button>
+        <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom" style="display:none;">🎛️</button>
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
     </div>
@@ -1029,7 +1038,7 @@
 
         <div class="chat-panel">
           <div class="chat-controls">
-            <button onclick="toggleAutoScroll()" id="scrollBtn">📌 Auto-scroll: ON</button>
+            <button onclick="toggleAutoScroll()" id="scrollBtn">📌 Auto-scroll: OFF</button>
             <button class="danger" onclick="clearChat()">🗑️ Limpar</button>
           </div>
           <div class="chat-messages" id="chatBox"></div>
@@ -1103,12 +1112,13 @@ let currentRoomData = null;
 let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
-let autoScroll = true;
+let autoScroll = false;
 let songData = null;
 let messageLikes = {};
 
 // ===== UTILS =====
 function $(id) { return document.getElementById(id); }
+
 function toast(msg, type) {
   const el = $('toast');
   el.textContent = msg;
@@ -1129,6 +1139,7 @@ function formatTime(d) {
 }
 
 function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) return '0:00';
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return m + ':' + s.toString().padStart(2,'0');
@@ -1582,10 +1593,10 @@ function syncPlayer(state) {
     try {
       player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
     } catch(e) {}
-    $('trackTitle').textContent = track.title;
-    $('trackArtist').textContent = track.artist;
+    $('trackTitle').textContent = track.title || 'Música';
+    $('trackArtist').textContent = track.artist || 'Desconhecido';
     $('trackDj').textContent = '👤 ' + (track.dj || '');
-    $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">`;
+    $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
   }
 }
 
@@ -1612,8 +1623,8 @@ function renderQueue(queue, currentIndex) {
       <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
       <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
       <div class="info">
-        <div class="title">${escapeHtml(track.title)}</div>
-        <div class="artist">${escapeHtml(track.artist)}</div>
+        <div class="title">${escapeHtml(track.title || 'Música')}</div>
+        <div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div>
       </div>
       <span class="dj">${escapeHtml(track.dj || '')}</span>
       ${i !== currentIndex && amIAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})">✕</button>` : ''}
@@ -1622,7 +1633,7 @@ function renderQueue(queue, currentIndex) {
   });
 }
 
-// ===== ADD SONG =====
+// ===== ADD SONG - CORRIGIDO =====
 function extractYouTubeId(url) {
   if (!url) return '';
   if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
@@ -1648,37 +1659,98 @@ async function previewSong() {
   const videoId = extractYouTubeId(url);
   if (!videoId) { clearPreview(); return; }
 
+  // Mostra loading
+  const box = $('songPreview');
+  box.classList.remove('hidden');
+  $('previewThumb').innerHTML = '⏳';
+  $('previewTitle').textContent = 'Buscando...';
+  $('previewArtist').textContent = 'Analisando link';
+  $('previewStatus').textContent = '';
+  $('previewActions').classList.add('hidden');
+
+  try {
+    // Tenta via oembed do YouTube
+    const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+    if (res.ok) {
+      const data = await res.json();
+      songData = {
+        id: videoId,
+        title: data.title || 'Música do YouTube',
+        artist: data.author_name || 'Desconhecido',
+        duration: data.duration || 0
+      };
+      showPreview(songData);
+      return;
+    }
+  } catch (e) {}
+
+  // Fallback: tenta via nossa API
   try {
     const res = await fetch(`/api/video-info?id=${videoId}`);
     const data = await res.json();
     if (res.ok && data.title) {
-      songData = { id: videoId, title: data.title, artist: data.artist || 'Desconhecido', duration: data.duration || 0 };
+      songData = {
+        id: videoId,
+        title: data.title || 'Música do YouTube',
+        artist: data.artist || 'Desconhecido',
+        duration: data.duration || 0
+      };
       showPreview(songData);
-    } else {
-      songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: 0 };
-      showPreview(songData);
+      return;
     }
-  } catch (e) {
-    songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: 0 };
-    showPreview(songData);
-  }
+  } catch (e) {}
+
+  // Último recurso: tenta do HTML da página
+  try {
+    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+    const html = await res.text();
+    const match = html.match(/<title>([^<]+)<\/title>/);
+    if (match) {
+      const title = match[1].replace(/ - YouTube\s*$/, '').trim();
+      songData = {
+        id: videoId,
+        title: title || 'Música do YouTube',
+        artist: 'Desconhecido',
+        duration: 0
+      };
+      showPreview(songData);
+      return;
+    }
+  } catch (e) {}
+
+  // Se tudo falhar
+  songData = {
+    id: videoId,
+    title: 'Música do YouTube',
+    artist: 'Desconhecido',
+    duration: 0
+  };
+  showPreview(songData);
 }
 
 function showPreview(data) {
   const box = $('songPreview');
   box.classList.remove('hidden');
-  $('previewThumb').innerHTML = `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="">${data.duration ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>` : ''}`;
-  $('previewTitle').textContent = data.title;
-  $('previewArtist').textContent = data.artist;
-  if (data.duration && data.duration > 600) {
+  
+  const thumbHtml = data.id 
+    ? `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`
+    : '🎵';
+  const durBadge = data.duration > 0 ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>` : '';
+  
+  $('previewThumb').innerHTML = thumbHtml + durBadge;
+  $('previewTitle').textContent = data.title || 'Música do YouTube';
+  $('previewArtist').textContent = data.artist || 'Desconhecido';
+  
+  if (data.duration > 0 && data.duration > 600) {
     $('previewStatus').textContent = '⛔ Muito longo! Limite: 10 min';
     $('previewStatus').style.color = 'var(--danger)';
-    $('songPreview .song-preview-confirm').disabled = true;
+    document.querySelector('.song-preview-confirm').disabled = true;
   } else {
-    $('previewStatus').textContent = data.duration ? `⏱ ${formatDuration(data.duration)}` : '';
+    $('previewStatus').textContent = data.duration > 0 ? `⏱ ${formatDuration(data.duration)}` : '⚠️ Duração não verificada';
     $('previewStatus').style.color = 'var(--text-muted)';
-    $('songPreview .song-preview-confirm').disabled = false;
+    document.querySelector('.song-preview-confirm').disabled = false;
   }
+  
   $('previewActions').classList.remove('hidden');
 }
 
@@ -1744,7 +1816,7 @@ function startCooldown() {
   }, 1000);
 }
 
-// ===== CHAT =====
+// ===== CHAT - SCROLL FIXO =====
 function sendMessage() {
   const input = $('chatInput');
   const text = input.value.trim();
@@ -1766,7 +1838,7 @@ function renderMessage(msg) {
         <span style="color:var(--text-muted);font-size:11px;">adicionou</span>
         <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
       </div>
-      <div class="music-info">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
+      <div class="music-info">${escapeHtml(msg.musicTitle || 'Música')} — ${escapeHtml(msg.musicArtist || 'Desconhecido')}</div>
     `;
   } else if (msg.isSystem) {
     div.className = 'msg msg-system';
@@ -1802,13 +1874,14 @@ function renderMessage(msg) {
     `;
   }
 
-  const nearBottom = isChatNearBottom();
+  // ADICIONA A MENSAGEM SEM ROLAR
   box.appendChild(div);
-  if (autoScroll && nearBottom) {
-    scrollToBottom();
-  } else if (!nearBottom) {
-    $('newMsgPill').classList.remove('hidden');
-  }
+  
+  // Marca como não vista
+  div.classList.add('unseen');
+  
+  // SEMPRE mostra o pill de novas mensagens
+  updateNewMessagesPill();
 }
 
 function likeMessage(msgId, btn) {
@@ -1828,23 +1901,44 @@ function likeMessage(msgId, btn) {
   }
 }
 
+function updateNewMessagesPill() {
+  const pill = $('newMsgPill');
+  const unseen = document.querySelectorAll('.msg.unseen').length;
+  if (unseen > 0) {
+    pill.textContent = `↓ ${unseen} novas mensagens`;
+    pill.classList.remove('hidden');
+  } else {
+    pill.classList.add('hidden');
+  }
+}
+
 function isChatNearBottom() {
   const box = $('chatBox');
   if (!box) return true;
-  return box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  return box.scrollHeight - box.scrollTop - box.clientHeight < 50;
 }
 
 function scrollToBottom() {
   const box = $('chatBox');
   if (!box) return;
   box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+  // Marca todas as mensagens como vistas
+  document.querySelectorAll('.msg').forEach(el => el.classList.remove('unseen'));
   $('newMsgPill').classList.add('hidden');
 }
 
 function toggleAutoScroll() {
   autoScroll = !autoScroll;
-  $('scrollBtn').textContent = autoScroll ? '📌 Auto-scroll: ON' : '📌 Auto-scroll: OFF';
-  if (autoScroll) scrollToBottom();
+  const btn = $('scrollBtn');
+  btn.textContent = autoScroll ? '📌 Auto-scroll: ON' : '📌 Auto-scroll: OFF';
+  btn.classList.toggle('active', autoScroll);
+  if (autoScroll) {
+    scrollToBottom();
+    toast('Auto-scroll ativado', 'success');
+  } else {
+    toast('Auto-scroll desativado', 'success');
+  }
+  localStorage.setItem('autoScroll', autoScroll);
 }
 
 function clearChat() {
@@ -1902,7 +1996,8 @@ socket.on('chat', renderMessage);
 socket.on('chatHistory', (messages) => {
   $('chatBox').innerHTML = '';
   messages.forEach(m => renderMessage(m));
-  setTimeout(scrollToBottom, 100);
+  // Não rola automaticamente - deixa o usuário controlar
+  updateNewMessagesPill();
 });
 
 socket.on('error', (msg) => toast(msg, 'error'));
@@ -1917,6 +2012,7 @@ socket.on('isAdmin', (isAdmin) => {
 
 socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
 socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
+
 socket.on('chatCleared', () => {
   $('chatBox').innerHTML = '';
   const div = document.createElement('div');
@@ -1952,8 +2048,19 @@ setInterval(() => {
 
 // ===== CHAT SCROLL =====
 $('chatBox')?.addEventListener('scroll', () => {
-  if (isChatNearBottom()) $('newMsgPill').classList.add('hidden');
+  if (isChatNearBottom()) {
+    document.querySelectorAll('.msg').forEach(el => el.classList.remove('unseen'));
+    $('newMsgPill').classList.add('hidden');
+  }
 });
+
+// ===== RESTAURAR PREFERÊNCIA =====
+const savedScroll = localStorage.getItem('autoScroll');
+if (savedScroll !== null) {
+  autoScroll = savedScroll === 'true';
+  $('scrollBtn').textContent = autoScroll ? '📌 Auto-scroll: ON' : '📌 Auto-scroll: OFF';
+  $('scrollBtn').classList.toggle('active', autoScroll);
+}
 
 // ===== INIT =====
 async function init() {
