@@ -6,7 +6,7 @@
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    /* ===== ESTILOS (mesmos do seu código, mantidos) ===== */
+    /* ===== ESTILOS ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -168,19 +168,11 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+
+    /* BOTÃO DE ENTRAR REMOVIDO COM CSS */
     .landing-nav-btn {
-      padding: 10px 20px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.15s;
+      display: none !important;
     }
-    .landing-nav-btn:hover { border-color: var(--border-hover); background: var(--bg-hover); }
 
     .landing-hero {
       text-align: center;
@@ -1333,6 +1325,7 @@
   <div class="landing-inner">
     <div class="landing-nav">
       <div class="landing-logo">🎸 Sonora <span>Fan</span></div>
+      <!-- BOTÃO DE ENTRAR FOI REMOVIDO AQUI -->
     </div>
 
     <div class="landing-hero">
@@ -1597,10 +1590,16 @@
           </div>
         </div>
 
-        <div class="users-panel" style="padding:14px 18px;border-bottom:1px solid var(--border);max-height:200px;overflow-y:auto;">
-          <div class="panel-header" style="display:flex;align-items:center;gap:6px;"><span>🎵</span> Tocadas recentemente</div>
-          <div id="historyList" style="display:flex;flex-direction:column;gap:6px;">
-            <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px 0;">Nenhuma música tocada ainda</div>
+        <!-- SUBSTITUÍDO "Tocadas recentemente" PELA FILA DA SIDEBAR -->
+        <div class="users-panel" style="padding:14px 18px; border-bottom:1px solid var(--border); flex: 1; min-height: 0; display: flex; flex-direction: column;">
+          <div class="panel-header" style="display:flex; align-items:center; justify-content:space-between; gap:6px; flex-shrink: 0;">
+            <span>🎵 Fila de músicas</span>
+            <span id="queueCountSidebar" style="color:var(--text-muted); font-size:12px;">0 músicas</span>
+          </div>
+          
+          <!-- Lista da fila com SCROLL -->
+          <div id="queueListSidebar" style="flex: 1; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; padding-right: 4px;">
+            <div style="color:var(--text-muted); font-size:12px; text-align:center; padding:20px 0;">Nenhuma música na fila</div>
           </div>
         </div>
 
@@ -2206,7 +2205,6 @@ socket.on('roomState', (state) => {
   if (newTrackId && newTrackId !== prevTrackId) currentTrackId = null;
   currentRoomData = state;
   syncPlayer(state);
-  renderHistory(state.history);
 });
 
 socket.on('queueEmpty', () => {
@@ -2237,29 +2235,72 @@ socket.on('isAdmin', (isAdmin) => {
 socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
 socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
 
-// ===== QUEUE =====
+// ===== QUEUE (ATUALIZADO PARA A SIDEBAR) =====
 function renderQueue(queue, currentIndex) {
+  // --- Lista principal (embaixo do player) ---
   const list = $('queueList');
   list.innerHTML = '';
   $('queueCount').textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
+  
   if (queue.length === 0) {
     list.innerHTML = `<div class="empty-queue"><div class="icon">🎵</div><p>Fila vazia. Adicione uma música!</p></div>`;
-    return;
+  } else {
+    queue.forEach((track, i) => {
+      const div = document.createElement('div');
+      div.className = 'queue-item' + (i === currentIndex ? ' playing' : '');
+      const showRemove = amIAdmin;
+      div.innerHTML = `
+        <span class="queue-num">${i === currentIndex ? '▶' : i + 1}</span>
+        <div class="queue-thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" alt="" onerror="this.style.display='none'"></div>
+        <span class="queue-title">${escapeHtml(track.title)} — ${escapeHtml(track.artist)}</span>
+        <span class="queue-dj">${escapeHtml(track.dj || 'Sistema')}</span>
+        ${showRemove && i !== currentIndex ? `<button class="queue-remove" onclick="event.stopPropagation(); removeFromQueue(${i})" title="Remover">×</button>` : ''}
+      `;
+      if (i !== currentIndex && amIAdmin) { div.onclick = () => socket.emit('skipTo', i); div.style.cursor = 'pointer'; }
+      list.appendChild(div);
+    });
   }
-  queue.forEach((track, i) => {
-    const div = document.createElement('div');
-    div.className = 'queue-item' + (i === currentIndex ? ' playing' : '');
-    const showRemove = amIAdmin;
-    div.innerHTML = `
-      <span class="queue-num">${i === currentIndex ? '▶' : i + 1}</span>
-      <div class="queue-thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" alt="" onerror="this.style.display='none'"></div>
-      <span class="queue-title">${escapeHtml(track.title)} — ${escapeHtml(track.artist)}</span>
-      <span class="queue-dj">${escapeHtml(track.dj || 'Sistema')}</span>
-      ${showRemove && i !== currentIndex ? `<button class="queue-remove" onclick="event.stopPropagation(); removeFromQueue(${i})" title="Remover">×</button>` : ''}
-    `;
-    if (i !== currentIndex && amIAdmin) { div.onclick = () => socket.emit('skipTo', i); div.style.cursor = 'pointer'; }
-    list.appendChild(div);
-  });
+
+  // --- Lista da sidebar (nova lista) ---
+  const sidebarList = $('queueListSidebar');
+  const sidebarCount = $('queueCountSidebar');
+  if (sidebarList) {
+    sidebarList.innerHTML = '';
+    if (sidebarCount) sidebarCount.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
+
+    if (queue.length === 0) {
+      sidebarList.innerHTML = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:20px 0;">Nenhuma música na fila</div>`;
+    } else {
+      queue.forEach((track, i) => {
+        const div = document.createElement('div');
+        // Estilo compacto para a sidebar
+        div.style.cssText = `
+          display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px;
+          font-size: 13px; background: ${i === currentIndex ? 'var(--bg-hover)' : 'transparent'};
+          border-left: ${i === currentIndex ? '3px solid var(--accent)' : 'none'};
+          cursor: ${i !== currentIndex && amIAdmin ? 'pointer' : 'default'};
+          transition: background 0.15s;
+        `;
+        div.onmouseenter = () => { if (i !== currentIndex && amIAdmin) div.style.background = 'var(--bg-hover)'; };
+        div.onmouseleave = () => { if (i !== currentIndex && amIAdmin) div.style.background = 'transparent'; };
+        if (i !== currentIndex && amIAdmin) { 
+          div.onclick = () => socket.emit('skipTo', i); 
+        }
+
+        div.innerHTML = `
+          <div style="width: 32px; height: 24px; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: var(--bg);">
+            <img src="https://img.youtube.com/vi/${track.id}/default.jpg" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="color: ${i === currentIndex ? 'var(--text)' : 'var(--text-secondary)'}; font-weight: ${i === currentIndex ? '600' : '400'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(track.title)}</div>
+            <div style="color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(track.artist)}</div>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); flex-shrink: 0;">${escapeHtml(track.dj || '')}</div>
+        `;
+        sidebarList.appendChild(div);
+      });
+    }
+  }
 }
 
 function removeFromQueue(index) {
@@ -2549,31 +2590,6 @@ function setVolume(val) {
   if (player && player.setVolume) player.setVolume(parseInt(val));
 }
 
-function renderHistory(history) {
-  const list = $('historyList');
-  if (!list) return;
-  if (!history || history.length === 0) {
-    list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px 0;">Nenhuma música tocada ainda</div>';
-    return;
-  }
-  list.innerHTML = '';
-  history.slice(0, 3).forEach(h => {
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:all 0.15s;font-size:12px;';
-    div.onmouseenter = () => div.style.background = 'var(--bg-hover)';
-    div.onmouseleave = () => div.style.background = 'transparent';
-    div.onclick = () => { $('songUrl').value = 'https://youtube.com/watch?v=' + h.id; handleSongUrlInput(); };
-    div.innerHTML = `
-      <img src="https://img.youtube.com/vi/${h.id}/default.jpg" style="width:40px;height:30px;border-radius:4px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
-      <div style="flex:1;min-width:0;overflow:hidden;">
-        <div style="color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(h.title)}</div>
-        <div style="color:var(--text-muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(h.artist)} • ${escapeHtml(h.dj || 'Sistema')}</div>
-      </div>
-    `;
-    list.appendChild(div);
-  });
-}
-
 function launchConfetti() {
   const container = document.getElementById('confettiContainer') || document.createElement('div');
   if (!document.getElementById('confettiContainer')) {
@@ -2663,7 +2679,7 @@ if (roomParam) {
   }, 1000);
 }
 
-// Estilos para confetti
+// Estilos para confetti e preview
 const style = document.createElement('style');
 style.textContent = `
   @keyframes confettiFall {
