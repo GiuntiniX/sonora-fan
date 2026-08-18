@@ -19,9 +19,8 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
 
 // ========== AUTENTICAÇÃO LOCAL ==========
-// Em produção, use um banco de dados real!
-const users = new Map(); // email -> { nome, email, senha, genero, regiao, estilos, avatar, criadoEm }
-const sessions = new Map(); // token -> email
+const users = new Map();
+const sessions = new Map();
 
 // ========== ESTADO ==========
 const rooms = new Map();
@@ -91,7 +90,6 @@ function addSystemMsg(slug, text) {
   io.to(slug).emit('chat', msg);
 }
 
-// ========== AVANÇO CENTRALIZADO ==========
 function advanceQueue(slug, reason) {
   const room = rooms.get(slug);
   if (!room) return false;
@@ -138,12 +136,9 @@ setInterval(() => {
 }, 2000);
 
 // ========== API DE AUTENTICAÇÃO ==========
-
-// CADASTRO
 app.post('/api/signup', (req, res) => {
   const { nome, email, senha, genero, regiao, estilos } = req.body;
 
-  // Validações
   if (!nome || nome.length < 2) {
     return res.status(400).json({ error: 'Nome deve ter pelo menos 2 caracteres' });
   }
@@ -163,16 +158,14 @@ app.post('/api/signup', (req, res) => {
     return res.status(400).json({ error: 'Escolha pelo menos um estilo musical' });
   }
 
-  // Verifica se e-mail já existe
   if (users.has(email)) {
     return res.status(400).json({ error: 'Este e-mail já está cadastrado' });
   }
 
-  // Cria usuário
   const user = {
     nome,
     email,
-    senha, // Em produção: hash com bcrypt!
+    senha,
     genero,
     regiao,
     estilos,
@@ -185,7 +178,6 @@ app.post('/api/signup', (req, res) => {
   res.json({ success: true, nome, email });
 });
 
-// LOGIN - COM SESSÃO
 app.post('/api/login', (req, res) => {
   const { email, senha } = req.body;
 
@@ -202,14 +194,12 @@ app.post('/api/login', (req, res) => {
     return res.status(401).json({ error: 'Senha incorreta' });
   }
 
-  // Cria token de sessão
   const token = crypto.randomBytes(64).toString('hex');
   sessions.set(token, email);
 
-  // Define cookie com o token
   res.cookie('sessionToken', token, {
     httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     sameSite: 'lax',
     path: '/'
   });
@@ -218,7 +208,6 @@ app.post('/api/login', (req, res) => {
   res.json({ success: true, user: userData });
 });
 
-// LOGOUT
 app.post('/api/logout', (req, res) => {
   const token = req.cookies.sessionToken;
   if (token) {
@@ -228,7 +217,6 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
-// VERIFICA SESSÃO - VIA COOKIE
 app.get('/api/me', (req, res) => {
   const token = req.cookies.sessionToken;
   if (!token) {
@@ -264,16 +252,14 @@ app.get('/api/rooms', (req, res) => {
 app.get('/api/rooms/random', (req, res) => {
   const list = Array.from(rooms.values());
   if (list.length === 0) return res.json({ slug: null });
-  // Ordena por número de ouvintes (decrescente)
   const sorted = list.sort((a, b) => b.listenerCount - a.listenerCount);
   res.json({ slug: sorted[0].slug });
 });
 
 app.post('/api/rooms', (req, res) => {
-  const { name, adminName, adminUid } = req.body;
+  const { name, adminName } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
   
-  // Verifica se já existe sala com nome similar
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
   
   rooms.set(slug, createRoom(slug, name, adminName || null));
@@ -532,47 +518,20 @@ io.on('connection', (socket) => {
     advanceQueue(currentRoom, 'videoEnded');
   });
 
-  socket.on('likeMusic', ({ msgId }) => {
-    if (!currentRoom || !msgId) return;
-    const room = rooms.get(currentRoom);
-    if (!room) return;
-    const msg = room.chatHistory.find(m => m._id === msgId);
-    if (!msg || !msg.isMusic) return;
-    if (msg.likedBy && msg.likedBy.includes(socket.userName)) return;
-    msg.musicLikes = (msg.musicLikes || 0) + 1;
-    if (!msg.likedBy) msg.likedBy = [];
-    msg.likedBy.push(socket.userName);
-    io.to(currentRoom).emit('musicLiked', { msgId, likes: msg.musicLikes });
-  });
-
   socket.on('typing', ({ isTyping }) => {
     if (!currentRoom) return;
     socket.to(currentRoom).emit('typing', { name: socket.userName, isTyping });
   });
 
-  socket.on('addReaction', ({ msgId, emoji }) => {
-    if (!currentRoom || !msgId || !emoji) return;
-    const room = rooms.get(currentRoom);
-    if (!room) return;
-    const msg = room.chatHistory.find(m => m._id === msgId);
-    if (!msg || msg.isSystem) return;
-    if (!msg.reactions) msg.reactions = {};
-    if (!msg.reactions[emoji]) msg.reactions[emoji] = [];
-    const users = msg.reactions[emoji];
-    if (users.includes(socket.userName)) {
-      msg.reactions[emoji] = users.filter(u => u !== socket.userName);
-      if (msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
-    } else {
-      msg.reactions[emoji].push(socket.userName);
-    }
-    io.to(currentRoom).emit('chatUpdated', msg);
-  });
-
   socket.on('clearChat', () => {
-    if (!currentRoom || !socket.isAdmin) return;
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas administradores podem limpar o chat');
+      return;
+    }
     const room = rooms.get(currentRoom);
     room.chatHistory = [];
     io.to(currentRoom).emit('chatCleared');
+    addSystemMsg(currentRoom, `🧹 Chat limpo por ${socket.userName}`);
   });
 
   socket.on('confetti', () => {
