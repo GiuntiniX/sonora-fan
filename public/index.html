@@ -1630,7 +1630,7 @@ function renderQueue(queue, currentIndex) {
   }
 }
 
-// ===== ADD SONG (TRAVA DEFINITIVA DE 10 MINUTOS) =====
+// ===== ADD SONG (TRAVA INTELIGENTE DE 10 MINUTOS) =====
 function extractYouTubeId(rawUrl) {
   const url = (rawUrl || '').trim();
   if (!url) return '';
@@ -1677,7 +1677,7 @@ function previewSongFromInput() {
   setSongPreview('loading');
   const requestId = ++songPreviewRequest;
 
-  // ALTERAÇÃO PRINCIPAL: Usa o oembed oficial do YouTube
+  // Tenta pegar a duração pela API oficial
   fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(data => {
@@ -1705,9 +1705,53 @@ function previewSongFromInput() {
     .catch(() => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
       
-      // FALHA NA API: BLOQUEIA TOTALMENTE POIS NÃO SABEMOS A DURAÇÃO
-      songPreviewData = { id: videoId, title: 'Música do YouTube', artist: 'Prévia indisponível', duration: 0 };
-      setSongPreview('too_long', songPreviewData, '⛔ Não foi possível verificar a duração. Limite: 10 min.');
+      // FALHA NA API: Tenta um método alternativo via fetch direto do HTML
+      fetch(`https://www.youtube.com/watch?v=${videoId}`)
+        .then(r => r.text())
+        .then(html => {
+          if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
+          
+          // Tenta encontrar a duração no HTML (forma alternativa)
+          let duration = 0;
+          const match = html.match(/"duration":\s*(\d+)/);
+          if (match) duration = parseInt(match[1]);
+
+          // Se ainda não encontrou, tenta a meta tag
+          if (!duration) {
+            const metaMatch = html.match(/<meta itemprop="duration" content="PT(\d+)M/);
+            if (metaMatch) duration = parseInt(metaMatch[1]) * 60;
+          }
+
+          let state = 'ready';
+          let statusMsg = '';
+          if (duration > 0 && duration > 600) {
+            state = 'too_long';
+            statusMsg = '⛔ Vídeo muito longo! Limite: 10 minutos.';
+          } else if (duration === 0) {
+            state = 'unknown';
+            statusMsg = '⚠️ Não foi possível verificar a duração. Certifique-se de que seja menor que 10 min.';
+          }
+
+          songPreviewData = {
+            id: videoId,
+            title: 'Música do YouTube',
+            artist: 'Canal desconhecido',
+            duration: duration,
+          };
+          setSongPreview(state, songPreviewData, statusMsg);
+        })
+        .catch(() => {
+          if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
+          
+          // Último recurso: assume que é curto e libera com aviso
+          songPreviewData = { 
+            id: videoId, 
+            title: 'Música do YouTube', 
+            artist: 'Prévia indisponível', 
+            duration: 0 
+          };
+          setSongPreview('unknown', songPreviewData, '⚠️ Duração não verificada. Confirme se é menor que 10 min.');
+        });
     });
 }
 
@@ -1788,16 +1832,12 @@ function confirmAddSong() {
   if (!songPreviewData || !songPreviewData.id) return;
   
   // ==========================================
-  // TRAVA DEFINITIVA DE SEGURANÇA
+  // TRAVA INTELIGENTE DE SEGURANÇA
   // ==========================================
   // Se a duração for maior que 0 E maior que 600 segundos, BLOQUEIA.
-  // Se a duração for 0 ou null (não foi possível obter), BLOQUEIA também.
+  // Se for 0 ou null (não foi possível obter), LIBERA com aviso.
   if (songPreviewData.duration > 0 && songPreviewData.duration > 600) {
     toast('⛔ Este vídeo é muito longo! Limite: 10 minutos.', 'error');
-    return;
-  }
-  if (!songPreviewData.duration || songPreviewData.duration === 0) {
-    toast('⛔ Não foi possível verificar a duração do vídeo. Tente outro link.', 'error');
     return;
   }
 
@@ -1818,7 +1858,7 @@ function confirmAddSong() {
     id: songPreviewData.id,
     title: songPreviewData.title,
     artist: songPreviewData.artist,
-    duration: Math.floor(songPreviewData.duration), // Envia a duração real
+    duration: songPreviewData.duration > 0 ? Math.floor(songPreviewData.duration) : null, // Envia null se desconhecido
   });
   lastAddTime = Date.now();
   input.value = '';
