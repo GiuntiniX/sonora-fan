@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
-  <!-- Firebase (usado para autenticação e cadastro) -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -30,28 +30,8 @@
       --success: #22c55e;
       --danger: #ef4444;
       --warning: #f59e0b;
-      --stage-light: rgba(124,58,237,0.08);
       --radius: 16px;
       --radius-sm: 12px;
-    }
-
-    [data-theme="neon"] {
-      --bg: #0a0a12;
-      --bg-elevated: #0f0f1a;
-      --bg-card: #12121f;
-      --bg-hover: #1a1a2e;
-      --border: #1e1e35;
-      --border-hover: #2a2a4a;
-      --text: #e0f0ff;
-      --text-secondary: #88aacc;
-      --text-muted: #556677;
-      --accent: #00ff88;
-      --accent-glow: rgba(0,255,136,0.4);
-      --accent2: #ff00ff;
-      --accent2-glow: rgba(255,0,255,0.4);
-      --success: #00ff88;
-      --danger: #ff3366;
-      --warning: #ffcc00;
     }
 
     body {
@@ -431,7 +411,6 @@
       transform: translateY(-1px);
       box-shadow: 0 8px 30px rgba(124,58,237,0.3);
     }
-    .login-card button:active { transform: scale(0.98); }
     .login-card button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
     .login-switch {
@@ -465,8 +444,8 @@
       border-radius: var(--radius);
       padding: 28px;
       width: 90%;
-      max-width: 460px;
-      max-height: 88vh;
+      max-width: 480px;
+      max-height: 92vh;
       overflow-y: auto;
       position: relative;
       animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -506,6 +485,16 @@
       margin-top: 14px;
     }
     .form-label:first-of-type { margin-top: 0; }
+    .form-label .required {
+      color: var(--danger);
+      margin-left: 2px;
+    }
+    .form-label .hint {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-left: 6px;
+    }
     .chip-group {
       display: flex;
       flex-wrap: wrap;
@@ -530,7 +519,20 @@
       background: rgba(255,107,53,0.15);
       color: var(--text);
     }
-    .form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
+    .form-hint { 
+      font-size: 11.5px; 
+      color: var(--text-muted); 
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .form-error {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: -10px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .form-error.show { display: block; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
     .modal-actions button {
       padding: 10px 20px;
@@ -557,6 +559,20 @@
       box-shadow: 0 6px 20px rgba(124,58,237,0.3);
     }
     .modal-actions .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .password-strength {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      margin-top: -10px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .password-strength .fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s, background 0.3s;
+      border-radius: 2px;
+    }
 
     @keyframes slideUp {
       from { opacity: 0; transform: translateY(30px) scale(0.96); }
@@ -829,7 +845,7 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM LAYOUT (mantido do original) ===== */
+    /* ===== ROOM LAYOUT ===== */
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 420px;
@@ -1390,19 +1406,41 @@
 
 <!-- SIGNUP MODAL -->
 <div class="modal-overlay" id="signupModal">
-  <div class="modal modal-lg">
-    <h3>Criar sua conta</h3>
+  <div class="modal">
+    <h3>🎵 Criar sua conta</h3>
+    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:18px;line-height:1.6;">
+      Preencha os dados abaixo e comece a curtir música com a galera!
+    </p>
 
-    <label class="form-label">Nome de usuário</label>
+    <!-- NOME -->
+    <label class="form-label">
+      Nome de usuário <span class="required">*</span>
+    </label>
     <input type="text" id="signupNome" placeholder="Como você quer ser chamado?" maxlength="60">
+    <div class="form-error" id="signupNomeError">Digite seu nome</div>
 
-    <label class="form-label">E-mail</label>
+    <!-- E-MAIL -->
+    <label class="form-label">
+      E-mail <span class="required">*</span>
+    </label>
     <input type="email" id="signupEmail" placeholder="voce@email.com" maxlength="120">
+    <div class="form-error" id="signupEmailError">Digite um e-mail válido</div>
 
-    <label class="form-label">Senha</label>
-    <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres" maxlength="30">
+    <!-- SENHA -->
+    <label class="form-label">
+      Senha <span class="required">*</span>
+      <span class="hint">(mínimo 6 caracteres)</span>
+    </label>
+    <input type="password" id="signupPassword" placeholder="Crie uma senha segura" maxlength="30" oninput="checkPasswordStrength(this.value)">
+    <div class="password-strength">
+      <div class="fill" id="passwordStrengthFill"></div>
+    </div>
+    <div class="form-error" id="signupPasswordError">A senha deve ter pelo menos 6 caracteres</div>
 
-    <label class="form-label">Gênero</label>
+    <!-- GÊNERO -->
+    <label class="form-label">
+      Gênero <span class="required">*</span>
+    </label>
     <select id="signupGenero">
       <option value="">Selecione</option>
       <option value="homem">Homem</option>
@@ -1412,8 +1450,12 @@
       <option value="prefiro-nao-dizer">Prefiro não dizer</option>
       <option value="outro">Outro</option>
     </select>
+    <div class="form-error" id="signupGeneroError">Selecione um gênero</div>
 
-    <label class="form-label">Região</label>
+    <!-- REGIÃO -->
+    <label class="form-label">
+      Região <span class="required">*</span>
+    </label>
     <select id="signupRegiao">
       <option value="">Selecione</option>
       <option value="norte">Norte</option>
@@ -1423,8 +1465,13 @@
       <option value="sul">Sul</option>
       <option value="fora-do-brasil">Fora do Brasil</option>
     </select>
+    <div class="form-error" id="signupRegiaoError">Selecione sua região</div>
 
-    <label class="form-label">Estilo de música (escolha um ou mais)</label>
+    <!-- ESTILOS MUSICAIS -->
+    <label class="form-label">
+      Estilo de música <span class="required">*</span>
+      <span class="hint">(escolha um ou mais)</span>
+    </label>
     <div class="chip-group" id="signupStyles">
       <div class="chip" data-style="sertanejo" onclick="toggleStyleChip(this)">Sertanejo</div>
       <div class="chip" data-style="funk" onclick="toggleStyleChip(this)">Funk</div>
@@ -1439,7 +1486,9 @@
       <div class="chip" data-style="indie" onclick="toggleStyleChip(this)">Indie</div>
       <div class="chip" data-style="reggaeton" onclick="toggleStyleChip(this)">Reggaeton</div>
     </div>
-    <div class="form-hint">Seus dados ficam salvos com segurança e não são compartilhados.</div>
+    <div class="form-error" id="signupStylesError">Escolha pelo menos um estilo musical</div>
+
+    <div class="form-hint">✅ Seus dados ficam salvos com segurança e não são compartilhados.</div>
 
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeSignupModal()">Cancelar</button>
@@ -1794,7 +1843,6 @@ async function doLogin() {
     const result = await auth.signInWithEmailAndPassword(email, password);
     currentUser = result.user;
 
-    // Busca dados do usuário no Firestore
     const doc = await db.collection('usuarios').doc(currentUser.uid).get();
     if (doc.exists) {
       const data = doc.data();
@@ -1823,6 +1871,39 @@ async function doLogin() {
   }
 }
 
+// ===== CHECK PASSWORD STRENGTH =====
+function checkPasswordStrength(password) {
+  const fill = $('passwordStrengthFill');
+  if (!fill) return;
+  
+  let strength = 0;
+  if (password.length >= 6) strength += 1;
+  if (password.length >= 10) strength += 1;
+  if (/[A-Z]/.test(password)) strength += 1;
+  if (/[0-9]/.test(password)) strength += 1;
+  if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+  
+  const pct = Math.min(100, (strength / 5) * 100);
+  fill.style.width = pct + '%';
+  
+  if (pct < 20) { fill.style.background = '#ef4444'; }
+  else if (pct < 40) { fill.style.background = '#f59e0b'; }
+  else if (pct < 60) { fill.style.background = '#eab308'; }
+  else if (pct < 80) { fill.style.background = '#22c55e'; }
+  else { fill.style.background = '#22c55e'; }
+}
+
+// ===== SIGNUP =====
+function showFieldError(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (el) el.classList.add('show');
+}
+
+function hideFieldError(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (el) el.classList.remove('show');
+}
+
 async function submitSignup() {
   const nome = $('signupNome').value.trim();
   const email = $('signupEmail').value.trim();
@@ -1833,12 +1914,23 @@ async function submitSignup() {
   const btn = $('signupSubmitBtn');
   const originalLabel = btn.textContent;
 
-  if (nome.length < 2) { toast('Digite seu nome', 'error'); return; }
-  if (!email || !email.includes('@')) { toast('Digite um e-mail válido', 'error'); return; }
-  if (password.length < 6) { toast('A senha deve ter pelo menos 6 caracteres', 'error'); return; }
-  if (!genero) { toast('Selecione um gênero', 'error'); return; }
-  if (!regiao) { toast('Selecione sua região', 'error'); return; }
-  if (estilos.length === 0) { toast('Escolha pelo menos um estilo musical', 'error'); return; }
+  // Reset errors
+  ['signupNomeError', 'signupEmailError', 'signupPasswordError', 'signupGeneroError', 'signupRegiaoError', 'signupStylesError']
+    .forEach(id => hideFieldError(id));
+
+  let hasError = false;
+
+  if (nome.length < 2) { showFieldError('signupNomeError'); hasError = true; }
+  if (!email || !email.includes('@') || !email.includes('.')) { showFieldError('signupEmailError'); hasError = true; }
+  if (password.length < 6) { showFieldError('signupPasswordError'); hasError = true; }
+  if (!genero) { showFieldError('signupGeneroError'); hasError = true; }
+  if (!regiao) { showFieldError('signupRegiaoError'); hasError = true; }
+  if (estilos.length === 0) { showFieldError('signupStylesError'); hasError = true; }
+
+  if (hasError) {
+    toast('Preencha todos os campos obrigatórios', 'error');
+    return;
+  }
 
   if (!auth || !db) {
     toast('Cadastro não disponível no momento.', 'error');
@@ -1849,11 +1941,9 @@ async function submitSignup() {
   btn.textContent = 'Criando conta...';
 
   try {
-    // Cria usuário no Firebase Auth
     const result = await auth.createUserWithEmailAndPassword(email, password);
     const user = result.user;
 
-    // Salva dados no Firestore
     await db.collection('usuarios').doc(user.uid).set({
       nome,
       email,
@@ -1864,10 +1954,8 @@ async function submitSignup() {
       criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Atualiza display name
     await user.updateProfile({ displayName: nome });
 
-    // Salva também na coleção de cadastros de interesse
     await db.collection('cadastros_interesse').add({
       nome,
       email,
@@ -1901,6 +1989,7 @@ async function submitSignup() {
     $('signupGenero').value = '';
     $('signupRegiao').value = '';
     document.querySelectorAll('#signupStyles .chip.selected').forEach(c => c.classList.remove('selected'));
+    $('passwordStrengthFill').style.width = '0%';
 
   } catch (err) {
     console.error(err);
@@ -1929,19 +2018,16 @@ function doLogout() {
   toast('Você saiu da sua conta.', 'success');
 }
 
-// ===== AVATAR =====
-function selectAvatar(el) {
-  document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
-  el.classList.add('selected');
-  myAvatar = el.dataset.emoji;
-}
-
 // ===== LANDING =====
 function toggleStyleChip(el) { el.classList.toggle('selected'); }
 
 function openSignupModal() {
   hideLogin();
   $('signupModal').classList.add('active');
+  // Reset errors
+  ['signupNomeError', 'signupEmailError', 'signupPasswordError', 'signupGeneroError', 'signupRegiaoError', 'signupStylesError']
+    .forEach(id => hideFieldError(id));
+  $('signupNome').focus();
 }
 
 function closeSignupModal() {
