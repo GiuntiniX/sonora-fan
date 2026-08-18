@@ -465,20 +465,30 @@
     .add-song button { padding: 12px 24px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
     .add-song button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
 
-    /* ===== SIDEBAR ===== */
-    .sidebar { border-left: 1px solid var(--border); display: flex; flex-direction: column; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); height: 100%; min-height: 0; }
+    /* ===== SIDEBAR - CORREÇÃO DA FIXAÇÃO ===== */
+    .sidebar { 
+      border-left: 1px solid var(--border); 
+      display: flex; 
+      flex-direction: column; 
+      background: rgba(0,0,0,0.6); 
+      backdrop-filter: blur(12px); 
+      height: 100%; /* Força a ocupar 100% da altura disponível */
+      min-height: 0; 
+      overflow: hidden; /* Garante que nada vaze */
+    }
     @media (max-width: 1024px) { .sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 600px; } }
     .users-panel { padding: 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .panel-header { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
     
-    /* ===== CHAT - CORREÇÃO DE FIXAÇÃO ===== */
+    /* ===== CHAT - CORREÇÃO DO SCROLL FIXO ===== */
     .chat-panel { 
       flex: 1; 
       display: flex; 
       flex-direction: column; 
       min-height: 0; 
       position: relative; 
-      overflow: hidden; /* Impede que o painel cresça */
+      overflow: hidden; 
+      height: 100%; /* Blinda a altura */
     }
     .chat-messages { 
       flex: 1; 
@@ -489,6 +499,7 @@
       padding: 16px; 
       font-size: 14px; 
       min-height: 0;
+      max-height: 100%; /* Garante o limite máximo */
     }
     .msg { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
     .msg:hover { background: rgba(255,255,255,0.02); }
