@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <style>
+    /* ===== ESTILOS (mesmos do seu código, mantidos) ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1278,7 +1275,6 @@
     }
     .empty-queue .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
 
-    /* ===== RODAPÉ ===== */
     .footer {
       text-align: center;
       padding: 20px;
@@ -1296,7 +1292,6 @@
     }
     .footer a:hover { text-decoration: underline; }
 
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 1024px) {
       .room-layout { grid-template-columns: 1fr; grid-template-rows: none; }
       #screen-room .app { height: auto; min-height: 100vh; overflow: visible; }
@@ -1412,35 +1407,20 @@
       Preencha os dados abaixo e comece a curtir música com a galera!
     </p>
 
-    <!-- NOME -->
-    <label class="form-label">
-      Nome de usuário <span class="required">*</span>
-    </label>
+    <label class="form-label">Nome de usuário <span class="required">*</span></label>
     <input type="text" id="signupNome" placeholder="Como você quer ser chamado?" maxlength="60">
     <div class="form-error" id="signupNomeError">Digite seu nome</div>
 
-    <!-- E-MAIL -->
-    <label class="form-label">
-      E-mail <span class="required">*</span>
-    </label>
+    <label class="form-label">E-mail <span class="required">*</span></label>
     <input type="email" id="signupEmail" placeholder="voce@email.com" maxlength="120">
     <div class="form-error" id="signupEmailError">Digite um e-mail válido</div>
 
-    <!-- SENHA -->
-    <label class="form-label">
-      Senha <span class="required">*</span>
-      <span class="hint">(mínimo 6 caracteres)</span>
-    </label>
+    <label class="form-label">Senha <span class="required">*</span> <span class="hint">(mínimo 6 caracteres)</span></label>
     <input type="password" id="signupPassword" placeholder="Crie uma senha segura" maxlength="30" oninput="checkPasswordStrength(this.value)">
-    <div class="password-strength">
-      <div class="fill" id="passwordStrengthFill"></div>
-    </div>
+    <div class="password-strength"><div class="fill" id="passwordStrengthFill"></div></div>
     <div class="form-error" id="signupPasswordError">A senha deve ter pelo menos 6 caracteres</div>
 
-    <!-- GÊNERO -->
-    <label class="form-label">
-      Gênero <span class="required">*</span>
-    </label>
+    <label class="form-label">Gênero <span class="required">*</span></label>
     <select id="signupGenero">
       <option value="">Selecione</option>
       <option value="homem">Homem</option>
@@ -1452,10 +1432,7 @@
     </select>
     <div class="form-error" id="signupGeneroError">Selecione um gênero</div>
 
-    <!-- REGIÃO -->
-    <label class="form-label">
-      Região <span class="required">*</span>
-    </label>
+    <label class="form-label">Região <span class="required">*</span></label>
     <select id="signupRegiao">
       <option value="">Selecione</option>
       <option value="norte">Norte</option>
@@ -1467,11 +1444,7 @@
     </select>
     <div class="form-error" id="signupRegiaoError">Selecione sua região</div>
 
-    <!-- ESTILOS MUSICAIS -->
-    <label class="form-label">
-      Estilo de música <span class="required">*</span>
-      <span class="hint">(escolha um ou mais)</span>
-    </label>
+    <label class="form-label">Estilo de música <span class="required">*</span> <span class="hint">(escolha um ou mais)</span></label>
     <div class="chip-group" id="signupStyles">
       <div class="chip" data-style="sertanejo" onclick="toggleStyleChip(this)">Sertanejo</div>
       <div class="chip" data-style="funk" onclick="toggleStyleChip(this)">Funk</div>
@@ -1547,9 +1520,7 @@
     <div class="room-layout">
       <div class="stage">
         <a href="https://www.instagram.com/terrasonora/" target="_blank" rel="noopener noreferrer" class="terra-banner" style="display:block;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);width:100%;height:320px;cursor:pointer;flex-shrink:0;">
-          <img src="https://iili.io/Ciid52s.jpg" 
-               alt="Terra Sonora — Siga no Instagram" 
-               style="width:100%;height:100%;display:block;object-fit:cover;background:linear-gradient(180deg,#0a0a14,#050508);">
+          <img src="https://iili.io/Ciid52s.jpg" alt="Terra Sonora — Siga no Instagram" style="width:100%;height:100%;display:block;object-fit:cover;background:linear-gradient(180deg,#0a0a14,#050508);">
         </a>
 
         <div class="player-section">
@@ -1628,9 +1599,7 @@
         </div>
 
         <div class="users-panel" style="padding:14px 18px;border-bottom:1px solid var(--border);max-height:200px;overflow-y:auto;">
-          <div class="panel-header" style="display:flex;align-items:center;gap:6px;">
-            <span>🎵</span> Tocadas recentemente
-          </div>
+          <div class="panel-header" style="display:flex;align-items:center;gap:6px;"><span>🎵</span> Tocadas recentemente</div>
           <div id="historyList" style="display:flex;flex-direction:column;gap:6px;">
             <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:8px 0;">Nenhuma música tocada ainda</div>
           </div>
@@ -1709,32 +1678,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== CONFIGURAÇÃO DO FIREBASE =====
-const firebaseConfig = {
-  apiKey: "AIzaSyCxNtXuV7exFiB2YbdTsHRLdYub6St8cZg",
-  authDomain: "sonora-fan-4cf69.firebaseapp.com",
-  projectId: "sonora-fan-4cf69",
-  storageBucket: "sonora-fan-4cf69.firebasestorage.app",
-  messagingSenderId: "82958071573",
-  appId: "1:82958071573:web:e43f7c23fcb6185ba65b1c",
-};
-
-let db = null;
-let auth = null;
-let currentUser = null;
-
-try {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-  auth = firebase.auth();
-} catch (e) {
-  console.warn('Firebase não configurado:', e.message);
-}
-
 // ===== SOCKET =====
 const socket = io();
+
+// ===== ESTADO DA SESSÃO =====
+let currentUser = null; // { nome, email, avatar, genero, regiao, estilos }
 let myName = '';
-let myAdminPass = '';
+let myAvatar = '🎸';
 let amIAdmin = false;
 let currentRoomSlug = null;
 let currentRoomData = null;
@@ -1742,7 +1692,6 @@ let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
 let addCooldown = 10000;
-let myAvatar = '🎸';
 let isTyping = false;
 let typingTimeout = null;
 let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
@@ -1806,7 +1755,7 @@ function censorText(text) {
   return censored;
 }
 
-// ===== AUTH =====
+// ===== AUTENTICAÇÃO =====
 function showLogin() {
   hide('landingScreen');
   $('loginScreen').classList.add('active');
@@ -1831,27 +1780,24 @@ async function doLogin() {
     return;
   }
 
-  if (!auth) {
-    toast('Autenticação não disponível. Tente novamente.', 'error');
-    return;
-  }
-
   btn.disabled = true;
   btn.textContent = 'Entrando...';
 
   try {
-    const result = await auth.signInWithEmailAndPassword(email, password);
-    currentUser = result.user;
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha: password }),
+    });
+    const data = await res.json();
 
-    const doc = await db.collection('usuarios').doc(currentUser.uid).get();
-    if (doc.exists) {
-      const data = doc.data();
-      myName = data.nome || currentUser.displayName || email.split('@')[0];
-      myAvatar = data.avatar || '🎸';
-    } else {
-      myName = email.split('@')[0];
-      myAvatar = '🎸';
+    if (!res.ok) {
+      throw new Error(data.error || 'Erro ao fazer login');
     }
+
+    currentUser = data.user;
+    myName = currentUser.nome;
+    myAvatar = currentUser.avatar || '🎸';
 
     hideLogin();
     hide('landingScreen');
@@ -1886,11 +1832,11 @@ function checkPasswordStrength(password) {
   const pct = Math.min(100, (strength / 5) * 100);
   fill.style.width = pct + '%';
   
-  if (pct < 20) { fill.style.background = '#ef4444'; }
-  else if (pct < 40) { fill.style.background = '#f59e0b'; }
-  else if (pct < 60) { fill.style.background = '#eab308'; }
-  else if (pct < 80) { fill.style.background = '#22c55e'; }
-  else { fill.style.background = '#22c55e'; }
+  if (pct < 20) fill.style.background = '#ef4444';
+  else if (pct < 40) fill.style.background = '#f59e0b';
+  else if (pct < 60) fill.style.background = '#eab308';
+  else if (pct < 80) fill.style.background = '#22c55e';
+  else fill.style.background = '#22c55e';
 }
 
 // ===== SIGNUP =====
@@ -1932,44 +1878,36 @@ async function submitSignup() {
     return;
   }
 
-  if (!auth || !db) {
-    toast('Cadastro não disponível no momento.', 'error');
-    return;
-  }
-
   btn.disabled = true;
   btn.textContent = 'Criando conta...';
 
   try {
-    const result = await auth.createUserWithEmailAndPassword(email, password);
-    const user = result.user;
-
-    await db.collection('usuarios').doc(user.uid).set({
-      nome,
-      email,
-      genero,
-      regiao,
-      estilos,
-      avatar: '🎸',
-      criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, email, senha: password, genero, regiao, estilos }),
     });
+    const data = await res.json();
 
-    await user.updateProfile({ displayName: nome });
+    if (!res.ok) {
+      throw new Error(data.error || 'Erro ao criar conta');
+    }
 
-    await db.collection('cadastros_interesse').add({
-      nome,
-      email,
-      genero,
-      regiao,
-      estilos,
-      uid: user.uid,
-      criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
-      origem: 'cadastro-app',
+    // Faz login automático após cadastro
+    const loginRes = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha: password }),
     });
+    const loginData = await loginRes.json();
 
-    currentUser = user;
-    myName = nome;
-    myAvatar = '🎸';
+    if (!loginRes.ok) {
+      throw new Error(loginData.error || 'Erro ao fazer login automático');
+    }
+
+    currentUser = loginData.user;
+    myName = currentUser.nome;
+    myAvatar = currentUser.avatar || '🎸';
 
     closeSignupModal();
     hideLogin();
@@ -1993,10 +1931,7 @@ async function submitSignup() {
 
   } catch (err) {
     console.error(err);
-    let msg = 'Erro ao criar conta. Tente novamente.';
-    if (err.code === 'auth/email-already-in-use') msg = 'Este e-mail já está em uso. Faça login.';
-    if (err.code === 'auth/weak-password') msg = 'A senha é muito fraca. Use pelo menos 6 caracteres.';
-    toast(msg, 'error');
+    toast(err.message || 'Erro ao criar conta. Tente novamente.', 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = originalLabel;
@@ -2004,7 +1939,6 @@ async function submitSignup() {
 }
 
 function doLogout() {
-  if (auth) auth.signOut();
   currentUser = null;
   myName = '';
   if (currentRoomSlug) {
@@ -2024,7 +1958,6 @@ function toggleStyleChip(el) { el.classList.toggle('selected'); }
 function openSignupModal() {
   hideLogin();
   $('signupModal').classList.add('active');
-  // Reset errors
   ['signupNomeError', 'signupEmailError', 'signupPasswordError', 'signupGeneroError', 'signupRegiaoError', 'signupStylesError']
     .forEach(id => hideFieldError(id));
   $('signupNome').focus();
@@ -2056,6 +1989,7 @@ function applyTheme() {
   document.documentElement.style.setProperty('--text-muted', t.textMuted);
   $('themeBtn').textContent = t.btn;
 }
+
 function toggleTheme() {
   const themes = ['dark', 'light', 'neon', 'vaporwave'];
   const idx = themes.indexOf(currentTheme);
@@ -2071,11 +2005,7 @@ async function loadRooms() {
     const rooms = await res.json();
     const grid = $('roomGrid');
     if (rooms.length === 0) {
-      grid.innerHTML = `
-        <div class="empty-state">
-          <div class="icon">🎵</div>
-          <p>Nenhuma sala ainda. Crie a primeira!</p>
-        </div>`;
+      grid.innerHTML = `<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>`;
       return;
     }
     grid.innerHTML = '';
@@ -2135,7 +2065,7 @@ async function createRoom() {
     const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, adminName: myName, adminUid: currentUser.uid }),
+      body: JSON.stringify({ name, adminName: myName }),
     });
     const data = await res.json();
     if (data.slug) {
@@ -2161,7 +2091,7 @@ function joinRoom(slug) {
     return;
   }
   currentRoomSlug = slug;
-  socket.emit('joinRoom', { slug, name: myName, uid: currentUser.uid, avatar: myAvatar });
+  socket.emit('joinRoom', { slug, name: myName, avatar: myAvatar });
   showScreen('room');
   $('chatBox').innerHTML = '';
   amIAdmin = false;
@@ -2690,46 +2620,42 @@ setInterval(() => {
 // ===== INIT =====
 applyTheme();
 
-// Verifica se o usuário já está logado
-if (auth) {
-  auth.onAuthStateChanged((user) => {
-    if (user) {
-      currentUser = user;
-      db.collection('usuarios').doc(user.uid).get().then(doc => {
-        if (doc.exists) {
-          const data = doc.data();
-          myName = data.nome || user.displayName || user.email.split('@')[0];
-          myAvatar = data.avatar || '🎸';
-        } else {
-          myName = user.displayName || user.email.split('@')[0];
-          myAvatar = '🎸';
-        }
+// Verifica se já tem sessão (via localStorage)
+const savedUser = localStorage.getItem('sonoraUser');
+if (savedUser) {
+  try {
+    const user = JSON.parse(savedUser);
+    // Valida com o servidor
+    fetch('/api/me', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        currentUser = data.user;
+        myName = currentUser.nome;
+        myAvatar = currentUser.avatar || '🎸';
         hide('landingScreen');
         hideLogin();
         showScreen('lobby');
         $('userDisplayName').textContent = myName;
         $('userAvatar').textContent = myAvatar;
         loadRooms();
-      }).catch(() => {
-        myName = user.displayName || user.email.split('@')[0];
-        myAvatar = '🎸';
-        hide('landingScreen');
-        hideLogin();
-        showScreen('lobby');
-        $('userDisplayName').textContent = myName;
-        $('userAvatar').textContent = myAvatar;
-        loadRooms();
-      });
-    } else {
-      show('landingScreen');
-      hideLogin();
-      showScreen('lobby');
-      hide('screen-lobby');
-    }
-  });
+      } else {
+        localStorage.removeItem('sonoraUser');
+      }
+    })
+    .catch(() => {
+      localStorage.removeItem('sonoraUser');
+    });
+  } catch(e) {
+    localStorage.removeItem('sonoraUser');
+  }
 }
 
-// Detecta se há parâmetro ?room na URL para entrar direto
+// Detecta se há parâmetro ?room na URL
 const urlParams = new URLSearchParams(window.location.search);
 const roomParam = urlParams.get('room');
 if (roomParam) {
