@@ -465,33 +465,35 @@
     .add-song button { padding: 12px 24px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
     .add-song button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
 
-    /* ===== SIDEBAR - CORREÇÃO DA FIXAÇÃO ===== */
+    /* ===== SIDEBAR ===== */
     .sidebar { 
       border-left: 1px solid var(--border); 
       display: flex; 
       flex-direction: column; 
       background: rgba(0,0,0,0.6); 
       backdrop-filter: blur(12px); 
-      height: 100%; /* Força a ocupar 100% da altura disponível */
+      height: 100%; 
       min-height: 0; 
-      overflow: hidden; /* Garante que nada vaze */
+      overflow: hidden; 
     }
     @media (max-width: 1024px) { .sidebar { border-left: none; border-top: 1px solid var(--border); max-height: 600px; } }
     .users-panel { padding: 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .panel-header { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
     
-    /* ===== CHAT - CORREÇÃO DO SCROLL FIXO ===== */
-    .chat-panel { 
-      flex: 1; 
+    /* ===== CHAT - MOVIDO PARA O STAGE ===== */
+    .chat-panel-stage { 
       display: flex; 
       flex-direction: column; 
-      min-height: 0; 
       position: relative; 
-      overflow: hidden; 
-      height: 100%; /* Blinda a altura */
-      max-height: 100%; /* Dupla segurança */
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      overflow: hidden;
+      flex: 1; /* Ocupa todo o espaço restante abaixo do player */
+      min-height: 200px;
+      max-height: 100%; /* Trava máxima */
     }
-    .chat-messages { 
+    .chat-messages-stage { 
       flex: 1; 
       overflow-y: auto; 
       display: flex; 
@@ -500,56 +502,39 @@
       padding: 16px; 
       font-size: 14px; 
       min-height: 0;
-      max-height: 100%; /* Garante o limite máximo */
+      max-height: 100%;
+      scroll-behavior: smooth;
     }
-    .msg { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
-    .msg:hover { background: rgba(255,255,255,0.02); }
+    .msg-stage { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
+    .msg-stage:hover { background: rgba(255,255,255,0.02); }
     @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .msg-user { font-weight: 700; flex-shrink: 0; cursor: pointer; font-size: 13px; }
-    .msg-text { color: var(--text-secondary); word-break: break-word; font-size: 13px; }
-    .msg-time { font-size: 10px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; align-self: flex-start; margin-top: 2px; }
-    .msg:hover .msg-time { opacity: 1; }
+    .msg-user-stage { font-weight: 700; flex-shrink: 0; cursor: pointer; font-size: 13px; }
+    .msg-text-stage { color: var(--text-secondary); word-break: break-word; font-size: 13px; }
+    .msg-time-stage { font-size: 10px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; align-self: flex-start; margin-top: 2px; }
+    .msg-stage:hover .msg-time-stage { opacity: 1; }
     
-    /* ===== BOTÕES DE CURTIR ===== */
-    .msg-actions {
+    .chat-input-bar-stage { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg-card); flex-shrink: 0; }
+    .chat-input-bar-stage input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; outline: none; transition: all 0.2s; font-family: inherit; }
+    .chat-input-bar-stage input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+    .chat-input-bar-stage button { padding: 10px 16px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .chat-input-bar-stage button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+
+    .msg-actions-stage {
       display: flex;
       align-items: center;
       gap: 6px;
       margin-top: 4px;
-      margin-left: 36px; /* Alinhado com o texto */
+      margin-left: 36px;
     }
-    .msg-like-btn {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      padding: 2px 6px;
-      border-radius: 12px;
-      color: var(--text-muted);
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-family: inherit;
+    .msg-like-btn-stage {
+      background: transparent; border: none; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 12px; color: var(--text-muted); transition: all 0.15s; display: flex; align-items: center; gap: 4px; font-family: inherit;
     }
-    .msg-like-btn:hover {
-      background: var(--bg-hover);
-      color: var(--text-secondary);
-    }
-    .msg-like-btn.liked {
-      color: var(--accent);
-      background: rgba(255,107,53,0.1);
-    }
-    .msg-like-count {
-      font-size: 11px;
-      font-weight: 600;
-    }
+    .msg-like-btn-stage:hover { background: var(--bg-hover); color: var(--text-secondary); }
+    .msg-like-btn-stage.liked { color: var(--accent); background: rgba(255,107,53,0.1); }
+    .msg-like-count-stage { font-size: 11px; font-weight: 600; }
 
-    .chat-input-bar { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg-card); flex-shrink: 0; }
-    .chat-input-bar input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; outline: none; transition: all 0.2s; font-family: inherit; }
-    .chat-input-bar input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
-    .chat-input-bar button { padding: 10px 16px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
-    .chat-input-bar button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+    /* ===== FILA DA SIDEBAR ===== */
+    .queue-list-sidebar { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding-right: 4px; }
 
     @media (max-width: 640px) { .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; } }
     
@@ -595,15 +580,15 @@
     .cooldown-text.hidden { display: none; }
     .admin-badge { background: linear-gradient(135deg, var(--accent), var(--accent2)); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; }
     .admin-badge.hidden { display: none; }
-    .emoji-btn { background: transparent; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.15s; flex-shrink: 0; }
-    .emoji-btn:hover { background: var(--bg-hover); }
-    .emoji-panel { display: none; position: absolute; bottom: 100%; left: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; max-width: 280px; max-height: 200px; overflow-y: auto; display: none; flex-wrap: wrap; gap: 4px; z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-    .emoji-panel.show { display: flex; }
-    .emoji-item { font-size: 22px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.15s; line-height: 1; }
-    .emoji-item:hover { background: var(--bg-hover); }
-    .new-messages-pill { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; border: none; border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; cursor: pointer; z-index: 10; box-shadow: 0 4px 20px rgba(255,107,53,0.4); transition: all 0.3s; font-family: inherit; }
-    .new-messages-pill.hidden { display: none; }
-    .new-messages-pill:hover { transform: translateX(-50%) scale(1.05); }
+    .emoji-btn-stage { background: transparent; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.15s; flex-shrink: 0; }
+    .emoji-btn-stage:hover { background: var(--bg-hover); }
+    .emoji-panel-stage { display: none; position: absolute; bottom: 100%; left: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; max-width: 280px; max-height: 200px; overflow-y: auto; flex-wrap: wrap; gap: 4px; z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+    .emoji-panel-stage.show { display: flex; }
+    .emoji-item-stage { font-size: 22px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.15s; line-height: 1; }
+    .emoji-item-stage:hover { background: var(--bg-hover); }
+    .new-messages-pill-stage { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; border: none; border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; cursor: pointer; z-index: 10; box-shadow: 0 4px 20px rgba(255,107,53,0.4); transition: all 0.3s; font-family: inherit; }
+    .new-messages-pill-stage.hidden { display: none; }
+    .new-messages-pill-stage:hover { transform: translateX(-50%) scale(1.05); }
     .eq-bar { width: 4px; border-radius: 2px; background: linear-gradient(to top, var(--accent), var(--accent2)); transition: height 0.3s; }
     @keyframes equalizer { 0%, 100% { height: 4px; } 50% { height: 18px; } }
     @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; } }
@@ -883,6 +868,51 @@
           </div>
         </div>
         <div class="cooldown-text hidden" id="cooldownText"></div>
+
+        <!-- ===== CHAT MOVIDO PARA O FINAL DO STAGE ===== -->
+        <div class="chat-panel-stage">
+          <div class="chat-messages-stage" id="chatBoxStage"></div>
+          <button class="new-messages-pill-stage hidden" id="newMessagesPillStage" onclick="scrollChatStageToBottom()">↓ Novas mensagens</button>
+          <div class="chat-input-bar-stage" style="position:relative;">
+            <button class="emoji-btn-stage" onclick="toggleEmojiPanelStage()" title="Emojis">😀</button>
+            <input type="text" id="chatInputStage" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsgStage()" oninput="handleTypingStage()">
+            <button onclick="sendMsgStage()">Enviar</button>
+            <div class="emoji-panel-stage" id="emojiPanelStage">
+              <span class="emoji-item-stage" onclick="insertEmojiStage('😀')">😀</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('😂')">😂</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🥰')">🥰</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('😎')">😎</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🤩')">🤩</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('😭')">😭</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('😡')">😡</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🥳')">🥳</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('👍')">👍</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('👎')">👎</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('❤️')">❤️</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🔥')">🔥</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🎵')">🎵</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🎸')">🎸</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🎤')">🎤</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🎧')">🎧</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🎹')">🎹</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🥁')">🥁</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🎷')">🎷</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🎺')">🎺</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('✨')">✨</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🌟')">🌟</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('💯')">💯</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🙌')">🙌</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('👏')">👏</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🤘')">🤘</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🕺')">🕺</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('💃')">💃</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🍕')">🍕</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🍺')">🍺</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('🌙')">🌙</span>
+              <span class="emoji-item-stage" onclick="insertEmojiStage('☀️')">☀️</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="sidebar">
@@ -902,52 +932,8 @@
             <span id="queueCountSidebar" style="color:var(--text-muted); font-size:12px;">0 músicas</span>
           </div>
           
-          <div id="queueListSidebar" style="flex: 1; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; padding-right: 4px;">
+          <div class="queue-list-sidebar" id="queueListSidebar">
             <div style="color:var(--text-muted); font-size:12px; text-align:center; padding:20px 0;">Nenhuma música na fila</div>
-          </div>
-        </div>
-
-        <div class="chat-panel">
-          <div class="chat-messages" id="chatBox"></div>
-          <button class="new-messages-pill hidden" id="newMessagesPill" onclick="scrollChatToBottom()">↓ Novas mensagens</button>
-          <div class="chat-input-bar" style="position:relative;">
-            <button class="emoji-btn" onclick="toggleEmojiPanel()" title="Emojis">😀</button>
-            <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()" oninput="handleTyping()">
-            <button onclick="sendMsg()">Enviar</button>
-            <div class="emoji-panel" id="emojiPanel">
-              <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
-              <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
-              <span class="emoji-item" onclick="insertEmoji('🥰')">🥰</span>
-              <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
-              <span class="emoji-item" onclick="insertEmoji('🤩')">🤩</span>
-              <span class="emoji-item" onclick="insertEmoji('😭')">😭</span>
-              <span class="emoji-item" onclick="insertEmoji('😡')">😡</span>
-              <span class="emoji-item" onclick="insertEmoji('🥳')">🥳</span>
-              <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
-              <span class="emoji-item" onclick="insertEmoji('👎')">👎</span>
-              <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
-              <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
-              <span class="emoji-item" onclick="insertEmoji('🎵')">🎵</span>
-              <span class="emoji-item" onclick="insertEmoji('🎸')">🎸</span>
-              <span class="emoji-item" onclick="insertEmoji('🎤')">🎤</span>
-              <span class="emoji-item" onclick="insertEmoji('🎧')">🎧</span>
-              <span class="emoji-item" onclick="insertEmoji('🎹')">🎹</span>
-              <span class="emoji-item" onclick="insertEmoji('🥁')">🥁</span>
-              <span class="emoji-item" onclick="insertEmoji('🎷')">🎷</span>
-              <span class="emoji-item" onclick="insertEmoji('🎺')">🎺</span>
-              <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
-              <span class="emoji-item" onclick="insertEmoji('🌟')">🌟</span>
-              <span class="emoji-item" onclick="insertEmoji('💯')">💯</span>
-              <span class="emoji-item" onclick="insertEmoji('🙌')">🙌</span>
-              <span class="emoji-item" onclick="insertEmoji('👏')">👏</span>
-              <span class="emoji-item" onclick="insertEmoji('🤘')">🤘</span>
-              <span class="emoji-item" onclick="insertEmoji('🕺')">🕺</span>
-              <span class="emoji-item" onclick="insertEmoji('💃')">💃</span>
-              <span class="emoji-item" onclick="insertEmoji('🍕')">🍕</span>
-              <span class="emoji-item" onclick="insertEmoji('🍺')">🍺</span>
-              <span class="emoji-item" onclick="insertEmoji('🌙')">🌙</span>
-              <span class="emoji-item" onclick="insertEmoji('☀️')">☀️</span>
-            </div>
           </div>
         </div>
       </div>
@@ -998,7 +984,7 @@ let currentRoomData = null;
 let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
-let addCooldown = 180000; // ALTERADO: 3 MINUTOS (180 segundos)
+let addCooldown = 180000; // 3 MINUTOS (180 segundos)
 let isTyping = false;
 let typingTimeout = null;
 let currentTheme = localStorage.getItem('sonoraTheme') || 'terra-sonora';
@@ -1006,6 +992,7 @@ let songPreviewTimer = null;
 let songPreviewRequest = 0;
 let songPreviewData = null;
 let songPreviewForUrl = '';
+let messageLikes = {};
 
 // ===== UTILS =====
 function $(id) { return document.getElementById(id); }
@@ -1044,14 +1031,12 @@ function formatDuration(seconds) {
 
 // ===== BAD WORDS CENSOR (EXPANDIDO) =====
 const badWords = [
-  // Português (com e sem acento)
   'porra','poha','poça','caralho','cralho','merda','mrda','bosta','bsta','puta','pta','puta que pariu','pqp',
   'viado','viadu','bicha','bixa','corno','corno','foda','fuder','fode','cu','cuzão','cuzona','cú','cuzão','cuzona',
   'arrombado','arrombada','rombado','filho da puta','fdp','desgraçado','desgraçada','desgracado','desgracada',
   'vagabundo','vagabunda','vadio','escroto','escrota','idiota','imbecil','imbeci','retardado','retardada','retardado',
   'buceta','bct','pica','pika','rola','pinto','piroca','cacete','cacet','punheta','siririca','boquete','anal',
   'xota','xoxota','pepeca','xereca','xeroca','bunda','bunduda','rabo',
-  // Inglês
   'fuck','fucking','fucked','fucker','fck','shit','sh1t','bitch','btch','asshole','ass','dick','d1ck','cock',
   'pussy','puss','cunt','whore','slut','bastard','bstd','damn','hell','nigger','nigga','retard','fag','faggot'
 ];
@@ -1059,7 +1044,6 @@ const badWords = [
 function censorText(text) {
   let censored = text;
   badWords.forEach(word => {
-    // Remove acentos para pegar variações
     const cleanWord = word.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const regex = new RegExp('\\b' + cleanWord + '\\b', 'gi');
     censored = censored.replace(regex, '***');
@@ -1450,7 +1434,7 @@ function joinRoom(slug) {
   currentRoomSlug = slug;
   socket.emit('joinRoom', { slug, name: myName, avatar: myAvatar });
   showScreen('room');
-  $('chatBox').innerHTML = '';
+  $('#chatBoxStage').innerHTML = '';
   amIAdmin = false;
   hide('adminBadge');
   loadYouTubeAPI();
@@ -1575,11 +1559,11 @@ socket.on('queueEmpty', () => {
 });
 
 socket.on('users', renderUsers);
-socket.on('chat', renderMessage);
+socket.on('chat', renderMessageStage);
 socket.on('chatHistory', (messages) => {
-  $('chatBox').innerHTML = '';
-  messages.forEach(m => renderMessage(m));
-  scrollChatToBottom();
+  $('#chatBoxStage').innerHTML = '';
+  messages.forEach(m => renderMessageStage(m));
+  scrollChatStageToBottom();
 });
 socket.on('error', (msg) => toast(msg, 'error'));
 socket.on('isAdmin', (isAdmin) => {
@@ -1591,8 +1575,8 @@ socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
 
 // ===== QUEUE (APENAS SIDEBAR) =====
 function renderQueue(queue, currentIndex) {
-  const sidebarList = $('queueListSidebar');
-  const sidebarCount = $('queueCountSidebar');
+  const sidebarList = $('#queueListSidebar');
+  const sidebarCount = $('#queueCountSidebar');
   if (sidebarList) {
     sidebarList.innerHTML = '';
     if (sidebarCount) sidebarCount.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
@@ -1678,16 +1662,12 @@ function previewSongFromInput() {
   setSongPreview('loading');
   const requestId = ++songPreviewRequest;
 
-  // Tenta pegar a duração pela API oficial
   fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(data => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
       
-      // A duração no oembed vem em segundos
       const duration = data.duration || 0;
-      
-      // VERIFICAÇÃO DE DURAÇÃO MÁXIMA (10 minutos = 600 segundos)
       let state = 'ready';
       let statusMsg = '';
       if (duration > 0 && duration > 600) {
@@ -1705,24 +1685,17 @@ function previewSongFromInput() {
     })
     .catch(() => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-      
-      // FALHA NA API: Tenta um método alternativo via fetch direto do HTML
       fetch(`https://www.youtube.com/watch?v=${videoId}`)
         .then(r => r.text())
         .then(html => {
           if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-          
-          // Tenta encontrar a duração no HTML (forma alternativa)
           let duration = 0;
           const match = html.match(/"duration":\s*(\d+)/);
           if (match) duration = parseInt(match[1]);
-
-          // Se ainda não encontrou, tenta a meta tag
           if (!duration) {
             const metaMatch = html.match(/<meta itemprop="duration" content="PT(\d+)M/);
             if (metaMatch) duration = parseInt(metaMatch[1]) * 60;
           }
-
           let state = 'ready';
           let statusMsg = '';
           if (duration > 0 && duration > 600) {
@@ -1732,25 +1705,12 @@ function previewSongFromInput() {
             state = 'unknown';
             statusMsg = '⚠️ Não foi possível verificar a duração. Certifique-se de que seja menor que 10 min.';
           }
-
-          songPreviewData = {
-            id: videoId,
-            title: 'Música do YouTube',
-            artist: 'Canal desconhecido',
-            duration: duration,
-          };
+          songPreviewData = { id: videoId, title: 'Música do YouTube', artist: 'Canal desconhecido', duration: duration };
           setSongPreview(state, songPreviewData, statusMsg);
         })
         .catch(() => {
           if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-          
-          // Último recurso: assume que é curto e libera com aviso
-          songPreviewData = { 
-            id: videoId, 
-            title: 'Música do YouTube', 
-            artist: 'Prévia indisponível', 
-            duration: 0 
-          };
+          songPreviewData = { id: videoId, title: 'Música do YouTube', artist: 'Prévia indisponível', duration: 0 };
           setSongPreview('unknown', songPreviewData, '⚠️ Duração não verificada. Confirme se é menor que 10 min.');
         });
     });
@@ -1792,7 +1752,6 @@ function setSongPreview(state, data, customStatus) {
   title.textContent = data.title;
   artist.textContent = data.artist;
 
-  // Verifica se é muito longo e desabilita o botão
   if (state === 'too_long') {
     status.textContent = customStatus || '⛔ Vídeo muito longo! Limite: 10 minutos.';
     status.style.color = 'var(--danger)';
@@ -1832,11 +1791,6 @@ function addSong() {
 function confirmAddSong() {
   if (!songPreviewData || !songPreviewData.id) return;
   
-  // ==========================================
-  // TRAVA INTELIGENTE DE SEGURANÇA
-  // ==========================================
-  // Se a duração for maior que 0 E maior que 600 segundos, BLOQUEIA.
-  // Se for 0 ou null (não foi possível obter), LIBERA com aviso.
   if (songPreviewData.duration > 0 && songPreviewData.duration > 600) {
     toast('⛔ Este vídeo é muito longo! Limite: 10 minutos.', 'error');
     return;
@@ -1854,12 +1808,11 @@ function confirmAddSong() {
   input.disabled = true;
   $('addBtn').disabled = true;
 
-  // Agora só envia se passou por todas as verificações
   socket.emit('addSong', {
     id: songPreviewData.id,
     title: songPreviewData.title,
     artist: songPreviewData.artist,
-    duration: songPreviewData.duration > 0 ? Math.floor(songPreviewData.duration) : null, // Envia null se desconhecido
+    duration: songPreviewData.duration > 0 ? Math.floor(songPreviewData.duration) : null,
   });
   lastAddTime = Date.now();
   input.value = '';
@@ -1871,7 +1824,7 @@ function startCooldown() {
   const input = $('songUrl');
   const btn = $('addBtn');
   const text = $('cooldownText');
-  let remaining = 180; // ALTERADO: 180 segundos (3 minutos)
+  let remaining = 180;
   text.textContent = `Aguarde ${Math.floor(remaining / 60)}m${remaining % 60}s para adicionar outra música`;
   text.classList.remove('hidden');
   const interval = setInterval(() => {
@@ -1894,11 +1847,9 @@ function renderUsers(users) {
   $('userCountPlural').textContent = count === 1 ? '' : 's';
 }
 
-// ===== CHAT (COM SCROLL AUTOMÁTICO E CURTIDAS) =====
-let messageLikes = {};
-
-function sendMsg() {
-  const input = $('chatInput');
+// ===== CHAT (MOVIDO PARA O STAGE) =====
+function sendMsgStage() {
+  const input = $('#chatInputStage');
   const text = input.value.trim();
   if (!text) return;
   if (text === '/confetti') { socket.emit('confetti'); launchConfetti(); input.value = ''; return; }
@@ -1909,27 +1860,27 @@ function sendMsg() {
   socket.emit('typing', { isTyping: false });
 }
 
-function renderMessage(msg) {
-  const box = $('chatBox');
+function renderMessageStage(msg) {
+  const box = $('#chatBoxStage');
   const div = document.createElement('div');
 
   if (msg.isMusic) {
-    div.className = 'msg msg-music';
+    div.className = 'msg-stage msg-music';
     div.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
         <span style="font-size:16px;">🎵</span>
         <span style="font-weight:700;color:var(--accent);font-size:13px;">${escapeHtml(msg.user)}</span>
         <span style="color:var(--text-muted);font-size:12px;">adicionou uma música</span>
-        <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
+        <span class="msg-time-stage" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
       </div>
       <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px;">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
     `;
   } else if (msg.isSystem) {
-    div.className = 'msg msg-system';
-    div.innerHTML = `<span class="msg-text">${escapeHtml(msg.text)}</span>`;
+    div.className = 'msg-stage msg-system';
+    div.innerHTML = `<span class="msg-text-stage">${escapeHtml(msg.text)}</span>`;
   } else {
     const avatar = msg.avatar || '👤';
-    div.className = 'msg';
+    div.className = 'msg-stage';
     let processedText = escapeHtml(msg.text);
     processedText = processedText.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
     
@@ -1949,16 +1900,16 @@ function renderMessage(msg) {
         <div style="width:28px;height:28px;border-radius:50%;background:${msg.color || '#888'}22;color:${msg.color || '#888'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid ${msg.color || '#888'}40;">${avatar}</div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
-            <span class="msg-user" style="color:${msg.color || '#fff'};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
-            <span class="msg-time" style="opacity:0.5;">${formatTime(msg.createdAt)}</span>
+            <span class="msg-user-stage" style="color:${msg.color || '#fff'};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
+            <span class="msg-time-stage" style="opacity:0.5;">${formatTime(msg.createdAt)}</span>
           </div>
-          <span class="msg-text">${processedText}</span>
-          <div class="msg-actions">
-            <button class="msg-like-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike('${msgId}', this)">
-              ${userLiked ? '❤️' : '🤍'} <span class="msg-like-count">${likeCount}</span>
+          <span class="msg-text-stage">${processedText}</span>
+          <div class="msg-actions-stage">
+            <button class="msg-like-btn-stage ${userLiked ? 'liked' : ''}" onclick="toggleLikeStage('${msgId}', this)">
+              ${userLiked ? '❤️' : '🤍'} <span class="msg-like-count-stage">${likeCount}</span>
             </button>
-            <button class="msg-like-btn" onclick="toggleFire('${msgId}', this)">
-              🔥 <span class="msg-like-count">0</span>
+            <button class="msg-like-btn-stage" onclick="toggleFireStage('${msgId}', this)">
+              🔥 <span class="msg-like-count-stage">0</span>
             </button>
           </div>
         </div>
@@ -1967,10 +1918,10 @@ function renderMessage(msg) {
   }
   
   box.appendChild(div);
-  scrollChatToBottom();
+  scrollChatStageToBottom();
 }
 
-function toggleLike(msgId, btn) {
+function toggleLikeStage(msgId, btn) {
   if (!messageLikes[msgId]) messageLikes[msgId] = { likes: 0, users: [] };
   const data = messageLikes[msgId];
   const userIndex = data.users.indexOf(myName);
@@ -1979,17 +1930,17 @@ function toggleLike(msgId, btn) {
     data.users.splice(userIndex, 1);
     data.likes--;
     btn.classList.remove('liked');
-    btn.innerHTML = `🤍 <span class="msg-like-count">${data.likes}</span>`;
+    btn.innerHTML = `🤍 <span class="msg-like-count-stage">${data.likes}</span>`;
   } else {
     data.users.push(myName);
     data.likes++;
     btn.classList.add('liked');
-    btn.innerHTML = `❤️ <span class="msg-like-count">${data.likes}</span>`;
+    btn.innerHTML = `❤️ <span class="msg-like-count-stage">${data.likes}</span>`;
   }
 }
 
-function toggleFire(msgId, btn) {
-  const countSpan = btn.querySelector('.msg-like-count');
+function toggleFireStage(msgId, btn) {
+  const countSpan = btn.querySelector('.msg-like-count-stage');
   let current = parseInt(countSpan.textContent) || 0;
   current++;
   countSpan.textContent = current;
@@ -1997,8 +1948,8 @@ function toggleFire(msgId, btn) {
   toast('🔥 Curtida com fogo!', 'success');
 }
 
-function scrollChatToBottom() {
-  const box = $('chatBox');
+function scrollChatStageToBottom() {
+  const box = $('#chatBoxStage');
   if (!box) return;
   requestAnimationFrame(() => { 
     box.scrollTo({
@@ -2008,7 +1959,7 @@ function scrollChatToBottom() {
   });
 }
 
-function handleTyping() {
+function handleTypingStage() {
   if (!isTyping) { isTyping = true; socket.emit('typing', { isTyping: true }); }
   clearTimeout(typingTimeout);
   typingTimeout = setTimeout(() => {
@@ -2017,11 +1968,12 @@ function handleTyping() {
   }, 2000);
 }
 
-function toggleEmojiPanel() { $('emojiPanel').classList.toggle('show'); }
-function insertEmoji(emoji) {
-  $('chatInput').value += emoji;
-  $('chatInput').focus();
-  $('emojiPanel').classList.remove('show');
+function toggleEmojiPanelStage() { $('#emojiPanelStage').classList.toggle('show'); }
+function insertEmojiStage(emoji) {
+  const input = $('#chatInputStage');
+  input.value += emoji;
+  input.focus();
+  $('#emojiPanelStage').classList.remove('show');
 }
 
 function updateEqualizer(playing) {
