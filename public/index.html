@@ -473,7 +473,7 @@
     
     /* ===== CHAT ===== */
     .chat-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
-    .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 16px; font-size: 14px; min-height: 0; }
+    .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 16px; font-size: 14px; min-height: 0; scroll-behavior: smooth; }
     .msg { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
     .msg:hover { background: rgba(255,255,255,0.02); }
     @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -481,6 +481,42 @@
     .msg-text { color: var(--text-secondary); word-break: break-word; font-size: 13px; }
     .msg-time { font-size: 10px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; align-self: flex-start; margin-top: 2px; }
     .msg:hover .msg-time { opacity: 1; }
+    
+    /* ===== BOTÕES DE CURTIR ===== */
+    .msg-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      margin-left: 36px; /* Alinhado com o texto */
+    }
+    .msg-like-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+      border-radius: 12px;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: inherit;
+    }
+    .msg-like-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-secondary);
+    }
+    .msg-like-btn.liked {
+      color: var(--accent);
+      background: rgba(255,107,53,0.1);
+    }
+    .msg-like-count {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
     .chat-input-bar { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg-card); flex-shrink: 0; }
     .chat-input-bar input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; outline: none; transition: all 0.2s; font-family: inherit; }
     .chat-input-bar input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
@@ -523,7 +559,8 @@
     .song-preview-actions { display: flex; gap: 6px; flex-shrink: 0; }
     .song-preview-actions.hidden { display: none; }
     .song-preview-confirm { padding: 6px 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 600; font-size: 12px; cursor: pointer; font-family: inherit; }
-    .song-preview-confirm:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+    .song-preview-confirm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .song-preview-confirm:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
     .song-preview-cancel { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; font-family: inherit; }
     .song-preview-cancel:hover { background: var(--bg-hover); }
     .cooldown-text { font-size: 12px; color: var(--accent); text-align: center; padding: 6px; border-radius: 8px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2); }
@@ -933,10 +970,10 @@ let currentRoomData = null;
 let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
-let addCooldown = 10000;
+let addCooldown = 180000; // ALTERADO: 3 MINUTOS (180 segundos)
 let isTyping = false;
 let typingTimeout = null;
-let currentTheme = localStorage.getItem('sonoraTheme') || 'terra-sonora'; // Tema inicial alterado para o exclusivo
+let currentTheme = localStorage.getItem('sonoraTheme') || 'terra-sonora';
 let songPreviewTimer = null;
 let songPreviewRequest = 0;
 let songPreviewData = null;
@@ -977,21 +1014,26 @@ function formatDuration(seconds) {
   return m + ':' + s.toString().padStart(2,'0');
 }
 
-// ===== BAD WORDS CENSOR =====
+// ===== BAD WORDS CENSOR (EXPANDIDO) =====
 const badWords = [
-  'porra','caralho','merda','bosta','puta','viado','bicha','corno','foda','foder',
-  'cu','cuzão','cuzona','arrombado','arrombada','filho da puta','fdp','desgraçado',
-  'desgraçada','vagabundo','vagabunda','escroto','escrota','idiota','imbecil',
-  'retardado','retardada','buceta','pica','rola','pinto','piroca','cacete',
-  'punheta','siririca','boquete','anal','xota','xoxota','pepeca','xereca',
-  'fuck','fucking','fucked','fucker','shit','bitch','asshole','dick','cock',
-  'pussy','cunt','whore','slut','bastard','damn','hell','nigger','nigga','retard',
+  // Português (com e sem acento)
+  'porra','poha','poça','caralho','cralho','merda','mrda','bosta','bsta','puta','pta','puta que pariu','pqp',
+  'viado','viadu','bicha','bixa','corno','corno','foda','fuder','fode','cu','cuzão','cuzona','cú','cuzão','cuzona',
+  'arrombado','arrombada','rombado','filho da puta','fdp','desgraçado','desgraçada','desgracado','desgracada',
+  'vagabundo','vagabunda','vadio','escroto','escrota','idiota','imbecil','imbeci','retardado','retardada','retardado',
+  'buceta','bct','pica','pika','rola','pinto','piroca','cacete','cacet','punheta','siririca','boquete','anal',
+  'xota','xoxota','pepeca','xereca','xeroca','bunda','bunduda','rabo',
+  // Inglês
+  'fuck','fucking','fucked','fucker','fck','shit','sh1t','bitch','btch','asshole','ass','dick','d1ck','cock',
+  'pussy','puss','cunt','whore','slut','bastard','bstd','damn','hell','nigger','nigga','retard','fag','faggot'
 ];
 
 function censorText(text) {
   let censored = text;
   badWords.forEach(word => {
-    const regex = new RegExp('\\b' + word + '\\b', 'gi');
+    // Remove acentos para pegar variações
+    const cleanWord = word.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const regex = new RegExp('\\b' + cleanWord + '\\b', 'gi');
     censored = censored.replace(regex, '***');
   });
   return censored;
@@ -1216,42 +1258,36 @@ function applyTheme() {
   document.documentElement.setAttribute('data-theme', currentTheme);
   
   const themes = {
-    // Tema Dark (Clássico aprimorado)
     'dark': { 
       btn: '🌙', bg: '#050508', elevated: '#0a0a10', card: '#0f0f18', hover: '#161620', 
       border: '#1e1e2e', borderHover: '#2a2a3e', text: '#f0f0f8', textSec: '#9a9ab0', textMuted: '#555570',
       accent: '#ff6b35', accent2: '#7c3aed', bgImage: 'none', bgOverlay: 'transparent',
       acGlow: 'rgba(255,107,53,0.3)', ac2Glow: 'rgba(124,58,237,0.3)'
     },
-    // Tema Light (Claro e arejado)
     'light': { 
       btn: '☀️', bg: '#f5f5fa', elevated: '#ffffff', card: '#ffffff', hover: '#f0f0f5', 
       border: '#e0e0e8', borderHover: '#d0d0d8', text: '#1a1a2e', textSec: '#666680', textMuted: '#9999aa',
       accent: '#e65c00', accent2: '#5b2c8e', bgImage: 'none', bgOverlay: 'transparent',
       acGlow: 'rgba(230,92,0,0.2)', ac2Glow: 'rgba(91,44,142,0.2)'
     },
-    // Tema Neon (Verde e Azul elétrico)
     'neon': { 
       btn: '🟢', bg: '#070a12', elevated: '#0b101a', card: '#111827', hover: '#1a2236', 
       border: '#1f2a4a', borderHover: '#2a3a6a', text: '#e0f0ff', textSec: '#88aacc', textMuted: '#556677',
       accent: '#22d3ee', accent2: '#10b981', bgImage: 'none', bgOverlay: 'transparent',
       acGlow: 'rgba(34,211,238,0.25)', ac2Glow: 'rgba(16,185,129,0.25)'
     },
-    // Tema Vaporwave (Roxos e rosas neon)
     'vaporwave': { 
       btn: '🌅', bg: '#14061f', elevated: '#1d0a2e', card: '#2a1240', hover: '#381a55', 
       border: '#4d206e', borderHover: '#642c8a', text: '#ffd6ff', textSec: '#c77dff', textMuted: '#9d4edd',
       accent: '#f472b6', accent2: '#a855f7', bgImage: 'none', bgOverlay: 'transparent',
       acGlow: 'rgba(244,114,182,0.25)', ac2Glow: 'rgba(168,85,247,0.25)'
     },
-    // Tema Amber (Laranjas e beges quentes)
     'amber': { 
       btn: '🔥', bg: '#1a1410', elevated: '#261c16', card: '#33251e', hover: '#45332a', 
       border: '#5a3f34', borderHover: '#765144', text: '#fff4ed', textSec: '#d6b8a8', textMuted: '#8a6f60',
       accent: '#fb923c', accent2: '#ea580c', bgImage: 'none', bgOverlay: 'transparent',
       acGlow: 'rgba(251,146,60,0.25)', ac2Glow: 'rgba(234,88,12,0.25)'
     },
-    // Tema Exclusivo Terra Sonora (Com imagem de fundo)
     'terra-sonora': { 
       btn: '🌄', bg: '#140a05', elevated: '#20120a', card: '#2a180e', hover: '#3a2216', 
       border: '#4a2e1e', borderHover: '#6a422e', text: '#fcf3ee', textSec: '#cbaa98', textMuted: '#8a6a5a',
@@ -1618,13 +1654,22 @@ function previewSongFromInput() {
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(data => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
+      
+      // VERIFICAÇÃO DE DURAÇÃO MÁXIMA (10 minutos = 600 segundos)
+      let state = 'ready';
+      let statusMsg = '';
+      if (data.duration > 0 && data.duration > 600) {
+        state = 'too_long';
+        statusMsg = '⛔ Vídeo muito longo! Limite: 10 minutos.';
+      }
+
       songPreviewData = {
         id: videoId,
         title: (data.title || 'Música do YouTube').trim(),
         artist: (data.artist || 'Canal desconhecido').trim(),
         duration: data.duration > 0 ? data.duration : null,
       };
-      setSongPreview('ready', songPreviewData);
+      setSongPreview(state, songPreviewData, statusMsg);
     })
     .catch(() => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
@@ -1638,7 +1683,8 @@ function previewSongFromInput() {
             artist: (data.author_name || 'Canal desconhecido').trim(),
             duration: null,
           };
-          setSongPreview('ready', songPreviewData);
+          // Se não conseguirmos a duração, permitimos, mas deixamos um aviso sutil
+          setSongPreview('ready', songPreviewData, '⚠️ Duração desconhecida, verifique se é curta.');
         })
         .catch(() => {
           if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
@@ -1648,7 +1694,7 @@ function previewSongFromInput() {
     });
 }
 
-function setSongPreview(state, data) {
+function setSongPreview(state, data, customStatus) {
   const box = $('songPreview');
   if (!box) return;
   const thumb = $('songPreviewThumb');
@@ -1656,22 +1702,26 @@ function setSongPreview(state, data) {
   const artist = $('songPreviewArtist');
   const status = $('songPreviewStatus');
   const actions = $('songPreviewActions');
+  const confirmBtn = $('songPreviewConfirmBtn');
 
   if (!data && state !== 'loading' && state !== 'error') { box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
   status.textContent = '';
-  if (actions) actions.classList.add('hidden');
+  if (actions) actions.classList.remove('hidden'); // Mostra ações por padrão
+  if (confirmBtn) confirmBtn.disabled = false;
 
   if (state === 'loading') {
     thumb.textContent = '⏳';
     title.textContent = 'Buscando música...';
     artist.textContent = 'Analisando link do YouTube';
+    if (actions) actions.classList.add('hidden');
     return;
   }
   if (state === 'error') {
     thumb.textContent = '⚠️';
     title.textContent = 'Link não reconhecido';
     artist.textContent = 'Confira se é um link do YouTube';
+    if (actions) actions.classList.add('hidden');
     return;
   }
 
@@ -1679,8 +1729,17 @@ function setSongPreview(state, data) {
   thumb.innerHTML = `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">${durBadge}`;
   title.textContent = data.title;
   artist.textContent = data.artist;
-  status.textContent = data.duration ? `⏱ ${formatDuration(data.duration)} — confirme para adicionar` : 'Confirme para adicionar';
-  if (actions) actions.classList.remove('hidden');
+
+  // Verifica se é muito longo e desabilita o botão
+  if (state === 'too_long') {
+    status.textContent = customStatus || '⛔ Vídeo muito longo! Limite: 10 minutos.';
+    status.style.color = 'var(--danger)';
+    if (confirmBtn) confirmBtn.disabled = true;
+  } else {
+    status.textContent = customStatus || (data.duration ? `⏱ ${formatDuration(data.duration)} — confirme para adicionar` : 'Confirme para adicionar');
+    status.style.color = 'var(--text-muted)';
+    if (confirmBtn) confirmBtn.disabled = false;
+  }
 }
 
 function clearSongPreview() {
@@ -1710,6 +1769,13 @@ function addSong() {
 
 function confirmAddSong() {
   if (!songPreviewData || !songPreviewData.id) return;
+  
+  // Verificação de segurança extra antes de enviar
+  if (songPreviewData.duration > 0 && songPreviewData.duration > 600) {
+    toast('⛔ Este vídeo é muito longo! Limite: 10 minutos.', 'error');
+    return;
+  }
+
   const now = Date.now();
   const timeSinceLast = now - lastAddTime;
   if (timeSinceLast < addCooldown) {
@@ -1738,12 +1804,12 @@ function startCooldown() {
   const input = $('songUrl');
   const btn = $('addBtn');
   const text = $('cooldownText');
-  let remaining = 10;
-  text.textContent = `Aguarde ${remaining}s para adicionar outra música`;
+  let remaining = 180; // ALTERADO: 180 segundos (3 minutos)
+  text.textContent = `Aguarde ${Math.floor(remaining / 60)}m${remaining % 60}s para adicionar outra música`;
   text.classList.remove('hidden');
   const interval = setInterval(() => {
     remaining--;
-    if (remaining > 0) text.textContent = `Aguarde ${remaining}s para adicionar outra música`;
+    if (remaining > 0) text.textContent = `Aguarde ${Math.floor(remaining / 60)}m${remaining % 60}s para adicionar outra música`;
     else {
       clearInterval(interval);
       input.disabled = false;
@@ -1761,12 +1827,17 @@ function renderUsers(users) {
   $('userCountPlural').textContent = count === 1 ? '' : 's';
 }
 
-// ===== CHAT =====
+// ===== CHAT (COM SCROLL AUTOMÁTICO E CURTIDAS) =====
+// Variáveis locais para controle de reações
+let messageLikes = {}; // { messageId: { likes: 0, users: [] } }
+
 function sendMsg() {
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
   if (text === '/confetti') { socket.emit('confetti'); launchConfetti(); input.value = ''; return; }
+  
+  // Envia o texto já censurado para o servidor
   socket.emit('chat', { text: censorText(text) });
   input.value = '';
   isTyping = false;
@@ -1780,7 +1851,6 @@ function renderMessage(msg) {
 
   if (msg.isMusic) {
     div.className = 'msg msg-music';
-    const likes = msg.musicLikes || 0;
     div.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
         <span style="font-size:16px;">🎵</span>
@@ -1798,6 +1868,20 @@ function renderMessage(msg) {
     div.className = 'msg';
     let processedText = escapeHtml(msg.text);
     processedText = processedText.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
+    
+    // Gera um ID único para a mensagem (para controle de curtidas)
+    const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    div.dataset.msgId = msgId;
+
+    // Inicializa o estado de curtidas se não existir
+    if (!messageLikes[msgId]) {
+      messageLikes[msgId] = { likes: 0, users: [] };
+    }
+
+    const likesData = messageLikes[msgId];
+    const userLiked = likesData.users.includes(myName);
+    const likeCount = likesData.likes;
+
     div.innerHTML = `
       <div style="display:flex;align-items:flex-start;gap:8px;width:100%;">
         <div style="width:28px;height:28px;border-radius:50%;background:${msg.color || '#888'}22;color:${msg.color || '#888'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid ${msg.color || '#888'}40;">${avatar}</div>
@@ -1807,18 +1891,66 @@ function renderMessage(msg) {
             <span class="msg-time" style="opacity:0.5;">${formatTime(msg.createdAt)}</span>
           </div>
           <span class="msg-text">${processedText}</span>
+          <div class="msg-actions">
+            <button class="msg-like-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike('${msgId}', this)">
+              ${userLiked ? '❤️' : '🤍'} <span class="msg-like-count">${likeCount}</span>
+            </button>
+            <button class="msg-like-btn" onclick="toggleFire('${msgId}', this)">
+              🔥 <span class="msg-like-count">0</span>
+            </button>
+          </div>
         </div>
       </div>
     `;
   }
+  
   box.appendChild(div);
   scrollChatToBottom();
+}
+
+// ===== SISTEMA DE CURTIDAS (FRONT-END APENAS) =====
+function toggleLike(msgId, btn) {
+  if (!messageLikes[msgId]) {
+    messageLikes[msgId] = { likes: 0, users: [] };
+  }
+  const data = messageLikes[msgId];
+  const userIndex = data.users.indexOf(myName);
+
+  if (userIndex > -1) {
+    // Já curtiu, remove
+    data.users.splice(userIndex, 1);
+    data.likes--;
+    btn.classList.remove('liked');
+    btn.innerHTML = `🤍 <span class="msg-like-count">${data.likes}</span>`;
+  } else {
+    // Não curtiu, adiciona
+    data.users.push(myName);
+    data.likes++;
+    btn.classList.add('liked');
+    btn.innerHTML = `❤️ <span class="msg-like-count">${data.likes}</span>`;
+  }
+}
+
+function toggleFire(msgId, btn) {
+  // Simples contagem local para o fogo (pode ser expandida se necessário)
+  const countSpan = btn.querySelector('.msg-like-count');
+  let current = parseInt(countSpan.textContent) || 0;
+  current++;
+  countSpan.textContent = current;
+  btn.style.color = 'var(--accent)';
+  toast('🔥 Curtida com fogo!', 'success');
 }
 
 function scrollChatToBottom() {
   const box = $('chatBox');
   if (!box) return;
-  requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+  // Força o scroll para o final com animação suave
+  requestAnimationFrame(() => { 
+    box.scrollTo({
+      top: box.scrollHeight,
+      behavior: 'smooth'
+    });
+  });
 }
 
 function handleTyping() {
