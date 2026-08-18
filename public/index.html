@@ -12,7 +12,6 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     :root {
-      /* Variáveis base (serão sobrescritas dinamicamente) */
       --bg: #050508;
       --bg-elevated: #0a0a10;
       --bg-card: #0f0f18;
@@ -33,11 +32,6 @@
       --bg-overlay: transparent;
     }
 
-    /* Transição suave em tudo ao trocar de tema */
-    body, .stage-bg, .landing-screen, .login-screen, .header, .sidebar, .room-card, .modal, .toast, .queue-item, .user, .msg {
-      transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, background-image 0.4s ease;
-    }
-
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
@@ -48,6 +42,9 @@
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, background-image 0.4s ease;
     }
 
     /* Overlay escuro/desfoque sobre a imagem de fundo */
@@ -92,7 +89,7 @@
       pointer-events: none;
       z-index: 0;
       mix-blend-mode: screen;
-      opacity: 0.3; /* Reduzido para não competir com fundos de imagem */
+      opacity: 0.3;
     }
     .spotlight-left {
       left: -20%;
@@ -153,9 +150,9 @@
 
     /* ===== LANDING SCREEN ===== */
     .landing-screen {
-      position: fixed;
-      inset: 0;
+      position: relative;
       z-index: 90;
+      flex: 1;
       overflow-y: auto;
       background: transparent;
     }
@@ -164,7 +161,7 @@
       z-index: 1;
       max-width: 1080px;
       margin: 0 auto;
-      padding: 64px 24px 80px;
+      padding: 64px 24px 40px;
     }
     .landing-nav {
       display: flex;
@@ -393,15 +390,15 @@
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
     /* ===== APP ===== */
-    .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    .app { position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1; min-height: 0; }
     .hidden { display: none !important; }
-    .screen { display: none; }
-    .screen.active { display: block; }
+    .screen { display: none; flex-direction: column; flex: 1; }
+    .screen.active { display: flex; }
 
     .header {
       display: flex; align-items: center; justify-content: space-between; padding: 14px 28px;
       border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.5); backdrop-filter: blur(20px);
-      position: sticky; top: 0; z-index: 50;
+      position: sticky; top: 0; z-index: 50; flex-shrink: 0;
     }
     .header-left { display: flex; align-items: center; gap: 16px; }
     .header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
@@ -412,7 +409,7 @@
     .logout-btn:hover { background: rgba(239,68,68,0.1); border-color: var(--danger); color: var(--danger); }
 
     /* ===== LOBBY ===== */
-    .lobby { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; }
+    .lobby { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
     .lobby-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
     .lobby-top h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
     .lobby-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -443,7 +440,7 @@
     #screen-room .app { height: 100vh; height: 100dvh; overflow: hidden; }
     @media (max-width: 1024px) { .room-layout { grid-template-columns: 1fr; } }
 
-    .stage { display: flex; flex-direction: column; padding: 20px 16px; gap: 20px; overflow-y: auto; min-height: 0; }
+    .stage { display: flex; flex-direction: column; padding: 20px 16px; gap: 20px; overflow-y: auto; min-height: 0; flex: 1; }
     
     /* ===== PLAYER ===== */
     .player-section { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); overflow: hidden; flex-shrink: 0; backdrop-filter: blur(4px); }
@@ -462,7 +459,7 @@
     .progress-time { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
 
     /* ===== ADICIONAR MÚSICA ===== */
-    .add-song { display: flex; gap: 10px; padding: 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); }
+    .add-song { display: flex; gap: 10px; padding: 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); flex-shrink: 0; }
     .add-song input { flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: all 0.2s; font-family: inherit; }
     .add-song input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
     .add-song button { padding: 12px 24px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
@@ -484,7 +481,7 @@
     .msg-text { color: var(--text-secondary); word-break: break-word; font-size: 13px; }
     .msg-time { font-size: 10px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; align-self: flex-start; margin-top: 2px; }
     .msg:hover .msg-time { opacity: 1; }
-    .chat-input-bar { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg-card); }
+    .chat-input-bar { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg-card); flex-shrink: 0; }
     .chat-input-bar input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; outline: none; transition: all 0.2s; font-family: inherit; }
     .chat-input-bar input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
     .chat-input-bar button { padding: 10px 16px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
@@ -492,8 +489,25 @@
 
     @media (max-width: 640px) { .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; } }
     
-    .footer { text-align: center; padding: 20px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); position: relative; z-index: 1; }
-    .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13px;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(20px);
+      position: relative;
+      z-index: 10;
+      flex-shrink: 0;
+      width: 100%;
+    }
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
     .footer a:hover { text-decoration: underline; }
     
     /* Estilos para o Preview */
@@ -899,6 +913,11 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- FOOTER (Posicionado no final da página) -->
+<div class="footer">
+  Desenvolvido por <a href="https://www.linkedin.com/in/ggiuntini/" target="_blank">Guilherme Giuntini</a>
+</div>
 
 <script>
 // ===== SOCKET =====
@@ -1917,10 +1936,6 @@ if (roomParam) {
 }
 
 </script>
-
-<div class="footer">
-  Desenvolvido por <a href="https://www.linkedin.com/in/ggiuntini/" target="_blank">Guilherme Giuntini</a>
-</div>
 
 </body>
 </html>
