@@ -17,6 +17,13 @@ app.use(cookieParser());
 // ========== CONFIG ==========
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
+const adminEmails = new Set(['admin@sonora.com']);
+const settings = {
+  maxQueue: 20,
+  cooldown: 180,
+  maxDuration: 600,
+  badWords: []
+};
 
 // ========== AUTENTICAÇÃO LOCAL ==========
 const users = new Map();
@@ -328,6 +335,199 @@ app.get('/api/video-info', async (req, res) => {
   res.json(info);
 });
 
+// ========== ADMIN ROTAS ==========
+function isAdmin(req, res, next) {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  
+  if (!adminEmails.has(email)) {
+    return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
+  }
+  
+  req.adminEmail = email;
+  next();
+}
+
+app.get('/api/admin/stats', isAdmin, (req, res) => {
+  const totalUsers = users.size;
+  const totalRooms = rooms.size;
+  const onlineUsers = io.sockets.sockets.size;
+  let totalSongs = 0;
+  
+  for (const [slug, room] of rooms) {
+    totalSongs += room.queue.length;
+  }
+  
+  res.json({ totalUsers, totalRooms, onlineUsers, totalSongs });
+});
+
+app.get('/api/admin/users', isAdmin, (req, res) => {
+  const userList = Array.from(users.values()).map(u => ({
+    ...u,
+    senha: undefined,
+    isAdmin: adminEmails.has(u.email)
+  }));
+  res.json(userList);
+});
+
+app.get('/api/admin/rooms', isAdmin, (req, res) => {
+  const roomList = Array.from(rooms.values()).map(r => ({
+    slug: r.slug,
+    name: r.name,
+    admin: r.admin,
+    listenerCount: r.listenerCount,
+    queueLength: r.queue.length,
+    isPlaying: r.isPlaying,
+  }));
+  res.json(roomList);
+});
+
+app.post('/api/admin/promote', isAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
+  
+  if (!users.has(email)) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+  
+  adminEmails.add(email);
+  res.json({ success: true, email });
+});
+
+app.post('/api/admin/remove', isAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
+  
+  if (email === 'admin@sonora.com') {
+    return res.status(400).json({ error: 'Não pode remover o super admin' });
+  }
+  
+  adminEmails.delete(email);
+  res.json({ success: true, email });
+});
+
+app.get('/api/admin/list', isAdmin, (req, res) => {
+  res.json(Array.from(adminEmails));
+});
+
+app.post('/api/admin/add', isAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
+  
+  if (!users.has(email)) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+  
+  adminEmails.add(email);
+  res.json({ success: true, email });
+});
+
+app.post('/api/admin/delete-user', isAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
+  
+  if (email === 'admin@sonora.com') {
+    return res.status(400).json({ error: 'Não pode deletar o super admin' });
+  }
+  
+  if (!users.has(email)) {
+    return res.status(404).json({ error: 'Usuário não encontrado' });
+  }
+  
+  users.delete(email);
+  adminEmails.delete(email);
+  res.json({ success: true, email });
+});
+
+app.delete('/api/admin/delete-room/:slug', isAdmin, (req, res) => {
+  const { slug } = req.params;
+  if (!rooms.has(slug)) {
+    return res.status(404).json({ error: 'Sala não encontrada' });
+  }
+  
+  io.to(slug).emit('roomClosed', 'A sala foi fechada pelo administrador');
+  io.in(slug).disconnectSockets();
+  rooms.delete(slug);
+  
+  res.json({ success: true, slug });
+});
+
+app.post('/api/admin/skip-room/:slug', isAdmin, (req, res) => {
+  const { slug } = req.params;
+  const room = rooms.get(slug);
+  if (!room) {
+    return res.status(404).json({ error: 'Sala não encontrada' });
+  }
+  
+  if (room.queue.length === 0) {
+    return res.status(400).json({ error: 'Fila vazia' });
+  }
+  
+  advanceQueue(slug, 'admin');
+  res.json({ success: true });
+});
+
+app.post('/api/admin/clear-all-chats', isAdmin, (req, res) => {
+  for (const [slug, room] of rooms) {
+    room.chatHistory = [];
+    io.to(slug).emit('chatCleared');
+  }
+  res.json({ success: true });
+});
+
+app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
+  for (const [slug, room] of rooms) {
+    room.queue = [];
+    room.currentIndex = 0;
+    room.isPlaying = false;
+    broadcastState(slug);
+    io.to(slug).emit('queueEmpty');
+  }
+  res.json({ success: true });
+});
+
+app.get('/api/admin/settings', isAdmin, (req, res) => {
+  res.json(settings);
+});
+
+app.post('/api/admin/settings', isAdmin, (req, res) => {
+  const { maxQueue, cooldown, maxDuration } = req.body;
+  if (maxQueue !== undefined) settings.maxQueue = parseInt(maxQueue);
+  if (cooldown !== undefined) settings.cooldown = parseInt(cooldown);
+  if (maxDuration !== undefined) settings.maxDuration = parseInt(maxDuration);
+  res.json({ success: true });
+});
+
+app.post('/api/admin/bad-words', isAdmin, (req, res) => {
+  const { words } = req.body;
+  if (Array.isArray(words)) {
+    settings.badWords = words;
+  }
+  res.json({ success: true, count: words.length });
+});
+
+app.get('/api/admin/export-data', isAdmin, (req, res) => {
+  const data = {
+    exportedAt: new Date().toISOString(),
+    users: Array.from(users.values()).map(u => ({ ...u, senha: undefined })),
+    admins: Array.from(adminEmails),
+    rooms: Array.from(rooms.values()).map(r => ({
+      slug: r.slug,
+      name: r.name,
+      admin: r.admin,
+      queue: r.queue,
+      chatHistory: r.chatHistory.slice(-50),
+      listenerCount: r.listenerCount,
+      isPlaying: r.isPlaying
+    })),
+    settings
+  };
+  res.json(data);
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -354,7 +554,7 @@ io.on('connection', (socket) => {
     socket.userAvatar = avatar || '👤';
     room.listenerCount++;
 
-    const isAdmin = adminPass === ADMIN_PASSWORD;
+    const isAdmin = adminPass === ADMIN_PASSWORD || adminEmails.has(currentUser?.email);
     socket.isAdmin = isAdmin;
 
     if (isAdmin && !room.admin) {
@@ -406,8 +606,8 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (room.queue.length >= 20) {
-      socket.emit('error', 'Fila cheia (máx. 20 músicas). Aguarde a próxima rodada.');
+    if (room.queue.length >= settings.maxQueue) {
+      socket.emit('error', `Fila cheia (máx. ${settings.maxQueue} músicas). Aguarde a próxima rodada.`);
       return;
     }
     song.dj = socket.userName;
@@ -537,6 +737,14 @@ io.on('connection', (socket) => {
   socket.on('confetti', () => {
     if (!currentRoom) return;
     socket.to(currentRoom).emit('confetti');
+  });
+
+  socket.on('adminBroadcast', (data) => {
+    if (!socket.isAdmin) {
+      socket.emit('error', 'Apenas administradores podem enviar mensagens globais');
+      return;
+    }
+    io.emit('adminBroadcast', { message: data.message });
   });
 
   socket.on('disconnect', () => {
