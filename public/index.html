@@ -489,7 +489,6 @@
       padding: 16px; 
       font-size: 14px; 
       min-height: 0;
-      /* Remove max-height: 100% para deixar o flex controlar */
     }
     .msg { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
     .msg:hover { background: rgba(255,255,255,0.02); }
@@ -1620,7 +1619,7 @@ function renderQueue(queue, currentIndex) {
   }
 }
 
-// ===== ADD SONG =====
+// ===== ADD SONG (TRAVA DEFINITIVA DE 10 MINUTOS) =====
 function extractYouTubeId(rawUrl) {
   const url = (rawUrl || '').trim();
   if (!url) return '';
@@ -1667,7 +1666,7 @@ function previewSongFromInput() {
   setSongPreview('loading');
   const requestId = ++songPreviewRequest;
 
-  // ALTERAÇÃO PRINCIPAL: Usa o oembed oficial do YouTube para garantir a duração correta
+  // ALTERAÇÃO PRINCIPAL: Usa o oembed oficial do YouTube
   fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
     .then(r => { if (!r.ok) throw new Error(); return r.json(); })
     .then(data => {
@@ -1695,7 +1694,7 @@ function previewSongFromInput() {
     .catch(() => {
       if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
       
-      // Fallback caso a API oficial falhe (não libera o vídeo, pois não temos a duração)
+      // FALHA NA API: BLOQUEIA TOTALMENTE POIS NÃO SABEMOS A DURAÇÃO
       songPreviewData = { id: videoId, title: 'Música do YouTube', artist: 'Prévia indisponível', duration: 0 };
       setSongPreview('too_long', songPreviewData, '⛔ Não foi possível verificar a duração. Limite: 10 min.');
     });
@@ -1714,7 +1713,7 @@ function setSongPreview(state, data, customStatus) {
   if (!data && state !== 'loading' && state !== 'error') { box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
   status.textContent = '';
-  if (actions) actions.classList.remove('hidden'); // Mostra ações por padrão
+  if (actions) actions.classList.remove('hidden');
   if (confirmBtn) confirmBtn.disabled = false;
 
   if (state === 'loading') {
@@ -1777,9 +1776,17 @@ function addSong() {
 function confirmAddSong() {
   if (!songPreviewData || !songPreviewData.id) return;
   
-  // Verificação de segurança extra antes de enviar
+  // ==========================================
+  // TRAVA DEFINITIVA DE SEGURANÇA
+  // ==========================================
+  // Se a duração for maior que 0 E maior que 600 segundos, BLOQUEIA.
+  // Se a duração for 0 ou null (não foi possível obter), BLOQUEIA também.
   if (songPreviewData.duration > 0 && songPreviewData.duration > 600) {
     toast('⛔ Este vídeo é muito longo! Limite: 10 minutos.', 'error');
+    return;
+  }
+  if (!songPreviewData.duration || songPreviewData.duration === 0) {
+    toast('⛔ Não foi possível verificar a duração do vídeo. Tente outro link.', 'error');
     return;
   }
 
@@ -1795,11 +1802,12 @@ function confirmAddSong() {
   input.disabled = true;
   $('addBtn').disabled = true;
 
+  // Agora só envia se passou por todas as verificações
   socket.emit('addSong', {
     id: songPreviewData.id,
     title: songPreviewData.title,
     artist: songPreviewData.artist,
-    duration: songPreviewData.duration > 0 ? Math.floor(songPreviewData.duration) : 180,
+    duration: Math.floor(songPreviewData.duration), // Envia a duração real
   });
   lastAddTime = Date.now();
   input.value = '';
@@ -1835,16 +1843,13 @@ function renderUsers(users) {
 }
 
 // ===== CHAT (COM SCROLL AUTOMÁTICO E CURTIDAS) =====
-// Variáveis locais para controle de reações
-let messageLikes = {}; // { messageId: { likes: 0, users: [] } }
+let messageLikes = {};
 
 function sendMsg() {
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
   if (text === '/confetti') { socket.emit('confetti'); launchConfetti(); input.value = ''; return; }
-  
-  // Envia o texto já censurado para o servidor
   socket.emit('chat', { text: censorText(text) });
   input.value = '';
   isTyping = false;
@@ -1876,11 +1881,9 @@ function renderMessage(msg) {
     let processedText = escapeHtml(msg.text);
     processedText = processedText.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
     
-    // Gera um ID único para a mensagem (para controle de curtidas)
     const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
     div.dataset.msgId = msgId;
 
-    // Inicializa o estado de curtidas se não existir
     if (!messageLikes[msgId]) {
       messageLikes[msgId] = { likes: 0, users: [] };
     }
@@ -1915,22 +1918,17 @@ function renderMessage(msg) {
   scrollChatToBottom();
 }
 
-// ===== SISTEMA DE CURTIDAS (FRONT-END APENAS) =====
 function toggleLike(msgId, btn) {
-  if (!messageLikes[msgId]) {
-    messageLikes[msgId] = { likes: 0, users: [] };
-  }
+  if (!messageLikes[msgId]) messageLikes[msgId] = { likes: 0, users: [] };
   const data = messageLikes[msgId];
   const userIndex = data.users.indexOf(myName);
 
   if (userIndex > -1) {
-    // Já curtiu, remove
     data.users.splice(userIndex, 1);
     data.likes--;
     btn.classList.remove('liked');
     btn.innerHTML = `🤍 <span class="msg-like-count">${data.likes}</span>`;
   } else {
-    // Não curtiu, adiciona
     data.users.push(myName);
     data.likes++;
     btn.classList.add('liked');
@@ -1939,7 +1937,6 @@ function toggleLike(msgId, btn) {
 }
 
 function toggleFire(msgId, btn) {
-  // Simples contagem local para o fogo (pode ser expandida se necessário)
   const countSpan = btn.querySelector('.msg-like-count');
   let current = parseInt(countSpan.textContent) || 0;
   current++;
@@ -1951,7 +1948,6 @@ function toggleFire(msgId, btn) {
 function scrollChatToBottom() {
   const box = $('chatBox');
   if (!box) return;
-  // Força o scroll para o final com animação suave
   requestAnimationFrame(() => { 
     box.scrollTo({
       top: box.scrollHeight,
