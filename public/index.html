@@ -770,105 +770,677 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM LAYOUT ===== */
-    .room-layout { display: grid; grid-template-columns: 1fr 420px; grid-template-rows: minmax(0, 1fr); gap: 0; flex: 1; min-height: 0; }
-    #screen-room .app { height: 100vh; height: 100dvh; overflow: hidden; }
-    @media (max-width: 1024px) { .room-layout { grid-template-columns: 1fr; } }
-
-    .stage { display: flex; flex-direction: column; padding: 20px 16px; gap: 20px; overflow-y: auto; min-height: 0; flex: 1; }
-    
-    /* ===== PLAYER ===== */
-    .player-section { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); overflow: hidden; flex-shrink: 0; backdrop-filter: blur(4px); }
-    .player-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); }
-    .now-playing-label { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
-    .live-indicator { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--danger); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-    #youtube-player { width: 100%; height: 320px; background: #000; }
-    .player-info { display: flex; gap: 16px; align-items: center; padding: 18px; }
-    .cover { width: 72px; height: 72px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-    .track-info { flex: 1; min-width: 0; }
-    .track-title { font-size: 17px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.3px; }
-    .track-artist { font-size: 14px; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
-    .progress-section { padding: 0 18px 18px; }
-    .progress-bar { width: 100%; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; position: relative; }
-    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.8s linear; box-shadow: 0 0 10px var(--accent-glow); }
-    .progress-time { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
-
-    /* ===== ADICIONAR MÚSICA ===== */
-    .add-song { display: flex; gap: 10px; padding: 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); flex-shrink: 0; }
-    .add-song input { flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: all 0.2s; font-family: inherit; }
-    .add-song input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
-    .add-song button { padding: 12px 24px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
-    .add-song button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
-
-    /* ===== SIDEBAR ===== */
-    .sidebar { 
-      border-left: 1px solid var(--border); 
-      display: flex; 
-      flex-direction: column; 
-      background: rgba(0,0,0,0.6); 
-      backdrop-filter: blur(12px); 
+    /* ===== ROOM LAYOUT - ESTRUTURA PRINCIPAL ===== */
+    .room-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      grid-template-rows: 1fr;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
       height: 100%;
-      min-height: 0; 
+    }
+
+    #screen-room .app {
+      height: 100vh;
+      height: 100dvh;
       overflow: hidden;
     }
+
     @media (max-width: 1024px) {
-      .room-layout { grid-template-rows: minmax(0, 1fr) 420px; }
-      .sidebar { border-left: none; border-top: 1px solid var(--border); height: 420px; max-height: 420px; }
+      .room-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 420px;
+      }
     }
-    .users-panel { padding: 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .panel-header { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    
-    /* ===== CHAT ===== */
-    .chat-panel { 
-      flex: 1; 
-      display: flex; 
-      flex-direction: column; 
-      min-height: 0; 
-      position: relative; 
-      overflow: hidden; 
+
+    /* ===== STAGE (LADO ESQUERDO) ===== */
+    .stage {
+      display: flex;
+      flex-direction: column;
+      padding: 16px 20px 20px;
+      gap: 16px;
+      overflow-y: auto;
+      min-height: 0;
+      flex: 1;
+      background: rgba(0,0,0,0.2);
+    }
+
+    /* ===== PLAYER ===== */
+    .player-section {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      overflow: hidden;
+      flex-shrink: 0;
+      backdrop-filter: blur(4px);
+    }
+    .player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .now-playing-label {
+      font-size: 10px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--danger);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .live-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
+    }
+    #youtube-player {
+      width: 100%;
+      height: 280px;
+      background: #000;
+    }
+    .player-info {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+    }
+    .cover {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .cover img {
+      width: 100%;
       height: 100%;
-      max-height: 100%;
+      object-fit: cover;
     }
-    .chat-messages { 
-      flex: 1; 
-      overflow-y: auto; 
+    .track-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .track-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.3px;
+    }
+    .track-artist {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-dj {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .progress-section {
+      padding: 0 16px 14px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 3px;
+      transition: width 0.5s linear;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+    .progress-time {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .volume-control input[type="range"] {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    .volume-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+    .volume-control input[type="range"]::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+    }
+
+    /* ===== LISTA DE MÚSICAS (CENTRO) ===== */
+    .queue-center {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+
+    .queue-center-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .queue-center-header span {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .queue-center-header .count {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    #queueCenterList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .queue-center-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      transition: all 0.15s;
+      cursor: default;
+      border-left: 3px solid transparent;
+    }
+
+    .queue-center-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .queue-center-item.current {
+      background: var(--bg-hover);
+      border-left-color: var(--accent);
+    }
+
+    .queue-center-item .position {
+      font-size: 11px;
+      color: var(--text-muted);
+      min-width: 24px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .queue-center-item.current .position {
+      color: var(--accent);
+    }
+
+    .queue-center-item .thumb {
+      width: 40px;
+      height: 30px;
+      border-radius: 4px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .queue-center-item .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .queue-center-item .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .queue-center-item .info .title {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .queue-center-item.current .info .title {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .queue-center-item .info .artist {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .queue-center-item .dj {
+      font-size: 10px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      padding: 2px 8px;
+      background: var(--bg);
+      border-radius: 10px;
+    }
+
+    .queue-center-item .remove-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      opacity: 0;
+      font-family: inherit;
+    }
+
+    .queue-center-item:hover .remove-btn {
+      opacity: 1;
+    }
+
+    .queue-center-item .remove-btn:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .queue-center-item.current .remove-btn {
+      display: none;
+    }
+
+    .queue-center-item.clickable {
+      cursor: pointer;
+    }
+
+    .queue-center-item.clickable:hover {
+      background: var(--bg-hover);
+      border-left-color: var(--accent2);
+    }
+
+    /* ===== ADICIONAR MÚSICA ===== */
+    .add-song {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      flex-shrink: 0;
+    }
+    .add-song input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .add-song input:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .add-song button {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .add-song button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(124,58,237,0.3);
+    }
+
+    .song-preview {
+      display: flex;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .song-preview.hidden { display: none; }
+    .song-preview-thumb {
+      width: 50px;
+      height: 38px;
+      border-radius: 6px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--border);
+    }
+    .song-preview-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .song-preview-duration {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      font-size: 9px;
+      background: rgba(0,0,0,0.7);
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #fff;
+    }
+    .song-preview-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .song-preview-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-preview-artist {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-preview-status {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .song-preview-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .song-preview-actions.hidden { display: none; }
+    .song-preview-confirm {
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .song-preview-confirm:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .song-preview-confirm:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+    }
+    .song-preview-cancel {
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .song-preview-cancel:hover {
+      background: var(--bg-hover);
+    }
+    .cooldown-text {
+      font-size: 12px;
+      color: var(--accent);
+      text-align: center;
+      padding: 6px;
+      border-radius: 8px;
+      background: rgba(255,107,53,0.1);
+      border: 1px solid rgba(255,107,53,0.2);
+      flex-shrink: 0;
+    }
+    .cooldown-text.hidden { display: none; }
+
+    /* ===== SIDEBAR (DIREITA) ===== */
+    .sidebar {
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(12px);
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        border-left: none;
+        border-top: 1px solid var(--border);
+        height: 420px;
+        max-height: 420px;
+      }
+    }
+
+    /* ===== USERS ===== */
+    .users-panel {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.2);
+    }
+    .users-panel .user-count {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .users-panel .user-count .icon {
+      font-size: 18px;
+    }
+
+    /* ===== CHAT ===== */
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
       overscroll-behavior: contain;
       scroll-behavior: smooth;
-      display: flex; 
-      flex-direction: column; 
-      gap: 2px; 
-      padding: 16px; 
-      font-size: 14px; 
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 12px 14px;
+      font-size: 14px;
       min-height: 0;
       max-height: 100%;
     }
-    .msg { display: flex; gap: 8px; line-height: 1.5; padding: 6px 10px; border-radius: 10px; animation: msgIn 0.25s ease; }
-    .msg:hover { background: rgba(255,255,255,0.02); }
-    @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .msg-user { font-weight: 700; flex-shrink: 0; cursor: pointer; font-size: 13px; }
-    .msg-text { color: var(--text-secondary); word-break: break-word; font-size: 13px; }
-    .msg-time { font-size: 10px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; align-self: flex-start; margin-top: 2px; }
-    .msg:hover .msg-time { opacity: 1; }
-    
+
+    .msg {
+      display: flex;
+      gap: 8px;
+      line-height: 1.5;
+      padding: 5px 8px;
+      border-radius: 8px;
+      animation: msgIn 0.2s ease;
+    }
+    .msg:hover {
+      background: rgba(255,255,255,0.02);
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      border: 2px solid transparent;
+    }
+
+    .msg-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .msg-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 1px;
+    }
+    .msg-user {
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .msg-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+    .msg-text {
+      color: var(--text-secondary);
+      word-break: break-word;
+      font-size: 13px;
+    }
+    .msg-system .msg-text {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 12px;
+    }
+    .msg-music {
+      background: rgba(124, 58, 237, 0.05);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .msg-music .music-info {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
     .msg-actions {
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-top: 4px;
-      margin-left: 36px;
+      margin-top: 3px;
+      margin-left: 32px;
     }
     .msg-like-btn {
       background: transparent;
       border: none;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       padding: 2px 6px;
-      border-radius: 12px;
+      border-radius: 10px;
       color: var(--text-muted);
       transition: all 0.15s;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       font-family: inherit;
     }
     .msg-like-btn:hover {
@@ -886,14 +1458,14 @@
 
     .new-messages-pill {
       position: absolute;
-      bottom: 80px;
+      bottom: 70px;
       left: 50%;
       transform: translateX(-50%);
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       color: #fff;
       border: none;
       border-radius: 20px;
-      padding: 8px 20px;
+      padding: 6px 16px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
@@ -901,13 +1473,9 @@
       box-shadow: 0 4px 20px rgba(255,107,53,0.4);
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
       font-family: inherit;
-      animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
-    .new-messages-pill.hidden {
-      display: none;
-    }
-
+    .new-messages-pill.hidden { display: none; }
     .new-messages-pill:hover {
       transform: translateX(-50%) scale(1.05);
       box-shadow: 0 6px 30px rgba(124,58,237,0.5);
@@ -918,156 +1486,124 @@
       100% { opacity: 1; transform: translateX(-50%) scale(1); }
     }
 
-    .chat-input-bar { padding: 14px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; background: var(--bg-card); flex-shrink: 0; position: relative; }
-    .chat-input-bar input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; outline: none; transition: all 0.2s; font-family: inherit; }
-    .chat-input-bar input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
-    .chat-input-bar button { padding: 10px 16px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
-    .chat-input-bar button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
-
-    .emoji-btn { background: transparent; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.15s; flex-shrink: 0; }
-    .emoji-btn:hover { background: var(--bg-hover); }
-    .emoji-panel { display: none; position: absolute; bottom: 100%; left: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; max-width: 280px; max-height: 200px; overflow-y: auto; flex-wrap: wrap; gap: 4px; z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-    .emoji-panel.show { display: flex; }
-    .emoji-item { font-size: 22px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.15s; line-height: 1; }
-    .emoji-item:hover { background: var(--bg-hover); }
-
-    /* ===== QUEUE PANEL ===== */
-    .queue-panel {
-      flex-shrink: 0;
-      height: 200px;
+    .chat-input-bar {
+      padding: 10px 14px;
       border-top: 1px solid var(--border);
-      background: rgba(0,0,0,0.3);
       display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-
-    .queue-panel .panel-header {
-      display: flex;
+      gap: 8px;
       align-items: center;
-      justify-content: space-between;
-      padding: 10px 18px;
+      background: var(--bg-card);
       flex-shrink: 0;
+      position: relative;
     }
-
-    #queueListSidebar {
+    .chat-input-bar input {
       flex: 1;
-      overflow-y: auto;
-      padding: 0 12px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    #queueListSidebar .queue-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 8px;
+      padding: 8px 12px;
       border-radius: 8px;
-      font-size: 13px;
-      transition: background 0.15s;
-      cursor: default;
-    }
-
-    #queueListSidebar .queue-item:hover {
-      background: var(--bg-hover);
-    }
-
-    #queueListSidebar .queue-item.current {
-      background: var(--bg-hover);
-      border-left: 3px solid var(--accent);
-    }
-
-    #queueListSidebar .queue-item .thumb {
-      width: 32px;
-      height: 24px;
-      border-radius: 4px;
-      overflow: hidden;
-      flex-shrink: 0;
+      border: 1px solid var(--border);
       background: var(--bg);
-    }
-
-    #queueListSidebar .queue-item .thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    #queueListSidebar .queue-item .info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    #queueListSidebar .queue-item .info .title {
-      color: var(--text-secondary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    #queueListSidebar .queue-item.current .info .title {
       color: var(--text);
-      font-weight: 600;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
     }
-
-    #queueListSidebar .queue-item .info .artist {
-      color: var(--text-muted);
-      font-size: 11px;
+    .chat-input-bar input:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    .chat-input-bar button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    }
+    .chat-input-bar button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
     }
 
-    #queueListSidebar .queue-item .dj {
-      font-size: 10px;
-      color: var(--text-muted);
+    .emoji-btn {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.15s;
       flex-shrink: 0;
     }
-
-    @media (max-width: 1024px) {
-      .queue-panel {
-        height: 150px;
-      }
+    .emoji-btn:hover {
+      background: var(--bg-hover);
+    }
+    .emoji-panel {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      max-width: 260px;
+      max-height: 180px;
+      overflow-y: auto;
+      flex-wrap: wrap;
+      gap: 3px;
+      z-index: 50;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .emoji-panel.show { display: flex; }
+    .emoji-item {
+      font-size: 20px;
+      cursor: pointer;
+      padding: 3px 5px;
+      border-radius: 4px;
+      transition: background 0.15s;
+      line-height: 1;
+    }
+    .emoji-item:hover {
+      background: var(--bg-hover);
     }
 
-    @media (max-width: 640px) {
-      .queue-panel {
-        height: 120px;
-      }
+    .admin-badge {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
     }
-
-    /* ===== OUTROS ===== */
-    .song-preview { display: flex; gap: 12px; padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); align-items: center; margin-top: 8px; }
-    .song-preview.hidden { display: none; }
-    .song-preview-thumb { width: 60px; height: 45px; border-radius: 8px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; overflow: hidden; position: relative; border: 1px solid var(--border); }
-    .song-preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .song-preview-duration { position: absolute; bottom: 2px; right: 2px; font-size: 10px; background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 4px; color: #fff; }
-    .song-preview-info { flex: 1; min-width: 0; }
-    .song-preview-title { font-weight: 600; font-size: 14px; color: var(--text); }
-    .song-preview-artist { font-size: 12px; color: var(--text-secondary); }
-    .song-preview-status { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .song-preview-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .song-preview-actions.hidden { display: none; }
-    .song-preview-confirm { padding: 6px 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 600; font-size: 12px; cursor: pointer; font-family: inherit; }
-    .song-preview-confirm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-    .song-preview-confirm:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
-    .song-preview-cancel { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; font-family: inherit; }
-    .song-preview-cancel:hover { background: var(--bg-hover); }
-    .cooldown-text { font-size: 12px; color: var(--accent); text-align: center; padding: 6px; border-radius: 8px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2); }
-    .cooldown-text.hidden { display: none; }
-    .admin-badge { background: linear-gradient(135deg, var(--accent), var(--accent2)); padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; }
     .admin-badge.hidden { display: none; }
-    .eq-bar { width: 4px; border-radius: 2px; background: linear-gradient(to top, var(--accent), var(--accent2)); transition: height 0.3s; }
-    @keyframes equalizer { 0%, 100% { height: 4px; } 50% { height: 18px; } }
-    @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; } }
+
+    .eq-bar {
+      width: 4px;
+      border-radius: 2px;
+      background: linear-gradient(to top, var(--accent), var(--accent2));
+      transition: height 0.3s;
+    }
+    @keyframes equalizer {
+      0%, 100% { height: 4px; }
+      50% { height: 18px; }
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; }
+    }
 
     .footer {
       text-align: center;
-      padding: 20px;
+      padding: 16px;
       border-top: 1px solid var(--border);
       color: var(--text-muted);
-      font-size: 13px;
+      font-size: 12px;
       background: rgba(0,0,0,0.5);
       backdrop-filter: blur(20px);
       position: relative;
@@ -1082,7 +1618,30 @@
     }
     .footer a:hover { text-decoration: underline; }
 
-    @media (max-width: 640px) { .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; } }
+    @media (max-width: 768px) {
+      .header { padding: 10px 14px; flex-wrap: wrap; gap: 6px; }
+      .header h1 { font-size: 15px; }
+      #youtube-player { height: 200px; }
+      .player-info { padding: 10px 12px; }
+      .cover { width: 48px; height: 48px; font-size: 18px; }
+      .track-title { font-size: 14px; }
+      .queue-center-item { padding: 6px 8px; }
+      .queue-center-item .thumb { width: 32px; height: 24px; }
+      .queue-center-item .info .title { font-size: 12px; }
+      .room-layout { grid-template-rows: 1fr 380px; }
+      .sidebar { height: 380px; max-height: 380px; }
+    }
+
+    @media (max-width: 480px) {
+      .stage { padding: 10px 12px; }
+      #youtube-player { height: 160px; }
+      .add-song { flex-direction: column; }
+      .add-song button { width: 100%; }
+      .song-preview { flex-wrap: wrap; }
+      .song-preview-actions { width: 100%; justify-content: flex-end; }
+      .room-layout { grid-template-rows: 1fr 320px; }
+      .sidebar { height: 320px; max-height: 320px; }
+    }
   </style>
 </head>
 <body>
@@ -1382,7 +1941,7 @@
   <div class="app">
     <div class="header">
       <div class="header-left">
-        <button onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border);padding:8px 16px;border-radius:10px;color:var(--text);cursor:pointer;font-family:inherit;">← Voltar</button>
+        <button onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;">← Voltar</button>
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
@@ -1393,11 +1952,9 @@
     </div>
 
     <div class="room-layout">
+      <!-- LADO ESQUERDO - STAGE -->
       <div class="stage">
-        <a href="https://www.instagram.com/terrasonora/" target="_blank" rel="noopener noreferrer" class="terra-banner" style="display:block;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;background:var(--bg-card);width:100%;height:320px;cursor:pointer;flex-shrink:0;">
-          <img src="https://iili.io/Ciid52s.jpg" alt="Terra Sonora — Siga no Instagram" style="width:100%;height:100%;display:block;object-fit:cover;background:linear-gradient(180deg,#0a0a14,#050508);">
-        </a>
-
+        <!-- Player -->
         <div class="player-section">
           <div class="player-header">
             <span class="now-playing-label">Tocando agora</span>
@@ -1409,7 +1966,7 @@
                 <div class="eq-bar" style="height:18px;"></div>
                 <div class="eq-bar" style="height:10px;"></div>
               </div>
-              <span class="live-indicator"><span class="live-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--danger);animation:pulse 1.5s infinite;"></span>Ao vivo</span>
+              <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
             </div>
           </div>
           <div id="youtube-player"></div>
@@ -1427,23 +1984,35 @@
               <span id="currentTime">0:00</span>
               <span id="totalTime">0:00</span>
             </div>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
-              <span style="font-size:14px;">🔊</span>
-              <input type="range" id="volumeSlider" min="0" max="100" value="80" style="flex:1;height:4px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer;" oninput="setVolume(this.value)">
-              <span id="volumeValue" style="font-size:12px;color:var(--text-muted);min-width:28px;text-align:right;">80%</span>
+            <div class="volume-control">
+              <span style="font-size:13px;">🔊</span>
+              <input type="range" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
+              <span id="volumeValue" style="font-size:11px;color:var(--text-muted);min-width:28px;text-align:right;">80%</span>
             </div>
           </div>
         </div>
 
+        <!-- Lista de Músicas (CENTRO) -->
+        <div class="queue-center">
+          <div class="queue-center-header">
+            <span>🎵 Fila de músicas</span>
+            <span class="count" id="queueCenterCount">0 músicas</span>
+          </div>
+          <div id="queueCenterList">
+            <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>
+          </div>
+        </div>
+
+        <!-- Adicionar Música -->
         <div class="add-song">
-          <div class="input-wrapper">
+          <div class="input-wrapper" style="flex:1;">
             <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="handleSongUrlInput()" onpaste="setTimeout(handleSongUrlInput, 0)">
             <span class="input-hint">🔗 Ex: youtube.com/watch?v=... ou youtu.be/...</span>
           </div>
           <button id="addBtn" onclick="addSong()">Adicionar</button>
         </div>
 
-        <div class="song-preview hidden" id="songPreview" aria-live="polite">
+        <div class="song-preview hidden" id="songPreview">
           <div class="song-preview-thumb" id="songPreviewThumb">🎵</div>
           <div class="song-preview-info">
             <div class="song-preview-title" id="songPreviewTitle">Prévia da música</div>
@@ -1451,27 +2020,25 @@
             <div class="song-preview-status" id="songPreviewStatus"></div>
           </div>
           <div class="song-preview-actions hidden" id="songPreviewActions">
-            <button class="song-preview-confirm" id="songPreviewConfirmBtn" onclick="confirmAddSong()">✓ Adicionar à fila</button>
-            <button class="song-preview-cancel" onclick="cancelSongPreview()">✕ Cancelar</button>
+            <button class="song-preview-confirm" id="songPreviewConfirmBtn" onclick="confirmAddSong()">✓ Adicionar</button>
+            <button class="song-preview-cancel" onclick="cancelSongPreview()">✕</button>
           </div>
         </div>
         <div class="cooldown-text hidden" id="cooldownText"></div>
       </div>
 
-      <!-- ===== SIDEBAR REORGANIZADO ===== -->
+      <!-- LADO DIREITO - SIDEBAR (CHAT) -->
       <div class="sidebar">
-        <!-- USERS - Mantido no topo -->
-        <div class="users-panel" style="padding:14px 18px; flex-shrink: 0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div style="display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:14px;font-weight:600;">
-              <span style="font-size:18px;">👥</span>
-              <span id="userCount">0</span> ouvinte<span id="userCountPlural">s</span> na sala
-            </div>
+        <!-- Users -->
+        <div class="users-panel">
+          <div class="user-count">
+            <span class="icon">👥</span>
+            <span id="userCount">0</span> ouvinte<span id="userCountPlural">s</span> na sala
           </div>
         </div>
 
-        <!-- CHAT - Agora em cima (flex: 1) -->
-        <div class="chat-panel" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
+        <!-- Chat -->
+        <div class="chat-panel">
           <div class="chat-controls">
             <button id="toggleAutoScrollBtn" class="scroll-toggle" onclick="toggleAutoScroll()">
               📌 Auto-scroll: ON
@@ -1520,17 +2087,6 @@
               <span class="emoji-item" onclick="insertEmoji('🌙')">🌙</span>
               <span class="emoji-item" onclick="insertEmoji('☀️')">☀️</span>
             </div>
-          </div>
-        </div>
-
-        <!-- QUEUE - Agora em baixo com altura fixa -->
-        <div class="queue-panel">
-          <div class="panel-header">
-            <span>🎵 Fila de músicas</span>
-            <span id="queueCountSidebar" style="color:var(--text-muted); font-size:12px;">0 músicas</span>
-          </div>
-          <div id="queueListSidebar">
-            <div style="color:var(--text-muted); font-size:12px; text-align:center; padding:20px 0;">Nenhuma música na fila</div>
           </div>
         </div>
       </div>
@@ -2096,7 +2652,7 @@ function onYouTubeIframeAPIReady() { initPlayer(); }
 function initPlayer() {
   if (player) return;
   player = new YT.Player('youtube-player', {
-    height: '320',
+    height: '280',
     width: '100%',
     playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, enablejsapi: 1 },
     events: {
@@ -2132,7 +2688,7 @@ function syncPlayer(state) {
   if (!player || !player.loadVideoById) return;
   currentRoomData = state;
   const track = state.queue[state.currentIndex];
-  renderQueue(state.queue, state.currentIndex);
+  renderQueueCenter(state.queue, state.currentIndex);
 
   if (!track) {
     currentTrackId = null;
@@ -2169,6 +2725,61 @@ function updateTrackInfo(track) {
   $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
 }
 
+// ===== RENDER QUEUE CENTER =====
+function renderQueueCenter(queue, currentIndex) {
+  const list = $('queueCenterList');
+  const count = $('queueCenterCount');
+  
+  if (!list) return;
+  
+  if (count) {
+    count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
+  }
+
+  list.innerHTML = '';
+
+  if (queue.length === 0) {
+    list.innerHTML = `<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>`;
+    return;
+  }
+
+  queue.forEach((track, i) => {
+    const div = document.createElement('div');
+    div.className = 'queue-center-item' + (i === currentIndex ? ' current' : '');
+    
+    // Admin pode clicar para pular
+    if (i !== currentIndex && amIAdmin) {
+      div.classList.add('clickable');
+      div.title = 'Clique para pular para esta música';
+      div.onclick = () => socket.emit('skipTo', i);
+    }
+
+    const positionLabel = i === currentIndex ? '▶' : (i + 1);
+
+    div.innerHTML = `
+      <span class="position">${positionLabel}</span>
+      <div class="thumb">
+        <img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'">
+      </div>
+      <div class="info">
+        <div class="title">${escapeHtml(track.title)}</div>
+        <div class="artist">${escapeHtml(track.artist)}</div>
+      </div>
+      <span class="dj">${escapeHtml(track.dj || '')}</span>
+      ${i !== currentIndex && amIAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();removeFromQueue(${i})" title="Remover da fila">✕</button>` : ''}
+    `;
+    list.appendChild(div);
+  });
+}
+
+function removeFromQueue(index) {
+  if (!amIAdmin) {
+    toast('Apenas administradores podem remover músicas', 'error');
+    return;
+  }
+  socket.emit('removeFromQueue', index);
+}
+
 // ===== SOCKET EVENTS =====
 socket.on('roomState', (state) => {
   const prevTrackId = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex]
@@ -2189,6 +2800,7 @@ socket.on('queueEmpty', () => {
   $('currentTime').textContent = '0:00';
   $('totalTime').textContent = '0:00';
   try { if (player && player.stopVideo) player.stopVideo(); } catch(e) {}
+  renderQueueCenter([], 0);
   toast('Fila encerrada! Adicione mais músicas.', 'success');
 });
 
@@ -2217,43 +2829,6 @@ socket.on('chatCleared', () => {
   }
   toast('Chat limpo pelo administrador', 'success');
 });
-
-// ===== QUEUE =====
-function renderQueue(queue, currentIndex) {
-  const sidebarList = $('queueListSidebar');
-  const sidebarCount = $('queueCountSidebar');
-  
-  if (sidebarList) {
-    sidebarList.innerHTML = '';
-    if (sidebarCount) sidebarCount.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
-
-    if (queue.length === 0) {
-      sidebarList.innerHTML = `<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:20px 0;">Nenhuma música na fila</div>`;
-    } else {
-      queue.forEach((track, i) => {
-        const div = document.createElement('div');
-        div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
-        
-        if (i !== currentIndex && amIAdmin) {
-          div.style.cursor = 'pointer';
-          div.onclick = () => socket.emit('skipTo', i);
-        }
-
-        div.innerHTML = `
-          <div class="thumb">
-            <img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'">
-          </div>
-          <div class="info">
-            <div class="title">${escapeHtml(track.title)}</div>
-            <div class="artist">${escapeHtml(track.artist)}</div>
-          </div>
-          <div class="dj">${escapeHtml(track.dj || '')}</div>
-        `;
-        sidebarList.appendChild(div);
-      });
-    }
-  }
-}
 
 // ===== ADD SONG =====
 function extractYouTubeId(rawUrl) {
@@ -2524,13 +3099,13 @@ function renderMessage(msg) {
   if (msg.isMusic) {
     div.className = 'msg msg-music';
     div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <span style="font-size:16px;">🎵</span>
-        <span style="font-weight:700;color:var(--accent);font-size:13px;">${escapeHtml(msg.user)}</span>
-        <span style="color:var(--text-muted);font-size:12px;">adicionou uma música</span>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+        <span style="font-size:14px;">🎵</span>
+        <span style="font-weight:700;color:var(--accent);font-size:12px;">${escapeHtml(msg.user)}</span>
+        <span style="color:var(--text-muted);font-size:11px;">adicionou uma música</span>
         <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
       </div>
-      <div style="color:var(--text);font-weight:600;font-size:14px;margin-bottom:4px;">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
+      <div class="music-info">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
     `;
   } else if (msg.isSystem) {
     div.className = 'msg msg-system';
@@ -2553,12 +3128,12 @@ function renderMessage(msg) {
     const likeCount = likesData.likes;
 
     div.innerHTML = `
-      <div style="display:flex;align-items:flex-start;gap:8px;width:100%;">
-        <div style="width:28px;height:28px;border-radius:50%;background:${msg.color || '#888'}22;color:${msg.color || '#888'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:2px solid ${msg.color || '#888'}40;">${avatar}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+      <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
+        <div class="msg-avatar" style="background:${msg.color || '#888'}22;color:${msg.color || '#888'};border-color:${msg.color || '#888'}40;">${avatar}</div>
+        <div class="msg-content">
+          <div class="msg-header">
             <span class="msg-user" style="color:${msg.color || '#fff'};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
-            <span class="msg-time" style="opacity:0.5;">${formatTime(msg.createdAt)}</span>
+            <span class="msg-time">${formatTime(msg.createdAt)}</span>
           </div>
           <span class="msg-text">${processedText}</span>
           <div class="msg-actions">
@@ -2614,7 +3189,7 @@ function toggleFire(msgId, btn) {
 function isChatNearBottom() {
   const box = $('chatBox');
   if (!box) return true;
-  return box.scrollHeight - box.scrollTop - box.clientHeight < 100;
+  return box.scrollHeight - box.scrollTop - box.clientHeight < 80;
 }
 
 function showNewMessagesPill() {
