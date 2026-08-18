@@ -176,14 +176,17 @@
       text-align: center;
       max-width: 420px;
       width: 92%;
+      max-height: 92vh;
+      overflow-y: auto;
+      overflow-x: hidden;
       position: relative;
-      overflow: hidden;
     }
     .login-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
       background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
     }
     .login-card .logo {
@@ -1494,15 +1497,18 @@
       padding: 28px;
       width: 90%;
       max-width: 420px;
+      max-height: 88vh;
+      overflow-y: auto;
+      overflow-x: hidden;
       animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
-      overflow: hidden;
     }
     .modal::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
     }
     .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.3px; }
@@ -2427,14 +2433,13 @@ function formatDuration(seconds) {
 }
 
 // ========== FIREBASE (cadastro de interesse da landing) ==========
-// TODO: troque pelas credenciais do SEU projeto Firebase (Configurações do projeto > Config do SDK)
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  projectId: "SEU_PROJETO",
-  storageBucket: "SEU_PROJETO.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId: "SEU_APP_ID",
+  apiKey: "AIzaSyCxNtXuV7exFiB2YbdTsHRLdYub6St8cZg",
+  authDomain: "sonora-fan-4cf69.firebaseapp.com",
+  projectId: "sonora-fan-4cf69",
+  storageBucket: "sonora-fan-4cf69.firebasestorage.app",
+  messagingSenderId: "82958071573",
+  appId: "1:82958071573:web:e43f7c23fcb6185ba65b1c",
 };
 let db = null;
 try {
