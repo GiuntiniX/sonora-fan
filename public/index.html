@@ -46,7 +46,6 @@
       background-attachment: fixed;
       display: flex;
       flex-direction: column;
-      transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, background-image 0.4s ease;
     }
 
     body::before {
@@ -54,10 +53,8 @@
       position: fixed;
       inset: 0;
       background: var(--bg-overlay);
-      backdrop-filter: var(--bg-image) ? blur(6px) : none;
       pointer-events: none;
       z-index: -1;
-      transition: all 0.4s ease;
     }
 
     * {
@@ -69,51 +66,6 @@
     ::-webkit-scrollbar-thumb {
       background: linear-gradient(180deg, var(--accent), var(--accent2));
       border-radius: 10px;
-    }
-
-    .stage-bg {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background: var(--bg-image) ? rgba(0,0,0,0.1) : 
-        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.15), transparent),
-        radial-gradient(ellipse 60% 40% at 20% 100%, rgba(255,107,53,0.08), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124,58,237,0.08), transparent);
-    }
-
-    .spotlight-left, .spotlight-right {
-      position: fixed;
-      top: -20%;
-      width: 60vw;
-      height: 120vh;
-      pointer-events: none;
-      z-index: 0;
-      mix-blend-mode: screen;
-      opacity: 0.3;
-    }
-    .spotlight-left {
-      left: -20%;
-      background: radial-gradient(ellipse at center, rgba(255,107,53,0.12) 0%, transparent 70%);
-      animation: spotlight 4s ease-in-out infinite;
-    }
-    .spotlight-right {
-      right: -20%;
-      background: radial-gradient(ellipse at center, rgba(124,58,237,0.12) 0%, transparent 70%);
-      animation: spotlight2 5s ease-in-out infinite;
-    }
-
-    @keyframes spotlight {
-      0%, 100% { transform: rotate(-15deg) scale(1); }
-      25% { transform: rotate(-10deg) scale(1.1); }
-      50% { transform: rotate(-20deg) scale(0.95); }
-      75% { transform: rotate(-12deg) scale(1.05); }
-    }
-    @keyframes spotlight2 {
-      0%, 100% { transform: rotate(15deg) scale(1); }
-      25% { transform: rotate(20deg) scale(1.15); }
-      50% { transform: rotate(10deg) scale(0.9); }
-      75% { transform: rotate(18deg) scale(1.1); }
     }
 
     .particles {
@@ -149,7 +101,7 @@
       50% { transform: translateY(-100vh) rotate(180deg); }
     }
 
-    /* ===== LANDING SCREEN ===== */
+    /* ===== LANDING ===== */
     .landing-screen {
       position: relative;
       z-index: 90;
@@ -184,35 +136,11 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .landing-nav-btn { display: none !important; }
-
     .landing-hero {
       text-align: center;
       max-width: 720px;
       margin: 0 auto 72px;
     }
-    .landing-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 16px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-secondary);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      margin-bottom: 24px;
-    }
-    .landing-badge .dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--danger);
-      box-shadow: 0 0 8px var(--danger);
-      animation: pulse 1.6s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
     .landing-hero h1 {
       font-size: 52px;
       font-weight: 800;
@@ -263,13 +191,6 @@
     }
     .landing-cta-secondary:hover { background: var(--bg-hover); border-color: var(--accent2); }
 
-    .landing-hero-visual {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 6px;
-      height: 64px;
-    }
     .landing-features {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -285,7 +206,7 @@
     }
     .landing-feature-card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
     .landing-feature-card .icon { font-size: 26px; margin-bottom: 14px; }
-    .landing-feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
+    .landing-feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
     .landing-feature-card p { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
 
     .landing-cta-band {
@@ -296,7 +217,6 @@
       text-align: center;
       position: relative;
       overflow: hidden;
-      backdrop-filter: blur(10px);
     }
     .landing-cta-band::before {
       content: '';
@@ -305,10 +225,10 @@
       height: 3px;
       background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
     }
-    .landing-cta-band h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.4px; }
+    .landing-cta-band h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
     .landing-cta-band p { color: var(--text-secondary); font-size: 14px; margin-bottom: 22px; }
 
-    /* ===== LOGIN SCREEN ===== */
+    /* ===== LOGIN ===== */
     .login-screen {
       position: fixed;
       inset: 0;
@@ -340,8 +260,8 @@
       border-radius: var(--radius) var(--radius) 0 0;
       background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
     }
-    .login-card .logo { font-size: 56px; margin-bottom: 12px; filter: drop-shadow(0 0 20px var(--accent-glow)); }
-    .login-card h1 { font-size: 32px; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.5px; }
+    .login-card .logo { font-size: 56px; margin-bottom: 12px; }
+    .login-card h1 { font-size: 32px; font-weight: 800; margin-bottom: 6px; }
     .login-card h1 span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .login-card p { color: var(--text-secondary); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
     .login-card input {
@@ -353,10 +273,9 @@
     .login-card .login-error.show { display: block; }
     .login-card button { width: 100%; padding: 16px; border-radius: var(--radius-sm); border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
     .login-card button:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(124,58,237,0.3); }
-    .login-card button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .login-card button:disabled { opacity: 0.6; cursor: not-allowed; }
     .login-switch { margin-top: 16px; color: var(--text-muted); font-size: 13px; }
     .login-switch a { color: var(--accent); cursor: pointer; font-weight: 600; text-decoration: none; }
-    .login-switch a:hover { text-decoration: underline; }
 
     /* ===== MODAIS ===== */
     .modal-overlay {
@@ -367,7 +286,7 @@
       background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 90%; max-width: 480px; max-height: 92vh; overflow-y: auto; position: relative; animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
-    .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.3px; }
+    .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
     .modal input, .modal select { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 15px; outline: none; margin-bottom: 14px; font-family: inherit; transition: all 0.2s; }
     .modal input:focus, .modal select:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
     .form-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; margin-top: 14px; }
@@ -385,343 +304,71 @@
     .modal-actions .btn-secondary:hover { background: var(--bg-hover); }
     .modal-actions .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
     .modal-actions .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
-    .password-strength { height: 4px; border-radius: 2px; background: var(--border); margin-top: -10px; margin-bottom: 14px; overflow: hidden; }
-    .password-strength .fill { height: 100%; width: 0%; transition: width 0.3s, background 0.3s; border-radius: 2px; }
 
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    /* ===== MODAL DE BOAS-VINDAS ===== */
-    .welcome-modal {
-      max-width: 640px !important;
-      padding: 32px 36px !important;
+    /* ===== ADMIN PANEL ===== */
+    .admin-panel {
+      max-width: 700px !important;
       max-height: 90vh;
-      overflow-y: auto;
+      overflow-y: auto !important;
     }
 
-    .welcome-header {
-      text-align: center;
-      margin-bottom: 28px;
-    }
-
-    .welcome-icon {
-      font-size: 48px;
-      margin-bottom: 8px;
-      display: block;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    .welcome-modal h2 {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .welcome-subtitle {
-      color: var(--text-secondary);
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .welcome-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      margin: 24px 0 28px;
-    }
-
-    .welcome-step {
-      display: flex;
-      gap: 14px;
-      padding: 14px 16px;
-      border-radius: var(--radius-sm);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      transition: all 0.2s;
-    }
-
-    .welcome-step:hover {
-      border-color: var(--border-hover);
-      transform: translateX(4px);
-    }
-
-    .step-number {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .step-content {
-      display: flex;
-      gap: 12px;
-      flex: 1;
-    }
-
-    .step-icon {
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-
-    .step-content h4 {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 2px;
-      color: var(--text);
-    }
-
-    .step-content p {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    .step-example {
-      margin-top: 6px;
-      padding: 4px 10px;
-      background: var(--bg-elevated);
-      border-radius: 6px;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .example-label {
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .step-example code {
-      color: var(--accent);
-      background: transparent;
-      font-family: monospace;
-      font-size: 12px;
-      word-break: break-all;
-    }
-
-    .step-tip {
-      margin-top: 6px;
-      padding: 6px 10px;
-      background: rgba(255, 107, 53, 0.08);
-      border-radius: 6px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-    }
-
-    .tip-icon {
-      flex-shrink: 0;
-    }
-
-    .quick-tips {
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(255, 107, 53, 0.05));
-      border-color: rgba(124, 58, 237, 0.2);
-    }
-
-    .quick-tips-list {
-      list-style: none;
-      padding: 0;
-      margin: 4px 0 0;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4px 16px;
-    }
-
-    .quick-tips-list li {
-      font-size: 12.5px;
-      color: var(--text-secondary);
-      padding: 2px 0;
-      line-height: 1.5;
-    }
-
-    .quick-tips-list li strong {
-      color: var(--text);
-    }
-
-    .welcome-actions {
+    .admin-user-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
-
-    .welcome-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: var(--text-secondary);
-      cursor: pointer;
-    }
-
-    .welcome-checkbox input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-
-    .welcome-start-btn {
-      padding: 12px 32px;
-      border-radius: var(--radius-sm);
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-
-    .welcome-start-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.35);
-    }
-
-    @media (max-width: 640px) {
-      .welcome-modal {
-        padding: 24px 18px !important;
-      }
-      
-      .welcome-step {
-        padding: 12px 14px;
-        flex-direction: column;
-      }
-      
-      .step-content {
-        flex-direction: column;
-        gap: 4px;
-      }
-      
-      .quick-tips-list {
-        grid-template-columns: 1fr;
-      }
-      
-      .welcome-actions {
-        flex-direction: column-reverse;
-        align-items: stretch;
-      }
-      
-      .welcome-checkbox {
-        justify-content: center;
-      }
-    }
-
-    @keyframes slideUpWelcome {
-      from {
-        opacity: 0;
-        transform: translateY(40px) scale(0.96);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .welcome-modal {
-      animation: slideUpWelcome 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    /* ===== CONTROLES DO CHAT ===== */
-    .chat-controls {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 8px 16px 4px;
-      flex-shrink: 0;
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .scroll-toggle {
-      padding: 4px 12px;
-      border-radius: 16px;
+      padding: 8px 12px;
+      border-radius: 8px;
       background: var(--bg);
       border: 1px solid var(--border);
-      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .admin-user-item .name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .admin-user-item .email {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .admin-user-item .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .admin-user-item .actions button {
+      padding: 2px 10px;
+      border-radius: 4px;
+      border: none;
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
       font-family: inherit;
-      white-space: nowrap;
     }
 
-    .scroll-toggle:hover {
-      border-color: var(--accent2);
-      color: var(--text);
-      transform: translateY(-1px);
+    .admin-user-item .actions .promote {
+      background: var(--accent2);
+      color: #fff;
     }
 
-    .scroll-toggle.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: rgba(255, 107, 53, 0.1);
+    .admin-user-item .actions .delete {
+      background: var(--danger);
+      color: #fff;
     }
 
-    .scroll-toggle.danger:hover {
-      border-color: var(--danger);
-      color: var(--danger);
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    .help-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      cursor: pointer;
-      font-size: 18px;
-      transition: all 0.2s;
-      font-family: inherit;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .help-btn:hover {
-      background: var(--bg-hover);
-      border-color: var(--accent2);
-      transform: scale(1.05);
-    }
-
-    .input-wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .input-hint {
-      font-size: 11px;
-      color: var(--text-muted);
-      padding-left: 4px;
-    }
-
-    .input-wrapper input {
-      width: 100%;
+    .admin-badge-mini {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      padding: 1px 8px;
+      border-radius: 8px;
+      font-size: 9px;
+      font-weight: 700;
+      margin-left: 4px;
     }
 
     /* ===== APP ===== */
@@ -731,24 +378,24 @@
     .screen.active { display: flex; }
 
     .header {
-      display: flex; align-items: center; justify-content: space-between; padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between; padding: 12px 24px;
       border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.5); backdrop-filter: blur(20px);
       position: sticky; top: 0; z-index: 50; flex-shrink: 0;
     }
     .header-left { display: flex; align-items: center; gap: 16px; }
-    .header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .header h1 { font-size: 18px; font-weight: 700; }
     .header h1 span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-    .header-right { display: flex; align-items: center; gap: 16px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
     .header .user-info { display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 10px; border-radius: 20px; background: var(--bg-card); border: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); }
-    .logout-btn { padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+    .logout-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; transition: all 0.15s; font-weight: 500; font-family: inherit; }
     .logout-btn:hover { background: rgba(239,68,68,0.1); border-color: var(--danger); color: var(--danger); }
 
     .admin-toggle-btn {
       background: transparent;
       border: 1px solid var(--border);
       border-radius: 50%;
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       cursor: pointer;
       font-size: 16px;
       transition: all 0.2s;
@@ -757,32 +404,41 @@
       justify-content: center;
       font-family: inherit;
     }
-
     .admin-toggle-btn:hover {
       background: var(--bg-hover);
       border-color: var(--accent2);
       transform: scale(1.05);
     }
 
+    .admin-badge {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .admin-badge.hidden { display: none; }
+
     /* ===== LOBBY ===== */
     .lobby { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
     .lobby-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
-    .lobby-top h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .lobby-top h2 { font-size: 24px; font-weight: 700; }
     .lobby-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .lobby-actions button { padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; }
     .lobby-actions button:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(124,58,237,0.3); }
 
     .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .room-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-    .room-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(124,58,237,0.15); }
-    .room-card:hover .room-thumb img { transform: scale(1.08); }
-    .room-thumb { position: relative; width: 100%; aspect-ratio: 16 / 9; background: linear-gradient(135deg, var(--accent2-glow), var(--accent-glow)); overflow: hidden; flex-shrink: 0; }
-    .room-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+    .room-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.3s ease; overflow: hidden; }
+    .room-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.45); }
+    .room-thumb { position: relative; width: 100%; aspect-ratio: 16 / 9; background: linear-gradient(135deg, var(--accent2-glow), var(--accent-glow)); overflow: hidden; }
+    .room-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .room-live-badge { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); font-size: 11px; font-weight: 700; color: var(--text); z-index: 2; }
     .room-live-badge .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
     .room-listeners-badge { position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 20px; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); font-size: 11px; font-weight: 600; color: var(--text); z-index: 2; }
     .room-card-body { padding: 16px 18px 18px; }
-    .room-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.2px; }
+    .room-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
     .room-card .meta { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-muted); }
 
     /* ===== TOAST ===== */
@@ -791,7 +447,7 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM LAYOUT ===== */
+    /* ===== ROOM ===== */
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 380px;
@@ -801,19 +457,8 @@
       min-height: 0;
       height: 100%;
     }
-
-    #screen-room .app {
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
-    }
-
-    @media (max-width: 1024px) {
-      .room-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr 420px;
-      }
-    }
+    #screen-room .app { height: 100vh; height: 100dvh; overflow: hidden; }
+    @media (max-width: 1024px) { .room-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 420px; } }
 
     .stage {
       display: flex;
@@ -832,7 +477,6 @@
       background: var(--bg-card);
       overflow: hidden;
       flex-shrink: 0;
-      backdrop-filter: blur(4px);
     }
     .player-header {
       display: flex;
@@ -841,150 +485,26 @@
       padding: 10px 16px;
       border-bottom: 1px solid var(--border);
     }
-    .now-playing-label {
-      font-size: 10px;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-weight: 700;
-    }
-    .live-indicator {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--danger);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .live-dot {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--danger);
-      animation: pulse 1.5s infinite;
-    }
-    #youtube-player {
-      width: 100%;
-      height: 280px;
-      background: #000;
-    }
-    .player-info {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      padding: 14px 16px;
-    }
-    .cover {
-      width: 60px;
-      height: 60px;
-      border-radius: 10px;
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      flex-shrink: 0;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    .cover img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .track-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .track-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      letter-spacing: -0.3px;
-    }
-    .track-artist {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .track-dj {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-    .progress-section {
-      padding: 0 16px 14px;
-    }
-    .progress-bar {
-      width: 100%;
-      height: 4px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-      position: relative;
-      cursor: pointer;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      border-radius: 3px;
-      transition: width 0.5s linear;
-      box-shadow: 0 0 10px var(--accent-glow);
-    }
-    .progress-time {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 6px;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-    .volume-control {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 8px;
-    }
-    .volume-control input[type="range"] {
-      flex: 1;
-      height: 4px;
-      -webkit-appearance: none;
-      appearance: none;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-      cursor: pointer;
-    }
-    .volume-control input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-    }
-    .volume-control input[type="range"]::-moz-range-thumb {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-      border: none;
-    }
+    .now-playing-label { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
+    .live-indicator { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--danger); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); animation: pulse 1.5s infinite; }
+    #youtube-player { width: 100%; height: 280px; background: #000; }
+    .player-info { display: flex; gap: 14px; align-items: center; padding: 14px 16px; }
+    .cover { width: 60px; height: 60px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; overflow: hidden; border: 1px solid var(--border); }
+    .cover img { width: 100%; height: 100%; object-fit: cover; }
+    .track-info { flex: 1; min-width: 0; }
+    .track-title { font-size: 16px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist { font-size: 13px; color: var(--text-secondary); margin-top: 2px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-dj { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .progress-section { padding: 0 16px 14px; }
+    .progress-bar { width: 100%; height: 4px; background: var(--border); border-radius: 3px; overflow: hidden; position: relative; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.5s linear; }
+    .progress-time { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--text-muted); }
+    .volume-control { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .volume-control input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
+    .volume-control input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); cursor: pointer; }
 
-    /* ===== QUEUE CENTER ===== */
+    /* ===== QUEUE ===== */
     .queue-center {
       flex: 1;
       min-height: 0;
@@ -995,7 +515,6 @@
       background: var(--bg-card);
       overflow: hidden;
     }
-
     .queue-center-header {
       display: flex;
       align-items: center;
@@ -1005,31 +524,11 @@
       flex-shrink: 0;
       background: rgba(0,0,0,0.2);
     }
+    .queue-center-header span { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .queue-center-header .count { color: var(--text-muted); font-size: 12px; font-weight: 600; }
+    #queueCenterList { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
 
-    .queue-center-header span {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .queue-center-header .count {
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    #queueCenterList {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 12px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .queue-center-item {
+    .queue-item {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -1039,114 +538,25 @@
       cursor: default;
       border-left: 3px solid transparent;
     }
+    .queue-item:hover { background: var(--bg-hover); }
+    .queue-item.current { background: var(--bg-hover); border-left-color: var(--accent); }
+    .queue-item .pos { font-size: 11px; color: var(--text-muted); min-width: 24px; text-align: center; font-weight: 600; }
+    .queue-item.current .pos { color: var(--accent); }
+    .queue-item .thumb { width: 40px; height: 30px; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: var(--bg); }
+    .queue-item .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .queue-item .info { flex: 1; min-width: 0; }
+    .queue-item .info .title { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .queue-item.current .info .title { color: var(--text); font-weight: 600; }
+    .queue-item .info .artist { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .queue-item .dj { font-size: 10px; color: var(--text-muted); flex-shrink: 0; padding: 2px 8px; background: var(--bg); border-radius: 10px; }
+    .queue-item .remove-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px; transition: all 0.15s; opacity: 0; font-family: inherit; }
+    .queue-item:hover .remove-btn { opacity: 1; }
+    .queue-item .remove-btn:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+    .queue-item.current .remove-btn { display: none; }
+    .queue-item.clickable { cursor: pointer; }
+    .queue-item.clickable:hover { background: var(--bg-hover); border-left-color: var(--accent2); }
 
-    .queue-center-item:hover {
-      background: var(--bg-hover);
-    }
-
-    .queue-center-item.current {
-      background: var(--bg-hover);
-      border-left-color: var(--accent);
-    }
-
-    .queue-center-item .position {
-      font-size: 11px;
-      color: var(--text-muted);
-      min-width: 24px;
-      text-align: center;
-      font-weight: 600;
-    }
-
-    .queue-center-item.current .position {
-      color: var(--accent);
-    }
-
-    .queue-center-item .thumb {
-      width: 40px;
-      height: 30px;
-      border-radius: 4px;
-      overflow: hidden;
-      flex-shrink: 0;
-      background: var(--bg);
-    }
-
-    .queue-center-item .thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .queue-center-item .info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .queue-center-item .info .title {
-      font-size: 13px;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .queue-center-item.current .info .title {
-      color: var(--text);
-      font-weight: 600;
-    }
-
-    .queue-center-item .info .artist {
-      font-size: 11px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .queue-center-item .dj {
-      font-size: 10px;
-      color: var(--text-muted);
-      flex-shrink: 0;
-      padding: 2px 8px;
-      background: var(--bg);
-      border-radius: 10px;
-    }
-
-    .queue-center-item .remove-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 14px;
-      padding: 4px;
-      border-radius: 4px;
-      transition: all 0.15s;
-      opacity: 0;
-      font-family: inherit;
-    }
-
-    .queue-center-item:hover .remove-btn {
-      opacity: 1;
-    }
-
-    .queue-center-item .remove-btn:hover {
-      color: var(--danger);
-      background: rgba(239, 68, 68, 0.1);
-    }
-
-    .queue-center-item.current .remove-btn {
-      display: none;
-    }
-
-    .queue-center-item.clickable {
-      cursor: pointer;
-    }
-
-    .queue-center-item.clickable:hover {
-      background: var(--bg-hover);
-      border-left-color: var(--accent2);
-    }
-
-    /* ===== ADICIONAR MÚSICA ===== */
+    /* ===== ADD SONG ===== */
     .add-song {
       display: flex;
       gap: 10px;
@@ -1156,39 +566,10 @@
       background: var(--bg-card);
       flex-shrink: 0;
     }
-    .add-song input {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-      outline: none;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-    .add-song input:focus {
-      border-color: var(--accent2);
-      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
-    }
-    .add-song button {
-      padding: 10px 20px;
-      border-radius: 10px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: inherit;
-      white-space: nowrap;
-    }
-    .add-song button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 25px rgba(124,58,237,0.3);
-    }
+    .add-song input { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: all 0.2s; font-family: inherit; }
+    .add-song input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+    .add-song button { padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
+    .add-song button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
 
     .song-preview {
       display: flex;
@@ -1201,109 +582,21 @@
       flex-shrink: 0;
     }
     .song-preview.hidden { display: none; }
-    .song-preview-thumb {
-      width: 50px;
-      height: 38px;
-      border-radius: 6px;
-      background: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid var(--border);
-    }
-    .song-preview-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .song-preview-duration {
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      font-size: 9px;
-      background: rgba(0,0,0,0.7);
-      padding: 1px 4px;
-      border-radius: 3px;
-      color: #fff;
-    }
-    .song-preview-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .song-preview-title {
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .song-preview-artist {
-      font-size: 12px;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .song-preview-status {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-    .song-preview-actions {
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
+    .song-preview-thumb { width: 50px; height: 38px; border-radius: 6px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; overflow: hidden; position: relative; border: 1px solid var(--border); }
+    .song-preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .song-preview-duration { position: absolute; bottom: 2px; right: 2px; font-size: 9px; background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 3px; color: #fff; }
+    .song-preview-info { flex: 1; min-width: 0; }
+    .song-preview-title { font-weight: 600; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-preview-artist { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-preview-status { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .song-preview-actions { display: flex; gap: 6px; flex-shrink: 0; }
     .song-preview-actions.hidden { display: none; }
-    .song-preview-confirm {
-      padding: 5px 12px;
-      border-radius: 6px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-weight: 600;
-      font-size: 12px;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .song-preview-confirm:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-    .song-preview-confirm:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(124,58,237,0.3);
-    }
-    .song-preview-cancel {
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 12px;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .song-preview-cancel:hover {
-      background: var(--bg-hover);
-    }
-    .cooldown-text {
-      font-size: 12px;
-      color: var(--accent);
-      text-align: center;
-      padding: 6px;
-      border-radius: 8px;
-      background: rgba(255,107,53,0.1);
-      border: 1px solid rgba(255,107,53,0.2);
-      flex-shrink: 0;
-    }
+    .song-preview-confirm { padding: 5px 12px; border-radius: 6px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 600; font-size: 12px; cursor: pointer; font-family: inherit; }
+    .song-preview-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+    .song-preview-confirm:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+    .song-preview-cancel { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; font-family: inherit; }
+    .song-preview-cancel:hover { background: var(--bg-hover); }
+    .cooldown-text { font-size: 12px; color: var(--accent); text-align: center; padding: 6px; border-radius: 8px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2); flex-shrink: 0; }
     .cooldown-text.hidden { display: none; }
 
     /* ===== SIDEBAR ===== */
@@ -1317,162 +610,53 @@
       min-height: 0;
       overflow: hidden;
     }
-
     @media (max-width: 1024px) {
-      .sidebar {
-        border-left: none;
-        border-top: 1px solid var(--border);
-        height: 420px;
-        max-height: 420px;
-      }
+      .sidebar { border-left: none; border-top: 1px solid var(--border); height: 420px; max-height: 420px; }
     }
 
-    .users-panel {
-      padding: 12px 18px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      background: rgba(0,0,0,0.2);
-    }
-    .users-panel .user-count {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--text-secondary);
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .users-panel .user-count .icon {
-      font-size: 18px;
-    }
+    .users-panel { padding: 12px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: rgba(0,0,0,0.2); }
+    .users-panel .user-count { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 14px; font-weight: 600; }
+    .users-panel .user-count .icon { font-size: 18px; }
 
     /* ===== CHAT ===== */
-    .chat-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      position: relative;
-      overflow: hidden;
-    }
+    .chat-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; overflow: hidden; }
+    .chat-controls { display: flex; justify-content: flex-end; gap: 8px; padding: 6px 14px; flex-shrink: 0; background: var(--bg-card); border-bottom: 1px solid var(--border); }
+    .chat-controls button { padding: 3px 10px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary); font-size: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .chat-controls button:hover { border-color: var(--accent2); color: var(--text); }
+    .chat-controls button.danger:hover { border-color: var(--danger); color: var(--danger); }
 
     .chat-messages {
       flex: 1;
       overflow-y: auto;
       overscroll-behavior: contain;
-      scroll-behavior: smooth;
       display: flex;
       flex-direction: column;
       gap: 2px;
-      padding: 12px 14px;
+      padding: 10px 14px;
       font-size: 14px;
       min-height: 0;
       max-height: 100%;
     }
 
-    .msg {
-      display: flex;
-      gap: 8px;
-      line-height: 1.5;
-      padding: 5px 8px;
-      border-radius: 8px;
-      animation: msgIn 0.2s ease;
-    }
-    .msg:hover {
-      background: rgba(255,255,255,0.02);
-    }
-    @keyframes msgIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .msg { display: flex; gap: 8px; line-height: 1.5; padding: 4px 8px; border-radius: 8px; animation: msgIn 0.2s ease; }
+    .msg:hover { background: rgba(255,255,255,0.02); }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    .msg-avatar {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      flex-shrink: 0;
-      border: 2px solid transparent;
-    }
+    .msg-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; border: 2px solid transparent; }
+    .msg-content { flex: 1; min-width: 0; }
+    .msg-header { display: flex; align-items: center; gap: 6px; margin-bottom: 1px; }
+    .msg-user { font-weight: 700; font-size: 12px; cursor: pointer; }
+    .msg-time { font-size: 10px; color: var(--text-muted); opacity: 0.5; }
+    .msg-text { color: var(--text-secondary); word-break: break-word; font-size: 13px; }
+    .msg-system .msg-text { color: var(--text-muted); font-style: italic; font-size: 12px; }
+    .msg-music { background: rgba(124,58,237,0.05); border-radius: 8px; padding: 6px 10px; }
+    .msg-music .music-info { color: var(--text); font-weight: 600; font-size: 13px; margin-top: 2px; }
 
-    .msg-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .msg-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 1px;
-    }
-    .msg-user {
-      font-weight: 700;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .msg-time {
-      font-size: 10px;
-      color: var(--text-muted);
-      opacity: 0.5;
-    }
-    .msg-text {
-      color: var(--text-secondary);
-      word-break: break-word;
-      font-size: 13px;
-    }
-    .msg-system .msg-text {
-      color: var(--text-muted);
-      font-style: italic;
-      font-size: 12px;
-    }
-    .msg-music {
-      background: rgba(124, 58, 237, 0.05);
-      border-radius: 8px;
-      padding: 8px 10px;
-    }
-    .msg-music .music-info {
-      color: var(--text);
-      font-weight: 600;
-      font-size: 13px;
-      margin-top: 2px;
-    }
-
-    .msg-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 3px;
-      margin-left: 32px;
-    }
-    .msg-like-btn {
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      padding: 2px 6px;
-      border-radius: 10px;
-      color: var(--text-muted);
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      font-family: inherit;
-    }
-    .msg-like-btn:hover {
-      background: var(--bg-hover);
-      color: var(--text-secondary);
-    }
-    .msg-like-btn.liked {
-      color: var(--accent);
-      background: rgba(255,107,53,0.1);
-    }
-    .msg-like-count {
-      font-size: 11px;
-      font-weight: 600;
-    }
+    .msg-actions { display: flex; align-items: center; gap: 4px; margin-top: 2px; margin-left: 30px; }
+    .msg-like-btn { background: transparent; border: none; cursor: pointer; font-size: 12px; padding: 2px 4px; border-radius: 8px; color: var(--text-muted); transition: all 0.15s; display: flex; align-items: center; gap: 2px; font-family: inherit; }
+    .msg-like-btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
+    .msg-like-btn.liked { color: var(--accent); background: rgba(255,107,53,0.1); }
+    .msg-like-count { font-size: 10px; font-weight: 600; }
 
     .new-messages-pill {
       position: absolute;
@@ -1483,29 +667,20 @@
       color: #fff;
       border: none;
       border-radius: 20px;
-      padding: 6px 16px;
-      font-size: 12px;
+      padding: 5px 14px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       z-index: 10;
       box-shadow: 0 4px 20px rgba(255,107,53,0.4);
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.3s;
       font-family: inherit;
-      animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .new-messages-pill.hidden { display: none; }
-    .new-messages-pill:hover {
-      transform: translateX(-50%) scale(1.05);
-      box-shadow: 0 6px 30px rgba(124,58,237,0.5);
-    }
-
-    @keyframes bounceIn {
-      0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
-      100% { opacity: 1; transform: translateX(-50%) scale(1); }
-    }
+    .new-messages-pill:hover { transform: translateX(-50%) scale(1.05); }
 
     .chat-input-bar {
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-top: 1px solid var(--border);
       display: flex;
       gap: 8px;
@@ -1514,496 +689,38 @@
       flex-shrink: 0;
       position: relative;
     }
-    .chat-input-bar input {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-    .chat-input-bar input:focus {
-      border-color: var(--accent2);
-      box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
-    }
-    .chat-input-bar button {
-      padding: 8px 14px;
-      border-radius: 8px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: inherit;
-      white-space: nowrap;
-    }
-    .chat-input-bar button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
-    }
+    .chat-input-bar input { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 13px; outline: none; transition: all 0.2s; font-family: inherit; }
+    .chat-input-bar input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+    .chat-input-bar button { padding: 8px 14px; border-radius: 8px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
+    .chat-input-bar button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
 
-    .emoji-btn {
-      background: transparent;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 6px;
-      transition: background 0.15s;
-      flex-shrink: 0;
-    }
-    .emoji-btn:hover {
-      background: var(--bg-hover);
-    }
-    .emoji-panel {
-      display: none;
-      position: absolute;
-      bottom: 100%;
-      left: 0;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 8px;
-      max-width: 260px;
-      max-height: 180px;
-      overflow-y: auto;
-      flex-wrap: wrap;
-      gap: 3px;
-      z-index: 50;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    }
+    .emoji-btn { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.15s; flex-shrink: 0; }
+    .emoji-btn:hover { background: var(--bg-hover); }
+    .emoji-panel { display: none; position: absolute; bottom: 100%; left: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; max-width: 260px; max-height: 160px; overflow-y: auto; flex-wrap: wrap; gap: 3px; z-index: 50; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
     .emoji-panel.show { display: flex; }
-    .emoji-item {
-      font-size: 20px;
-      cursor: pointer;
-      padding: 3px 5px;
-      border-radius: 4px;
-      transition: background 0.15s;
-      line-height: 1;
-    }
-    .emoji-item:hover {
-      background: var(--bg-hover);
-    }
+    .emoji-item { font-size: 20px; cursor: pointer; padding: 3px 5px; border-radius: 4px; transition: background 0.15s; line-height: 1; }
+    .emoji-item:hover { background: var(--bg-hover); }
 
-    .admin-badge {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      padding: 3px 10px;
-      border-radius: 10px;
-      font-size: 10px;
-      font-weight: 700;
-      color: #fff;
-    }
-    .admin-badge.hidden { display: none; }
-
-    .eq-bar {
-      width: 4px;
-      border-radius: 2px;
-      background: linear-gradient(to top, var(--accent), var(--accent2));
-      transition: height 0.3s;
-    }
-    @keyframes equalizer {
-      0%, 100% { height: 4px; }
-      50% { height: 18px; }
-    }
-    @keyframes confettiFall {
-      0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-      100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; }
-    }
+    .eq-bar { width: 4px; border-radius: 2px; background: linear-gradient(to top, var(--accent), var(--accent2)); transition: height 0.3s; }
+    @keyframes equalizer { 0%, 100% { height: 4px; } 50% { height: 18px; } }
+    @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; } }
 
     .footer {
       text-align: center;
-      padding: 16px;
+      padding: 12px;
       border-top: 1px solid var(--border);
       color: var(--text-muted);
       font-size: 12px;
       background: rgba(0,0,0,0.5);
       backdrop-filter: blur(20px);
-      position: relative;
-      z-index: 10;
       flex-shrink: 0;
       width: 100%;
     }
-    .footer a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-    }
+    .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
     .footer a:hover { text-decoration: underline; }
 
-    /* ===== PAINEL ADMIN ===== */
-    .admin-panel {
-      max-width: 900px !important;
-      padding: 0 !important;
-      max-height: 95vh;
-      overflow: hidden;
-      animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .admin-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-
-    .admin-header h2 {
-      color: #fff;
-      font-size: 22px;
-      font-weight: 800;
-    }
-
-    .admin-close {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: #fff;
-      font-size: 20px;
-      cursor: pointer;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .admin-close:hover {
-      background: rgba(255,255,255,0.3);
-      transform: rotate(90deg);
-    }
-
-    .admin-tabs {
-      display: flex;
-      gap: 4px;
-      padding: 12px 16px 0;
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-
-    .admin-tab {
-      padding: 10px 18px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      border-radius: 8px 8px 0 0;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-
-    .admin-tab:hover {
-      color: var(--text);
-      background: var(--bg-hover);
-    }
-
-    .admin-tab.active {
-      color: var(--accent);
-      background: var(--bg);
-      border-bottom: 2px solid var(--accent);
-    }
-
-    .admin-content {
-      display: none;
-      padding: 20px 24px;
-      overflow-y: auto;
-      max-height: 60vh;
-      background: var(--bg);
-    }
-
-    .admin-content.active {
-      display: block;
-    }
-
-    .admin-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 18px 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      transition: all 0.2s;
-    }
-
-    .stat-card:hover {
-      border-color: var(--border-hover);
-      transform: translateY(-2px);
-    }
-
-    .stat-icon {
-      font-size: 28px;
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: rgba(124,58,237,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .stat-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .stat-value {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--text);
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    .admin-actions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-    }
-
-    .admin-action-btn {
-      padding: 14px 18px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text);
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-      text-align: center;
-    }
-
-    .admin-action-btn:hover {
-      border-color: var(--accent2);
-      background: var(--bg-hover);
-      transform: translateY(-2px);
-    }
-
-    .admin-action-btn.danger:hover {
-      border-color: var(--danger);
-      color: var(--danger);
-    }
-
-    .admin-table-wrap {
-      overflow-x: auto;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-    }
-
-    .admin-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .admin-table thead {
-      background: var(--bg-card);
-    }
-
-    .admin-table th {
-      padding: 12px 14px;
-      text-align: left;
-      font-weight: 700;
-      color: var(--text-secondary);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .admin-table td {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-secondary);
-    }
-
-    .admin-table tr:hover td {
-      background: var(--bg-hover);
-    }
-
-    .admin-table .admin-badge-table {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      padding: 2px 10px;
-      border-radius: 10px;
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .admin-btn-small {
-      padding: 4px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-secondary);
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-
-    .admin-btn-small:hover {
-      border-color: var(--accent2);
-      color: var(--text);
-    }
-
-    .admin-btn-small.danger:hover {
-      border-color: var(--danger);
-      color: var(--danger);
-    }
-
-    .admin-search {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .admin-search input {
-      flex: 1;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-      font-family: inherit;
-    }
-
-    .admin-search input:focus {
-      border-color: var(--accent2);
-    }
-
-    .admin-search button {
-      padding: 10px 18px;
-      border-radius: 8px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    .admin-settings-group {
-      margin-bottom: 24px;
-      padding: 18px 20px;
-      background: var(--bg-card);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border);
-    }
-
-    .admin-settings-group h3 {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      color: var(--text);
-    }
-
-    .setting-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 8px 0;
-      flex-wrap: wrap;
-    }
-
-    .setting-item label {
-      min-width: 180px;
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .setting-item input[type="number"],
-    .setting-item input[type="email"] {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 13px;
-      width: 120px;
-      font-family: inherit;
-      outline: none;
-    }
-
-    .setting-item input:focus {
-      border-color: var(--accent2);
-    }
-
-    .setting-item textarea {
-      flex: 1;
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 13px;
-      font-family: inherit;
-      resize: vertical;
-      outline: none;
-      min-width: 200px;
-    }
-
-    .setting-item textarea:focus {
-      border-color: var(--accent2);
-    }
-
-    .admin-list-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      border-radius: 6px;
-      background: var(--bg);
-      margin-bottom: 4px;
-    }
-
-    .admin-list-item .email {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    .admin-list-item .remove-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 14px;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-
-    .admin-list-item .remove-btn:hover {
-      color: var(--danger);
-      background: rgba(239,68,68,0.1);
-    }
+    .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
 
     @media (max-width: 768px) {
       .header { padding: 10px 14px; flex-wrap: wrap; gap: 6px; }
@@ -2012,61 +729,12 @@
       .player-info { padding: 10px 12px; }
       .cover { width: 48px; height: 48px; font-size: 18px; }
       .track-title { font-size: 14px; }
-      .queue-center-item { padding: 6px 8px; }
-      .queue-center-item .thumb { width: 32px; height: 24px; }
-      .queue-center-item .info .title { font-size: 12px; }
+      .queue-item { padding: 6px 8px; }
+      .queue-item .thumb { width: 32px; height: 24px; }
+      .queue-item .info .title { font-size: 12px; }
       .room-layout { grid-template-rows: 1fr 380px; }
       .sidebar { height: 380px; max-height: 380px; }
-      
-      .admin-panel {
-        padding: 0 !important;
-        max-width: 100% !important;
-        border-radius: 0 !important;
-        max-height: 100vh;
-      }
-      
-      .admin-header h2 {
-        font-size: 18px;
-      }
-      
-      .admin-content {
-        padding: 16px;
-        max-height: 70vh;
-      }
-      
-      .setting-item {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .setting-item label {
-        min-width: auto;
-      }
-      
-      .setting-item input[type="number"],
-      .setting-item input[type="email"] {
-        width: 100%;
-      }
-      
-      .admin-stats {
-        grid-template-columns: 1fr 1fr;
-      }
-      
-      .admin-actions-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .admin-tabs {
-        gap: 2px;
-        padding: 8px 8px 0;
-      }
-      
-      .admin-tab {
-        padding: 8px 12px;
-        font-size: 12px;
-      }
     }
-
     @media (max-width: 480px) {
       .stage { padding: 10px 12px; }
       #youtube-player { height: 160px; }
@@ -2081,9 +749,6 @@
 </head>
 <body>
 
-<div class="stage-bg"></div>
-<div class="spotlight-left"></div>
-<div class="spotlight-right"></div>
 <div class="particles">
   <div class="particle" style="bottom:-10%;left:5%;"></div>
   <div class="particle" style="bottom:-10%;left:15%;"></div>
@@ -2103,80 +768,59 @@
     <div class="landing-nav">
       <div class="landing-logo">🎸 Sonora <span>Fan</span></div>
     </div>
-
     <div class="landing-hero">
-      <div class="landing-badge"><span class="dot"></span> Salas ao vivo agora</div>
       <h1>A pista é sua.<br>A trilha sonora é <span>de todo mundo</span>.</h1>
-      <p>Entre em uma sala, jogue suas músicas favoritas na fila, vote com a galera e converse em tempo real — como um show, mas com você no controle da playlist.</p>
+      <p>Entre em uma sala, adicione suas músicas favoritas do YouTube e converse em tempo real com a galera.</p>
       <div class="landing-ctas">
         <button class="landing-cta-primary" onclick="showLogin()">🎤 Entrar na sala</button>
-        <button class="landing-cta-secondary" onclick="openSignupModal()">✍️ Criar minha conta</button>
-      </div>
-      <div class="landing-hero-visual">
-        <div class="equalizer" style="display:flex;align-items:flex-end;gap:3px;height:64px;">
-          <div class="eq-bar" style="width:6px;border-radius:4px;animation:equalizer 0.8s ease-in-out infinite;height:20px;background:linear-gradient(to top,var(--accent),var(--accent2));"></div>
-          <div class="eq-bar" style="width:6px;border-radius:4px;animation:equalizer 0.8s ease-in-out infinite 0.2s;height:40px;background:linear-gradient(to top,var(--accent),var(--accent2));"></div>
-          <div class="eq-bar" style="width:6px;border-radius:4px;animation:equalizer 0.8s ease-in-out infinite 0.1s;height:60px;background:linear-gradient(to top,var(--accent),var(--accent2));"></div>
-          <div class="eq-bar" style="width:6px;border-radius:4px;animation:equalizer 0.8s ease-in-out infinite 0.3s;height:34px;background:linear-gradient(to top,var(--accent),var(--accent2));"></div>
-          <div class="eq-bar" style="width:6px;border-radius:4px;animation:equalizer 0.8s ease-in-out infinite 0.15s;height:50px;background:linear-gradient(to top,var(--accent),var(--accent2));"></div>
-          <div class="eq-bar" style="width:6px;border-radius:4px;animation:equalizer 0.8s ease-in-out infinite 0.35s;height:22px;background:linear-gradient(to top,var(--accent),var(--accent2));"></div>
-          <div class="eq-bar" style="width:6px;border-radius:4px;animation:equalizer 0.8s ease-in-out infinite 0.05s;height:44px;background:linear-gradient(to top,var(--accent),var(--accent2));"></div>
-        </div>
+        <button class="landing-cta-secondary" onclick="openSignup()">✍️ Criar conta</button>
       </div>
     </div>
-
     <div class="landing-features">
       <div class="landing-feature-card">
         <div class="icon">🎶</div>
         <h3>Fila colaborativa</h3>
-        <p>Todo mundo adiciona música do YouTube, a fila toca em sincronia pra todos os ouvintes ao mesmo tempo.</p>
+        <p>Todo mundo adiciona música do YouTube, a fila toca em sincronia para todos.</p>
       </div>
       <div class="landing-feature-card">
         <div class="icon">💬</div>
         <h3>Chat ao vivo</h3>
-        <p>Comente a música tocando, reaja com emojis e curta as escolhas dos DJs da sala em tempo real.</p>
+        <p>Comente as músicas, reaja com emojis e curta as escolhas da galera.</p>
       </div>
       <div class="landing-feature-card">
         <div class="icon">🕺</div>
         <h3>Salas com identidade</h3>
-        <p>Crie sua própria sala, escolha um tema e convide a galera pra construir a vibe com você.</p>
+        <p>Crie sua própria sala e convide a galera pra construir a vibe com você.</p>
       </div>
     </div>
-
     <div class="landing-cta-band">
       <h2>Ainda não tem conta? Crie uma agora!</h2>
-      <p>Cadastre-se e entre nas salas para ouvir música com amigos, adicionar do YouTube e conversar em tempo real.</p>
-      <button class="landing-cta-primary" onclick="openSignupModal()">Criar minha conta 🎵</button>
+      <p>Cadastre-se e entre nas salas para ouvir música com amigos.</p>
+      <button class="landing-cta-primary" onclick="openSignup()">Criar minha conta 🎵</button>
     </div>
   </div>
 </div>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
     <div class="logo">🎸</div>
     <h1>Sonora <span>Fan</span></h1>
-    <p>Entre com sua conta para acessar as salas e curtir música com a galera.</p>
-    <div class="login-error" id="loginError">Credenciais inválidas. Tente novamente.</div>
+    <p>Entre com sua conta para acessar as salas.</p>
+    <div class="login-error" id="loginError">Credenciais inválidas.</div>
     <input type="email" id="loginEmail" placeholder="E-mail" onkeydown="if(event.key==='Enter') doLogin()">
     <input type="password" id="loginPassword" placeholder="Senha" onkeydown="if(event.key==='Enter') doLogin()">
     <button id="loginBtn" onclick="doLogin()">Entrar no palco</button>
-    <div class="login-switch">
-      Não tem conta? <a onclick="openSignupModal()">Cadastre-se agora</a>
-    </div>
+    <div class="login-switch">Não tem conta? <a onclick="openSignup()">Cadastre-se</a></div>
   </div>
 </div>
 
-<!-- SIGNUP MODAL -->
+<!-- SIGNUP -->
 <div class="modal-overlay" id="signupModal">
   <div class="modal">
-    <h3>🎵 Criar sua conta</h3>
-    <p style="color:var(--text-secondary);font-size:14px;margin-bottom:18px;line-height:1.6;">
-      Preencha os dados abaixo e comece a curtir música com a galera!
-    </p>
-
-    <label class="form-label">Nome de usuário <span class="required">*</span></label>
-    <input type="text" id="signupNome" placeholder="Como você quer ser chamado?" maxlength="60">
+    <h3>🎵 Criar conta</h3>
+    <label class="form-label">Nome <span class="required">*</span></label>
+    <input type="text" id="signupNome" placeholder="Seu nome" maxlength="60">
     <div class="form-error" id="signupNomeError">Digite seu nome</div>
 
     <label class="form-label">E-mail <span class="required">*</span></label>
@@ -2184,9 +828,8 @@
     <div class="form-error" id="signupEmailError">Digite um e-mail válido</div>
 
     <label class="form-label">Senha <span class="required">*</span> <span class="hint">(mínimo 6 caracteres)</span></label>
-    <input type="password" id="signupPassword" placeholder="Crie uma senha segura" maxlength="30" oninput="checkPasswordStrength(this.value)">
-    <div class="password-strength"><div class="fill" id="passwordStrengthFill"></div></div>
-    <div class="form-error" id="signupPasswordError">A senha deve ter pelo menos 6 caracteres</div>
+    <input type="password" id="signupPassword" placeholder="Crie uma senha" maxlength="30">
+    <div class="form-error" id="signupPasswordError">Mínimo 6 caracteres</div>
 
     <label class="form-label">Gênero <span class="required">*</span></label>
     <select id="signupGenero">
@@ -2196,7 +839,6 @@
       <option value="trans">Trans</option>
       <option value="nao-binario">Não-binário</option>
       <option value="prefiro-nao-dizer">Prefiro não dizer</option>
-      <option value="outro">Outro</option>
     </select>
     <div class="form-error" id="signupGeneroError">Selecione um gênero</div>
 
@@ -2212,128 +854,67 @@
     </select>
     <div class="form-error" id="signupRegiaoError">Selecione sua região</div>
 
-    <label class="form-label">Estilo de música <span class="required">*</span> <span class="hint">(escolha um ou mais)</span></label>
+    <label class="form-label">Estilo musical <span class="required">*</span></label>
     <div class="chip-group" id="signupStyles">
-      <div class="chip" data-style="sertanejo" onclick="toggleStyleChip(this)">Sertanejo</div>
-      <div class="chip" data-style="funk" onclick="toggleStyleChip(this)">Funk</div>
-      <div class="chip" data-style="pagode-samba" onclick="toggleStyleChip(this)">Pagode/Samba</div>
-      <div class="chip" data-style="mpb" onclick="toggleStyleChip(this)">MPB</div>
-      <div class="chip" data-style="rock" onclick="toggleStyleChip(this)">Rock</div>
-      <div class="chip" data-style="pop" onclick="toggleStyleChip(this)">Pop</div>
-      <div class="chip" data-style="eletronica" onclick="toggleStyleChip(this)">Eletrônica</div>
-      <div class="chip" data-style="hiphop-rap" onclick="toggleStyleChip(this)">Hip Hop/Rap</div>
-      <div class="chip" data-style="forro" onclick="toggleStyleChip(this)">Forró</div>
-      <div class="chip" data-style="gospel" onclick="toggleStyleChip(this)">Gospel</div>
-      <div class="chip" data-style="indie" onclick="toggleStyleChip(this)">Indie</div>
-      <div class="chip" data-style="reggaeton" onclick="toggleStyleChip(this)">Reggaeton</div>
+      <div class="chip" data-style="sertanejo" onclick="toggleChip(this)">Sertanejo</div>
+      <div class="chip" data-style="funk" onclick="toggleChip(this)">Funk</div>
+      <div class="chip" data-style="pagode" onclick="toggleChip(this)">Pagode/Samba</div>
+      <div class="chip" data-style="mpb" onclick="toggleChip(this)">MPB</div>
+      <div class="chip" data-style="rock" onclick="toggleChip(this)">Rock</div>
+      <div class="chip" data-style="pop" onclick="toggleChip(this)">Pop</div>
+      <div class="chip" data-style="eletronica" onclick="toggleChip(this)">Eletrônica</div>
+      <div class="chip" data-style="hiphop" onclick="toggleChip(this)">Hip Hop/Rap</div>
+      <div class="chip" data-style="forro" onclick="toggleChip(this)">Forró</div>
+      <div class="chip" data-style="gospel" onclick="toggleChip(this)">Gospel</div>
+      <div class="chip" data-style="indie" onclick="toggleChip(this)">Indie</div>
     </div>
-    <div class="form-error" id="signupStylesError">Escolha pelo menos um estilo musical</div>
-
-    <div class="form-hint">✅ Seus dados ficam salvos com segurança e não são compartilhados.</div>
+    <div class="form-error" id="signupStylesError">Escolha pelo menos um estilo</div>
 
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeSignupModal()">Cancelar</button>
-      <button class="btn-primary" id="signupSubmitBtn" onclick="submitSignup()">Criar conta 🎶</button>
+      <button class="btn-secondary" onclick="closeSignup()">Cancelar</button>
+      <button class="btn-primary" onclick="submitSignup()">Criar conta 🎶</button>
     </div>
   </div>
 </div>
 
-<!-- WELCOME MODAL -->
-<div class="modal-overlay" id="welcomeModal">
-  <div class="modal welcome-modal">
-    <div class="welcome-header">
-      <div class="welcome-icon">🎸</div>
-      <h2>Bem-vindo ao Sonora Fan!</h2>
-      <p class="welcome-subtitle">A pista é sua. A trilha sonora é de todo mundo.</p>
+<!-- ADMIN PANEL -->
+<div class="modal-overlay" id="adminPanel">
+  <div class="modal admin-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid var(--border);">
+      <h3 style="font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🎛️ Painel Admin</h3>
+      <button onclick="closeAdmin()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
     </div>
 
-    <div class="welcome-steps">
-      <div class="welcome-step">
-        <div class="step-number">1</div>
-        <div class="step-content">
-          <div class="step-icon">🔗</div>
-          <div>
-            <h4>Cole um link do YouTube</h4>
-            <p>Encontre sua música favorita no YouTube, copie o link e cole no campo "Adicionar música".</p>
-            <div class="step-example">
-              <span class="example-label">Exemplo:</span>
-              <code>https://www.youtube.com/watch?v=dQw4w9WgXcQ</code>
-            </div>
-          </div>
-        </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:16px;">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminUsers">0</div>
+        <div style="font-size:11px;color:var(--text-muted);">Usuários</div>
       </div>
-
-      <div class="welcome-step">
-        <div class="step-number">2</div>
-        <div class="step-content">
-          <div class="step-icon">✅</div>
-          <div>
-            <h4>Confirme a prévia</h4>
-            <p>O sistema mostrará uma prévia da música. Verifique o título e a duração, depois clique em "Adicionar à fila".</p>
-            <div class="step-tip">
-              <span class="tip-icon">⏱️</span>
-              <span><strong>Limite de 10 minutos</strong> por música para manter a fila dinâmica.</span>
-            </div>
-          </div>
-        </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminRooms">0</div>
+        <div style="font-size:11px;color:var(--text-muted);">Salas</div>
       </div>
-
-      <div class="welcome-step">
-        <div class="step-number">3</div>
-        <div class="step-content">
-          <div class="step-icon">🎵</div>
-          <div>
-            <h4>Acompanhe a fila</h4>
-            <p>Veja todas as músicas na fila ao lado. A música atual é destacada com uma barra laranja.</p>
-            <div class="step-tip">
-              <span class="tip-icon">👑</span>
-              <span><strong>Administradores</strong> podem pular músicas clicando em qualquer música da fila.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="welcome-step">
-        <div class="step-number">4</div>
-        <div class="step-content">
-          <div class="step-icon">💬</div>
-          <div>
-            <h4>Interaja no chat</h4>
-            <p>Comente as músicas, reaja com emojis e curta as mensagens da galera!</p>
-            <div class="step-tip">
-              <span class="tip-icon">❤️</span>
-              <span>Clique em <strong>🤍</strong> para curtir mensagens e em <strong>🔥</strong> para dar uma curtida com fogo!</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="welcome-step quick-tips">
-        <div class="step-number">⭐</div>
-        <div class="step-content">
-          <div class="step-icon">💡</div>
-          <div>
-            <h4>Dicas rápidas</h4>
-            <ul class="quick-tips-list">
-              <li>🎲 <strong>Sala aleatória</strong> - Entre em uma sala aleatória no lobby</li>
-              <li>🎤 <strong>Crie sua sala</strong> - Seja o DJ da sua própria sala</li>
-              <li>⏱️ <strong>Cooldown de 3 minutos</strong> entre cada música que você adiciona</li>
-              <li>🎧 <strong>Controle de volume</strong> - Ajuste o volume no player</li>
-              <li>🌙 <strong>Temas</strong> - Alterne entre temas com o botão no canto superior direito</li>
-            </ul>
-          </div>
-        </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminOnline">0</div>
+        <div style="font-size:11px;color:var(--text-muted);">Online</div>
       </div>
     </div>
 
-    <div class="welcome-actions">
-      <div class="welcome-checkbox">
-        <input type="checkbox" id="dontShowWelcomeAgain">
-        <label for="dontShowWelcomeAgain">Não mostrar novamente</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <button onclick="adminClearChats()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">🗑️ Limpar Chats</button>
+      <button onclick="adminClearRooms()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">🧹 Limpar Salas</button>
+      <button onclick="adminExport()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📥 Exportar</button>
+      <button onclick="adminBroadcast()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📢 Mensagem</button>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
+        <span style="font-size:11px;color:var(--text-muted);" id="adminUserCount">0</span>
       </div>
-      <button class="btn-primary welcome-start-btn" onclick="closeWelcomeModal()">
-        🚀 Vamos começar!
-      </button>
+      <div id="adminUserList" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
+        <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Carregando...</div>
+      </div>
     </div>
   </div>
 </div>
@@ -2342,30 +923,26 @@
 <div class="screen" id="screen-lobby">
   <div class="app">
     <div class="header">
-      <div class="header-left">
-        <h1>🎸 Sonora <span>Fan</span></h1>
-      </div>
+      <div class="header-left"><h1>🎸 Sonora <span>Fan</span></h1></div>
       <div class="header-right">
         <div class="user-info" id="userInfo">
-          <span class="avatar" id="userAvatar">🎸</span>
+          <span id="userAvatar">🎸</span>
           <span id="userDisplayName">Usuário</span>
         </div>
-        <button class="logout-btn" onclick="doLogout()">🚪 Sair</button>
+        <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtn">🎛️</button>
+        <button class="logout-btn" onclick="doLogout()">Sair</button>
       </div>
     </div>
     <div class="lobby">
       <div class="lobby-top">
         <h2>Salas disponíveis</h2>
         <div class="lobby-actions">
-          <button onclick="showCreateModal()">+ Nova sala</button>
+          <button onclick="showCreateRoom()">+ Nova sala</button>
           <button onclick="joinRandomRoom()">🎲 Sala aleatória</button>
         </div>
       </div>
       <div class="room-grid" id="roomGrid">
-        <div class="empty-state">
-          <div class="icon">🎵</div>
-          <p>Carregando salas...</p>
-        </div>
+        <div class="empty-state"><div class="icon">🎵</div><p>Carregando salas...</p></div>
       </div>
     </div>
   </div>
@@ -2380,37 +957,24 @@
         <h1 id="roomTitle">Sala</h1>
       </div>
       <div class="header-right">
-        <button class="admin-toggle-btn" onclick="openAdminPanel()" title="Painel Admin">🎛️</button>
-        <button class="help-btn" onclick="showWelcomeAgain()" title="Ajuda">❓</button>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Tema" id="themeBtn">🌙</button>
+        <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom">🎛️</button>
         <span id="adminBadge" class="admin-badge hidden">Admin</span>
       </div>
     </div>
 
     <div class="room-layout">
-      <!-- LADO ESQUERDO - STAGE -->
       <div class="stage">
-        <!-- Player -->
         <div class="player-section">
           <div class="player-header">
             <span class="now-playing-label">Tocando agora</span>
-            <div style="display:flex;align-items:center;gap:12px;">
-              <div class="equalizer" id="equalizer">
-                <div class="eq-bar" style="height:8px;"></div>
-                <div class="eq-bar" style="height:14px;"></div>
-                <div class="eq-bar" style="height:6px;"></div>
-                <div class="eq-bar" style="height:18px;"></div>
-                <div class="eq-bar" style="height:10px;"></div>
-              </div>
-              <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
-            </div>
+            <span class="live-indicator"><span class="live-dot"></span>Ao vivo</span>
           </div>
           <div id="youtube-player"></div>
           <div class="player-info">
             <div class="cover" id="trackCover">🎵</div>
             <div class="track-info">
-              <div class="track-title" id="trackTitle">Carregando...</div>
-              <div class="track-artist" id="trackArtist">Aguarde</div>
+              <div class="track-title" id="trackTitle">Nenhuma música</div>
+              <div class="track-artist" id="trackArtist">Adicione uma música</div>
               <div class="track-dj" id="trackDj"></div>
             </div>
           </div>
@@ -2428,67 +992,52 @@
           </div>
         </div>
 
-        <!-- Lista de Músicas (CENTRO) -->
         <div class="queue-center">
           <div class="queue-center-header">
-            <span>🎵 Fila de músicas</span>
-            <span class="count" id="queueCenterCount">0 músicas</span>
+            <span>🎵 Fila</span>
+            <span class="count" id="queueCount">0 músicas</span>
           </div>
-          <div id="queueCenterList">
+          <div id="queueList">
             <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>
           </div>
         </div>
 
-        <!-- Adicionar Música -->
         <div class="add-song">
-          <div class="input-wrapper" style="flex:1;">
-            <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="handleSongUrlInput()" onpaste="setTimeout(handleSongUrlInput, 0)">
-            <span class="input-hint">🔗 Ex: youtube.com/watch?v=... ou youtu.be/...</span>
-          </div>
+          <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="previewSong()">
           <button id="addBtn" onclick="addSong()">Adicionar</button>
         </div>
 
         <div class="song-preview hidden" id="songPreview">
-          <div class="song-preview-thumb" id="songPreviewThumb">🎵</div>
+          <div class="song-preview-thumb" id="previewThumb">🎵</div>
           <div class="song-preview-info">
-            <div class="song-preview-title" id="songPreviewTitle">Prévia da música</div>
-            <div class="song-preview-artist" id="songPreviewArtist">Cole um link do YouTube</div>
-            <div class="song-preview-status" id="songPreviewStatus"></div>
+            <div class="song-preview-title" id="previewTitle">Prévia</div>
+            <div class="song-preview-artist" id="previewArtist">Cole um link</div>
+            <div class="song-preview-status" id="previewStatus"></div>
           </div>
-          <div class="song-preview-actions hidden" id="songPreviewActions">
-            <button class="song-preview-confirm" id="songPreviewConfirmBtn" onclick="confirmAddSong()">✓ Adicionar</button>
-            <button class="song-preview-cancel" onclick="cancelSongPreview()">✕</button>
+          <div class="song-preview-actions" id="previewActions">
+            <button class="song-preview-confirm" onclick="confirmAdd()">✓ Adicionar</button>
+            <button class="song-preview-cancel" onclick="clearPreview()">✕</button>
           </div>
         </div>
         <div class="cooldown-text hidden" id="cooldownText"></div>
       </div>
 
-      <!-- LADO DIREITO - SIDEBAR (CHAT) -->
       <div class="sidebar">
-        <!-- Users -->
         <div class="users-panel">
-          <div class="user-count">
-            <span class="icon">👥</span>
-            <span id="userCount">0</span> ouvinte<span id="userCountPlural">s</span> na sala
-          </div>
+          <div class="user-count"><span class="icon">👥</span> <span id="userCount">0</span> ouvintes</div>
         </div>
 
-        <!-- Chat -->
         <div class="chat-panel">
           <div class="chat-controls">
-            <button id="toggleAutoScrollBtn" class="scroll-toggle" onclick="toggleAutoScroll()">
-              📌 Auto-scroll: ON
-            </button>
-            <button id="clearChatBtn" class="scroll-toggle danger" onclick="clearChat()" title="Limpar chat (apenas admin)">
-              🗑️ Limpar
-            </button>
+            <button onclick="toggleAutoScroll()" id="scrollBtn">📌 Auto-scroll: ON</button>
+            <button class="danger" onclick="clearChat()">🗑️ Limpar</button>
           </div>
           <div class="chat-messages" id="chatBox"></div>
-          <button class="new-messages-pill hidden" id="newMessagesPill" onclick="scrollChatToBottom()">↓ Novas mensagens</button>
+          <button class="new-messages-pill hidden" id="newMsgPill" onclick="scrollToBottom()">↓ Novas mensagens</button>
           <div class="chat-input-bar">
-            <button class="emoji-btn" onclick="toggleEmojiPanel()" title="Emojis">😀</button>
-            <input type="text" id="chatInput" placeholder="Escreva uma mensagem..." onkeydown="if(event.key==='Enter') sendMsg()" oninput="handleTyping()">
-            <button onclick="sendMsg()">Enviar</button>
+            <button class="emoji-btn" onclick="toggleEmojis()">😀</button>
+            <input type="text" id="chatInput" placeholder="Mensagem..." onkeydown="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()">Enviar</button>
             <div class="emoji-panel" id="emojiPanel">
               <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
               <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
@@ -2496,20 +1045,14 @@
               <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
               <span class="emoji-item" onclick="insertEmoji('🤩')">🤩</span>
               <span class="emoji-item" onclick="insertEmoji('😭')">😭</span>
-              <span class="emoji-item" onclick="insertEmoji('😡')">😡</span>
               <span class="emoji-item" onclick="insertEmoji('🥳')">🥳</span>
               <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
-              <span class="emoji-item" onclick="insertEmoji('👎')">👎</span>
               <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
               <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
               <span class="emoji-item" onclick="insertEmoji('🎵')">🎵</span>
               <span class="emoji-item" onclick="insertEmoji('🎸')">🎸</span>
               <span class="emoji-item" onclick="insertEmoji('🎤')">🎤</span>
               <span class="emoji-item" onclick="insertEmoji('🎧')">🎧</span>
-              <span class="emoji-item" onclick="insertEmoji('🎹')">🎹</span>
-              <span class="emoji-item" onclick="insertEmoji('🥁')">🥁</span>
-              <span class="emoji-item" onclick="insertEmoji('🎷')">🎷</span>
-              <span class="emoji-item" onclick="insertEmoji('🎺')">🎺</span>
               <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
               <span class="emoji-item" onclick="insertEmoji('🌟')">🌟</span>
               <span class="emoji-item" onclick="insertEmoji('💯')">💯</span>
@@ -2518,10 +1061,6 @@
               <span class="emoji-item" onclick="insertEmoji('🤘')">🤘</span>
               <span class="emoji-item" onclick="insertEmoji('🕺')">🕺</span>
               <span class="emoji-item" onclick="insertEmoji('💃')">💃</span>
-              <span class="emoji-item" onclick="insertEmoji('🍕')">🍕</span>
-              <span class="emoji-item" onclick="insertEmoji('🍺')">🍺</span>
-              <span class="emoji-item" onclick="insertEmoji('🌙')">🌙</span>
-              <span class="emoji-item" onclick="insertEmoji('☀️')">☀️</span>
             </div>
           </div>
         </div>
@@ -2530,167 +1069,13 @@
   </div>
 </div>
 
-<!-- PAINEL ADMIN -->
-<div class="modal-overlay" id="adminPanel">
-  <div class="modal admin-panel">
-    <div class="admin-header">
-      <h2>🎛️ Painel Administrativo</h2>
-      <button class="admin-close" onclick="closeAdminPanel()">✕</button>
-    </div>
-    
-    <div class="admin-tabs">
-      <button class="admin-tab active" data-tab="dashboard" onclick="switchAdminTab('dashboard')">📊 Dashboard</button>
-      <button class="admin-tab" data-tab="users" onclick="switchAdminTab('users')">👥 Usuários</button>
-      <button class="admin-tab" data-tab="rooms" onclick="switchAdminTab('rooms')">🎵 Salas</button>
-      <button class="admin-tab" data-tab="settings" onclick="switchAdminTab('settings')">⚙️ Configurações</button>
-    </div>
-
-    <div class="admin-content active" id="adminDashboard">
-      <div class="admin-stats">
-        <div class="stat-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-info">
-            <span class="stat-value" id="adminTotalUsers">0</span>
-            <span class="stat-label">Usuários Totais</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🎵</div>
-          <div class="stat-info">
-            <span class="stat-value" id="adminTotalRooms">0</span>
-            <span class="stat-label">Salas Ativas</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🟢</div>
-          <div class="stat-info">
-            <span class="stat-value" id="adminOnlineUsers">0</span>
-            <span class="stat-label">Usuários Online</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🎶</div>
-          <div class="stat-info">
-            <span class="stat-value" id="adminTotalSongs">0</span>
-            <span class="stat-label">Músicas na Fila</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="admin-actions-grid">
-        <button class="admin-action-btn" onclick="adminClearAllChats()">🗑️ Limpar Todos os Chats</button>
-        <button class="admin-action-btn danger" onclick="adminClearAllRooms()">🧹 Limpar Todas as Salas</button>
-        <button class="admin-action-btn" onclick="adminExportData()">📥 Exportar Dados</button>
-        <button class="admin-action-btn" onclick="adminBroadcastMessage()">📢 Mensagem para Todos</button>
-      </div>
-    </div>
-
-    <div class="admin-content" id="adminUsers">
-      <div class="admin-search">
-        <input type="text" id="adminUserSearch" placeholder="Buscar usuário..." oninput="filterAdminUsers()">
-        <button onclick="filterAdminUsers()">🔍 Buscar</button>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Usuário</th>
-              <th>E-mail</th>
-              <th>Gênero</th>
-              <th>Região</th>
-              <th>Estilos</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="adminUsersList">
-            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Carregando usuários...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="admin-content" id="adminRooms">
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Sala</th>
-              <th>Admin</th>
-              <th>Ouvintes</th>
-              <th>Na Fila</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="adminRoomsList">
-            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Carregando salas...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="admin-content" id="adminSettings">
-      <div class="admin-settings-group">
-        <h3>🎵 Configurações da Fila</h3>
-        <div class="setting-item">
-          <label>Máximo de músicas na fila</label>
-          <input type="number" id="adminMaxQueue" value="20" min="5" max="50">
-          <button class="admin-btn-small" onclick="adminSaveSetting('maxQueue')">Salvar</button>
-        </div>
-        <div class="setting-item">
-          <label>Tempo de cooldown (segundos)</label>
-          <input type="number" id="adminCooldown" value="180" min="30" max="600">
-          <button class="admin-btn-small" onclick="adminSaveSetting('cooldown')">Salvar</button>
-        </div>
-        <div class="setting-item">
-          <label>Duração máxima da música (segundos)</label>
-          <input type="number" id="adminMaxDuration" value="600" min="60" max="1800">
-          <button class="admin-btn-small" onclick="adminSaveSetting('maxDuration')">Salvar</button>
-        </div>
-      </div>
-
-      <div class="admin-settings-group">
-        <h3>🔧 Moderação</h3>
-        <div class="setting-item">
-          <label>Palavras proibidas</label>
-          <textarea id="adminBadWords" rows="4" placeholder="Palavras separadas por vírgula"></textarea>
-          <button class="admin-btn-small" onclick="adminSaveBadWords()">Salvar</button>
-        </div>
-      </div>
-
-      <div class="admin-settings-group">
-        <h3>👑 Administradores</h3>
-        <div class="setting-item">
-          <label>Adicionar administrador (e-mail)</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <input type="email" id="adminAddEmail" placeholder="email@exemplo.com" style="flex:1;min-width:200px;">
-            <button class="admin-btn-small" onclick="adminAddAdmin()">➕ Adicionar</button>
-          </div>
-        </div>
-        <div id="adminList" style="margin-top:10px;">
-          <div style="color:var(--text-muted);font-size:12px;">Carregando administradores...</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CRIAR SALA -->
-<div class="modal-overlay" id="createModal">
+<!-- CREATE ROOM -->
+<div class="modal-overlay" id="createRoomModal">
   <div class="modal">
-    <h3>Criar nova sala</h3>
+    <h3>Criar sala</h3>
     <input type="text" id="newRoomName" placeholder="Nome da sala" maxlength="40">
-    <select id="newRoomGenre">
-      <option value="mixed">🎵 Misto</option>
-      <option value="rock">🎸 Rock</option>
-      <option value="pop">🎤 Pop</option>
-      <option value="eletronica">🎹 Eletrônica</option>
-      <option value="indie">🎧 Indie</option>
-      <option value="hiphop">🎤 Hip Hop</option>
-      <option value="jazz">🎷 Jazz</option>
-    </select>
     <div class="modal-actions">
-      <button class="btn-secondary" onclick="hideCreateModal()">Cancelar</button>
+      <button class="btn-secondary" onclick="closeCreateRoom()">Cancelar</button>
       <button class="btn-primary" onclick="createRoom()">Criar</button>
     </div>
   </div>
@@ -2708,40 +1093,28 @@
 // ===== SOCKET =====
 const socket = io();
 
-// ===== ESTADO DA SESSÃO =====
+// ===== ESTADO =====
 let currentUser = null;
 let myName = '';
 let myAvatar = '🎸';
 let amIAdmin = false;
-let currentRoomSlug = null;
+let currentRoom = null;
 let currentRoomData = null;
 let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
-let addCooldown = 180000;
-let isTyping = false;
-let typingTimeout = null;
-let currentTheme = localStorage.getItem('sonoraTheme') || 'terra-sonora';
-let songPreviewTimer = null;
-let songPreviewRequest = 0;
-let songPreviewData = null;
-let songPreviewForUrl = '';
-
-// ===== CONTROLE DE AUTO-SCROLL =====
-let autoScrollEnabled = true;
-let hasSeenWelcome = false;
+let autoScroll = true;
+let songData = null;
 let messageLikes = {};
-let unreadCount = 0;
-let isPageVisible = true;
 
 // ===== UTILS =====
 function $(id) { return document.getElementById(id); }
-function show(id) { $(id).classList.remove('hidden'); }
-function hide(id) { $(id).classList.add('hidden'); }
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById('screen-' + id);
-  if (el) el.classList.add('active');
+function toast(msg, type) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
 }
 
 function escapeHtml(text) {
@@ -2750,17 +1123,9 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function toast(msg, type) {
-  const el = $('toast');
-  el.textContent = msg;
-  el.className = 'toast' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3500);
-}
-
-function formatTime(date) {
-  const d = new Date(date);
-  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+function formatTime(d) {
+  const date = new Date(d);
+  return date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
 }
 
 function formatDuration(seconds) {
@@ -2769,24 +1134,19 @@ function formatDuration(seconds) {
   return m + ':' + s.toString().padStart(2,'0');
 }
 
-// ===== BAD WORDS CENSOR =====
-let badWords = [
-  'porra','poha','poça','caralho','cralho','merda','mrda','bosta','bsta','puta','pta',
-  'viado','viadu','bicha','bixa','corno','foda','fuder','fode','cu','cuzão','cuzona',
-  'arrombado','arrombada','rombado','filho da puta','fdp','desgraçado','desgraçada',
-  'vagabundo','vagabunda','vadio','escroto','escrota','idiota','imbecil','retardado',
-  'buceta','bct','pica','pika','rola','pinto','piroca','cacete','punheta','siririca',
-  'xota','xoxota','pepeca','xereca','bunda','bunduda','rabo',
-  'fuck','fucking','fucked','fucker','fck','shit','sh1t','bitch','btch','asshole',
-  'dick','d1ck','cock','pussy','puss','cunt','whore','slut','bastard','damn','hell',
-  'nigger','nigga','retard','fag','faggot'
-];
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + id);
+  if (el) el.classList.add('active');
+}
+
+// ===== BAD WORDS =====
+const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
 
 function censorText(text) {
   let censored = text;
   badWords.forEach(word => {
-    const cleanWord = word.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const regex = new RegExp('\\b' + cleanWord + '\\b', 'gi');
+    const regex = new RegExp('\\b' + word + '\\b', 'gi');
     censored = censored.replace(regex, '***');
   });
   return censored;
@@ -2794,29 +1154,86 @@ function censorText(text) {
 
 // ===== AUTENTICAÇÃO =====
 function showLogin() {
-  hide('landingScreen');
+  $('landingScreen').style.display = 'none';
   $('loginScreen').classList.add('active');
-  $('loginEmail').focus();
 }
 
 function hideLogin() {
   $('loginScreen').classList.remove('active');
 }
 
+function openSignup() {
+  hideLogin();
+  $('signupModal').classList.add('active');
+}
+
+function closeSignup() {
+  $('signupModal').classList.remove('active');
+  $('landingScreen').style.display = 'block';
+}
+
+function toggleChip(el) { el.classList.toggle('selected'); }
+
+async function submitSignup() {
+  const nome = $('signupNome').value.trim();
+  const email = $('signupEmail').value.trim();
+  const senha = $('signupPassword').value.trim();
+  const genero = $('signupGenero').value;
+  const regiao = $('signupRegiao').value;
+  const estilos = Array.from(document.querySelectorAll('#signupStyles .chip.selected')).map(c => c.dataset.style);
+
+  if (nome.length < 2) return toast('Digite seu nome', 'error');
+  if (!email.includes('@')) return toast('E-mail inválido', 'error');
+  if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
+  if (!genero) return toast('Selecione um gênero', 'error');
+  if (!regiao) return toast('Selecione sua região', 'error');
+  if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
+
+  try {
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, email, senha, genero, regiao, estilos })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    const loginRes = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha })
+    });
+    const loginData = await loginRes.json();
+    if (!loginRes.ok) throw new Error(loginData.error);
+
+    currentUser = loginData.user;
+    myName = currentUser.nome;
+    myAvatar = currentUser.avatar || '🎸';
+    closeSignup();
+    hideLogin();
+    $('landingScreen').style.display = 'none';
+    showScreen('lobby');
+    updateUserInfo();
+    loadRooms();
+    checkAdmin();
+    toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
+  } catch (e) {
+    toast(e.message || 'Erro ao criar conta', 'error');
+  }
+}
+
 async function doLogin() {
   const email = $('loginEmail').value.trim();
-  const password = $('loginPassword').value.trim();
+  const senha = $('loginPassword').value.trim();
   const errorEl = $('loginError');
-  const btn = $('loginBtn');
 
-  errorEl.classList.remove('show');
-
-  if (!email || !password) {
-    errorEl.textContent = 'Preencha e-mail e senha.';
+  if (!email || !senha) {
+    errorEl.textContent = 'Preencha e-mail e senha';
     errorEl.classList.add('show');
     return;
   }
 
+  const btn = $('loginBtn');
   btn.disabled = true;
   btn.textContent = 'Entrando...';
 
@@ -2824,29 +1241,23 @@ async function doLogin() {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha: password }),
+      body: JSON.stringify({ email, senha })
     });
     const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Erro ao fazer login');
-    }
+    if (!res.ok) throw new Error(data.error);
 
     currentUser = data.user;
     myName = currentUser.nome;
     myAvatar = currentUser.avatar || '🎸';
-
     hideLogin();
-    hide('landingScreen');
+    $('landingScreen').style.display = 'none';
     showScreen('lobby');
-    $('userDisplayName').textContent = myName;
-    $('userAvatar').textContent = myAvatar;
+    updateUserInfo();
     loadRooms();
-    applyTheme();
-    toast('Bem-vindo(a) de volta, ' + myName + '! 🎉', 'success');
-  } catch (err) {
-    console.error(err);
-    errorEl.textContent = err.message || 'Erro ao fazer login. Verifique suas credenciais.';
+    checkAdmin();
+    toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
+  } catch (e) {
+    errorEl.textContent = e.message || 'Erro ao fazer login';
     errorEl.classList.add('show');
   } finally {
     btn.disabled = false;
@@ -2854,270 +1265,171 @@ async function doLogin() {
   }
 }
 
-function checkPasswordStrength(password) {
-  const fill = $('passwordStrengthFill');
-  if (!fill) return;
-  
-  let strength = 0;
-  if (password.length >= 6) strength += 1;
-  if (password.length >= 10) strength += 1;
-  if (/[A-Z]/.test(password)) strength += 1;
-  if (/[0-9]/.test(password)) strength += 1;
-  if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-  
-  const pct = Math.min(100, (strength / 5) * 100);
-  fill.style.width = pct + '%';
-  
-  if (pct < 20) fill.style.background = '#ef4444';
-  else if (pct < 40) fill.style.background = '#f59e0b';
-  else if (pct < 60) fill.style.background = '#eab308';
-  else if (pct < 80) fill.style.background = '#22c55e';
-  else fill.style.background = '#22c55e';
-}
-
-function showFieldError(fieldId) {
-  const el = document.getElementById(fieldId);
-  if (el) el.classList.add('show');
-}
-
-function hideFieldError(fieldId) {
-  const el = document.getElementById(fieldId);
-  if (el) el.classList.remove('show');
-}
-
-async function submitSignup() {
-  const nome = $('signupNome').value.trim();
-  const email = $('signupEmail').value.trim();
-  const password = $('signupPassword').value.trim();
-  const genero = $('signupGenero').value;
-  const regiao = $('signupRegiao').value;
-  const estilos = Array.from(document.querySelectorAll('#signupStyles .chip.selected')).map(c => c.dataset.style);
-  const btn = $('signupSubmitBtn');
-  const originalLabel = btn.textContent;
-
-  ['signupNomeError', 'signupEmailError', 'signupPasswordError', 'signupGeneroError', 'signupRegiaoError', 'signupStylesError']
-    .forEach(id => hideFieldError(id));
-
-  let hasError = false;
-
-  if (nome.length < 2) { showFieldError('signupNomeError'); hasError = true; }
-  if (!email || !email.includes('@') || !email.includes('.')) { showFieldError('signupEmailError'); hasError = true; }
-  if (password.length < 6) { showFieldError('signupPasswordError'); hasError = true; }
-  if (!genero) { showFieldError('signupGeneroError'); hasError = true; }
-  if (!regiao) { showFieldError('signupRegiaoError'); hasError = true; }
-  if (estilos.length === 0) { showFieldError('signupStylesError'); hasError = true; }
-
-  if (hasError) {
-    toast('Preencha todos os campos obrigatórios', 'error');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Criando conta...';
-
-  try {
-    const res = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, email, senha: password, genero, regiao, estilos }),
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Erro ao criar conta');
-    }
-
-    const loginRes = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha: password }),
-    });
-    const loginData = await loginRes.json();
-
-    if (!loginRes.ok) {
-      throw new Error(loginData.error || 'Erro ao fazer login automático');
-    }
-
-    currentUser = loginData.user;
-    myName = currentUser.nome;
-    myAvatar = currentUser.avatar || '🎸';
-
-    closeSignupModal();
-    hideLogin();
-    hide('landingScreen');
-    showScreen('lobby');
-    $('userDisplayName').textContent = myName;
-    $('userAvatar').textContent = myAvatar;
-    loadRooms();
-    applyTheme();
-
-    toast('Conta criada com sucesso! Bem-vindo(a) ' + nome + '! 🎉', 'success');
-
-    $('signupNome').value = '';
-    $('signupEmail').value = '';
-    $('signupPassword').value = '';
-    $('signupGenero').value = '';
-    $('signupRegiao').value = '';
-    document.querySelectorAll('#signupStyles .chip.selected').forEach(c => c.classList.remove('selected'));
-    $('passwordStrengthFill').style.width = '0%';
-
-  } catch (err) {
-    console.error(err);
-    toast(err.message || 'Erro ao criar conta. Tente novamente.', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalLabel;
-  }
-}
-
 function doLogout() {
-  fetch('/api/logout', { method: 'POST' })
-    .catch(e => console.error('Erro no logout:', e));
-  
-  currentUser = null;
-  myName = '';
-  if (currentRoomSlug) {
+  fetch('/api/logout', { method: 'POST' }).catch(() => {});
+  if (currentRoom) {
     socket.emit('leaveRoom');
-    currentRoomSlug = null;
+    currentRoom = null;
   }
+  currentUser = null;
   showScreen('lobby');
-  hide('screen-lobby');
-  show('landingScreen');
+  $('screen-lobby').classList.remove('active');
+  $('landingScreen').style.display = 'block';
   hideLogin();
-  toast('Você saiu da sua conta.', 'success');
+  toast('Você saiu', 'success');
 }
 
-function toggleStyleChip(el) { el.classList.toggle('selected'); }
-
-function openSignupModal() {
-  hideLogin();
-  $('signupModal').classList.add('active');
-  ['signupNomeError', 'signupEmailError', 'signupPasswordError', 'signupGeneroError', 'signupRegiaoError', 'signupStylesError']
-    .forEach(id => hideFieldError(id));
-  $('signupNome').focus();
+function updateUserInfo() {
+  $('userDisplayName').textContent = myName;
+  $('userAvatar').textContent = myAvatar;
 }
 
-function closeSignupModal() {
-  $('signupModal').classList.remove('active');
-  show('landingScreen');
+function checkAdmin() {
+  if (currentUser && currentUser.email === 'admin@sonora.com') {
+    amIAdmin = true;
+    $('adminBtn').style.display = 'flex';
+    $('adminBtnRoom').style.display = 'flex';
+    $('adminBadge').classList.remove('hidden');
+  } else {
+    amIAdmin = false;
+    $('adminBtn').style.display = 'none';
+    $('adminBtnRoom').style.display = 'none';
+    $('adminBadge').classList.add('hidden');
+  }
 }
 
-// ===== TEMAS =====
-function applyTheme() {
-  document.documentElement.setAttribute('data-theme', currentTheme);
-  
-  const themes = {
-    'dark': { 
-      btn: '🌙', bg: '#050508', elevated: '#0a0a10', card: '#0f0f18', hover: '#161620', 
-      border: '#1e1e2e', borderHover: '#2a2a3e', text: '#f0f0f8', textSec: '#9a9ab0', textMuted: '#555570',
-      accent: '#ff6b35', accent2: '#7c3aed', bgImage: 'none', bgOverlay: 'transparent',
-      acGlow: 'rgba(255,107,53,0.3)', ac2Glow: 'rgba(124,58,237,0.3)'
-    },
-    'light': { 
-      btn: '☀️', bg: '#f5f5fa', elevated: '#ffffff', card: '#ffffff', hover: '#f0f0f5', 
-      border: '#e0e0e8', borderHover: '#d0d0d8', text: '#1a1a2e', textSec: '#666680', textMuted: '#9999aa',
-      accent: '#e65c00', accent2: '#5b2c8e', bgImage: 'none', bgOverlay: 'transparent',
-      acGlow: 'rgba(230,92,0,0.2)', ac2Glow: 'rgba(91,44,142,0.2)'
-    },
-    'neon': { 
-      btn: '🟢', bg: '#070a12', elevated: '#0b101a', card: '#111827', hover: '#1a2236', 
-      border: '#1f2a4a', borderHover: '#2a3a6a', text: '#e0f0ff', textSec: '#88aacc', textMuted: '#556677',
-      accent: '#22d3ee', accent2: '#10b981', bgImage: 'none', bgOverlay: 'transparent',
-      acGlow: 'rgba(34,211,238,0.25)', ac2Glow: 'rgba(16,185,129,0.25)'
-    },
-    'vaporwave': { 
-      btn: '🌅', bg: '#14061f', elevated: '#1d0a2e', card: '#2a1240', hover: '#381a55', 
-      border: '#4d206e', borderHover: '#642c8a', text: '#ffd6ff', textSec: '#c77dff', textMuted: '#9d4edd',
-      accent: '#f472b6', accent2: '#a855f7', bgImage: 'none', bgOverlay: 'transparent',
-      acGlow: 'rgba(244,114,182,0.25)', ac2Glow: 'rgba(168,85,247,0.25)'
-    },
-    'amber': { 
-      btn: '🔥', bg: '#1a1410', elevated: '#261c16', card: '#33251e', hover: '#45332a', 
-      border: '#5a3f34', borderHover: '#765144', text: '#fff4ed', textSec: '#d6b8a8', textMuted: '#8a6f60',
-      accent: '#fb923c', accent2: '#ea580c', bgImage: 'none', bgOverlay: 'transparent',
-      acGlow: 'rgba(251,146,60,0.25)', ac2Glow: 'rgba(234,88,12,0.25)'
-    },
-    'terra-sonora': { 
-      btn: '🌄', bg: '#140a05', elevated: '#20120a', card: '#2a180e', hover: '#3a2216', 
-      border: '#4a2e1e', borderHover: '#6a422e', text: '#fcf3ee', textSec: '#cbaa98', textMuted: '#8a6a5a',
-      accent: '#e85d3a', accent2: '#d94a20', 
-      bgImage: 'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', 
-      bgOverlay: 'rgba(0,0,0,0.65)',
-      acGlow: 'rgba(232,93,58,0.3)', ac2Glow: 'rgba(217,74,32,0.3)'
-    }
-  };
-
-  const t = themes[currentTheme] || themes['terra-sonora'];
-  
-  document.documentElement.style.setProperty('--bg', t.bg);
-  document.documentElement.style.setProperty('--bg-elevated', t.elevated);
-  document.documentElement.style.setProperty('--bg-card', t.card);
-  document.documentElement.style.setProperty('--bg-hover', t.hover);
-  document.documentElement.style.setProperty('--border', t.border);
-  document.documentElement.style.setProperty('--border-hover', t.borderHover);
-  document.documentElement.style.setProperty('--text', t.text);
-  document.documentElement.style.setProperty('--text-secondary', t.textSec);
-  document.documentElement.style.setProperty('--text-muted', t.textMuted);
-  document.documentElement.style.setProperty('--accent', t.accent);
-  document.documentElement.style.setProperty('--accent2', t.accent2);
-  document.documentElement.style.setProperty('--bg-image', t.bgImage);
-  document.documentElement.style.setProperty('--bg-overlay', t.bgOverlay);
-  document.documentElement.style.setProperty('--accent-glow', t.acGlow);
-  document.documentElement.style.setProperty('--accent2-glow', t.ac2Glow);
-  
-  $('themeBtn').textContent = t.btn;
-}
-
-function toggleTheme() {
-  const keys = ['dark', 'light', 'neon', 'vaporwave', 'amber', 'terra-sonora'];
-  const idx = keys.indexOf(currentTheme);
-  currentTheme = keys[(idx + 1) % keys.length];
-  localStorage.setItem('sonoraTheme', currentTheme);
-  applyTheme();
-}
-
-// ===== MODAL DE BOAS-VINDAS =====
-function showWelcomeModal() {
-  const modal = document.getElementById('welcomeModal');
-  if (!modal) return;
-  
-  const seen = localStorage.getItem('sonoraWelcomeSeen');
-  if (seen === 'true') {
-    hasSeenWelcome = true;
+// ===== ADMIN =====
+function toggleAdmin() {
+  if (!amIAdmin) {
+    toast('Apenas administradores', 'error');
     return;
   }
-  
-  setTimeout(() => {
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }, 500);
-}
-
-function closeWelcomeModal() {
-  const modal = document.getElementById('welcomeModal');
-  const dontShow = document.getElementById('dontShowWelcomeAgain');
-  
-  if (!modal) return;
-  
-  modal.classList.remove('active');
-  document.body.style.overflow = '';
-  
-  if (dontShow && dontShow.checked) {
-    localStorage.setItem('sonoraWelcomeSeen', 'true');
+  const panel = $('adminPanel');
+  panel.classList.toggle('active');
+  if (panel.classList.contains('active')) {
+    loadAdminData();
+    loadAdminUsers();
   }
-  
-  hasSeenWelcome = true;
-  
-  setTimeout(() => {
-    const input = document.getElementById('songUrl');
-    if (input) input.focus();
-  }, 300);
 }
 
-function showWelcomeAgain() {
-  localStorage.removeItem('sonoraWelcomeSeen');
-  hasSeenWelcome = false;
-  showWelcomeModal();
+function closeAdmin() {
+  $('adminPanel').classList.remove('active');
+}
+
+async function loadAdminData() {
+  try {
+    const res = await fetch('/api/admin/stats', { credentials: 'include' });
+    const data = await res.json();
+    if (res.ok) {
+      $('adminUsers').textContent = data.totalUsers || 0;
+      $('adminRooms').textContent = data.totalRooms || 0;
+      $('adminOnline').textContent = data.onlineUsers || 0;
+    }
+  } catch (e) {}
+}
+
+async function loadAdminUsers() {
+  try {
+    const res = await fetch('/api/admin/users', { credentials: 'include' });
+    const users = await res.json();
+    const list = $('adminUserList');
+    const count = $('adminUserCount');
+    
+    if (!res.ok || !users.length) {
+      list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Nenhum usuário</div>';
+      return;
+    }
+    
+    count.textContent = users.length;
+    list.innerHTML = users.map(u => `
+      <div class="admin-user-item">
+        <div>
+          <span class="name">${escapeHtml(u.nome)}</span>
+          ${u.isAdmin ? '<span class="admin-badge-mini">Admin</span>' : ''}
+          <div class="email">${escapeHtml(u.email)}</div>
+        </div>
+        <div class="actions">
+          ${!u.isAdmin ? `<button class="promote" onclick="adminPromote('${u.email}')">👑</button>` : ''}
+          <button class="delete" onclick="adminDeleteUser('${u.email}')">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {}
+}
+
+async function adminPromote(email) {
+  if (!confirm(`Promover ${email}?`)) return;
+  try {
+    const res = await fetch('/api/admin/promote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email })
+    });
+    if (res.ok) {
+      toast('✅ Promovido!', 'success');
+      loadAdminUsers();
+    }
+  } catch (e) {}
+}
+
+async function adminDeleteUser(email) {
+  if (!confirm(`Deletar ${email}?`)) return;
+  try {
+    const res = await fetch('/api/admin/delete-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email })
+    });
+    if (res.ok) {
+      toast('✅ Deletado!', 'success');
+      loadAdminUsers();
+      loadAdminData();
+    }
+  } catch (e) {}
+}
+
+async function adminClearChats() {
+  if (!confirm('Limpar TODOS os chats?')) return;
+  try {
+    await fetch('/api/admin/clear-all-chats', { method: 'POST', credentials: 'include' });
+    toast('✅ Chats limpos!', 'success');
+  } catch (e) {}
+}
+
+async function adminClearRooms() {
+  if (!confirm('LIMPAR TODAS as salas?')) return;
+  try {
+    await fetch('/api/admin/clear-all-rooms', { method: 'POST', credentials: 'include' });
+    toast('✅ Salas limpas!', 'success');
+    loadAdminData();
+    loadRooms();
+  } catch (e) {}
+}
+
+async function adminExport() {
+  try {
+    const res = await fetch('/api/admin/export-data', { credentials: 'include' });
+    const data = await res.json();
+    if (res.ok) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sonora-fan-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('✅ Exportado!', 'success');
+    }
+  } catch (e) {}
+}
+
+function adminBroadcast() {
+  const msg = prompt('Mensagem para todos:');
+  if (!msg) return;
+  socket.emit('adminBroadcast', { message: msg });
+  toast('📢 Enviado!', 'success');
 }
 
 // ===== LOBBY =====
@@ -3127,7 +1439,7 @@ async function loadRooms() {
     const rooms = await res.json();
     const grid = $('roomGrid');
     if (rooms.length === 0) {
-      grid.innerHTML = `<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>`;
+      grid.innerHTML = '<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>';
       return;
     }
     grid.innerHTML = '';
@@ -3135,55 +1447,43 @@ async function loadRooms() {
       const card = document.createElement('div');
       card.className = 'room-card';
       card.onclick = () => joinRoom(r.slug);
-
       const track = r.currentTrack;
-      const thumbImg = track
-        ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.style.display='none'">`
-        : `<div class="thumb-fallback">🎧</div>`;
-      const liveBadge = r.isPlaying
-        ? `<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>`
-        : `<div class="room-live-badge" style="opacity:0.7;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);display:inline-block;"></span>PARADA</div>`;
-
+      const thumb = track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>';
+      const live = r.isPlaying ? '<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>' : '';
       card.innerHTML = `
-        <div class="room-thumb">
-          ${thumbImg}
-          ${liveBadge}
-          <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div>
-        </div>
+        <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div></div>
         <div class="room-card-body">
           <h3>${escapeHtml(r.name)}</h3>
-          <div class="meta">
-            <span>👤 ${r.listenerCount || 0} ouvinte${r.listenerCount !== 1 ? 's' : ''}</span>
-            <span>🎶 ${r.queueLength || 0} na fila</span>
-          </div>
+          <div class="meta"><span>👤 ${r.listenerCount || 0} ouvintes</span><span>🎶 ${r.queueLength || 0} na fila</span></div>
         </div>
       `;
       grid.appendChild(card);
     });
-  } catch(e) {
-    $('roomGrid').innerHTML = `<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar salas</p></div>`;
+  } catch (e) {
+    $('roomGrid').innerHTML = '<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar</p></div>';
   }
 }
 
-function showCreateModal() { $('createModal').classList.add('active'); $('newRoomName').focus(); }
-function hideCreateModal() { $('createModal').classList.remove('active'); }
+function showCreateRoom() { $('createRoomModal').classList.add('active'); }
+function closeCreateRoom() { $('createRoomModal').classList.remove('active'); }
 
 async function createRoom() {
   const name = $('newRoomName').value.trim();
-  if (!name) { toast('Digite um nome para a sala', 'error'); return; }
-  if (!currentUser) { toast('Você precisa estar logado', 'error'); return; }
+  if (!name) return toast('Digite um nome', 'error');
   try {
     const res = await fetch('/api/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, adminName: myName }),
+      body: JSON.stringify({ name, adminName: myName })
     });
     const data = await res.json();
     if (data.slug) {
-      hideCreateModal();
+      closeCreateRoom();
       joinRoom(data.slug);
     }
-  } catch(e) { toast('Erro ao criar sala', 'error'); }
+  } catch (e) {
+    toast('Erro ao criar sala', 'error');
+  }
 }
 
 async function joinRandomRoom() {
@@ -3192,7 +1492,9 @@ async function joinRandomRoom() {
     const data = await res.json();
     if (data.slug) joinRoom(data.slug);
     else toast('Nenhuma sala disponível', 'error');
-  } catch(e) { toast('Erro ao buscar sala', 'error'); }
+  } catch (e) {
+    toast('Erro ao buscar sala', 'error');
+  }
 }
 
 // ===== ROOM =====
@@ -3201,21 +1503,19 @@ function joinRoom(slug) {
     toast('Faça login primeiro', 'error');
     return;
   }
-  currentRoomSlug = slug;
+  currentRoom = slug;
   socket.emit('joinRoom', { slug, name: myName, avatar: myAvatar });
   showScreen('room');
   $('chatBox').innerHTML = '';
   amIAdmin = false;
-  hide('adminBadge');
+  $('adminBadge').classList.add('hidden');
   loadYouTubeAPI();
-  showWelcomeModal();
 }
 
 function leaveRoom() {
-  if (currentRoomSlug) socket.emit('leaveRoom');
-  currentRoomSlug = null;
+  if (currentRoom) socket.emit('leaveRoom');
+  currentRoom = null;
   currentRoomData = null;
-  amIAdmin = false;
   if (player && player.stopVideo) player.stopVideo();
   showScreen('lobby');
   loadRooms();
@@ -3228,6 +1528,7 @@ function loadYouTubeAPI() {
   tag.src = 'https://www.youtube.com/iframe_api';
   document.head.appendChild(tag);
 }
+
 function onYouTubeIframeAPIReady() { initPlayer(); }
 
 function initPlayer() {
@@ -3238,49 +1539,39 @@ function initPlayer() {
     playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, enablejsapi: 1 },
     events: {
       onReady: () => { if (currentRoomData) syncPlayer(currentRoomData); },
-      onStateChange: onPlayerStateChange,
-      onError: onPlayerError,
+      onStateChange: (e) => {
+        if (e.data === YT.PlayerState.PLAYING) {
+          try {
+            const d = player.getDuration();
+            if (d > 0) socket.emit('videoDuration', { duration: Math.floor(d) });
+          } catch(e) {}
+        }
+        if (e.data === YT.PlayerState.ENDED) socket.emit('videoEnded');
+      },
+      onError: () => {
+        toast('Erro no vídeo, pulando...', 'error');
+        setTimeout(() => socket.emit('videoEnded'), 2000);
+      }
     }
   });
-}
-
-function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.PLAYING) {
-    updateEqualizer(true);
-    try {
-      const duration = player.getDuration();
-      if (duration > 0) socket.emit('videoDuration', { duration: Math.floor(duration) });
-    } catch(e) {}
-  }
-  if (event.data === YT.PlayerState.PAUSED) updateEqualizer(false);
-  if (event.data === YT.PlayerState.ENDED) {
-    updateEqualizer(false);
-    socket.emit('videoEnded');
-  }
-}
-
-function onPlayerError(event) {
-  console.log('YouTube error:', event.data);
-  toast('Este vídeo não permite reprodução. Pulando...', 'error');
-  setTimeout(() => { socket.emit('videoEnded'); }, 2000);
 }
 
 function syncPlayer(state) {
   if (!player || !player.loadVideoById) return;
   currentRoomData = state;
   const track = state.queue[state.currentIndex];
-  renderQueueCenter(state.queue, state.currentIndex);
+  renderQueue(state.queue, state.currentIndex);
 
   if (!track) {
     currentTrackId = null;
     $('trackTitle').textContent = 'Fila vazia';
-    $('trackArtist').textContent = 'Adicione uma música do YouTube';
+    $('trackArtist').textContent = 'Adicione uma música';
     $('trackDj').textContent = '';
     $('trackCover').innerHTML = '🎵';
     $('progressFill').style.width = '0%';
     $('currentTime').textContent = '0:00';
     $('totalTime').textContent = '0:00';
-    try { if (player && player.stopVideo) player.stopVideo(); } catch(e) {}
+    try { player.stopVideo(); } catch(e) {}
     return;
   }
 
@@ -3289,403 +1580,177 @@ function syncPlayer(state) {
   if (currentTrackId !== track.id) {
     currentTrackId = track.id;
     try {
-      player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position) });
-    } catch(e) { console.error('Erro ao carregar vídeo:', e); }
-    updateTrackInfo(track);
-  } else {
-    try {
-      const currentPos = player.getCurrentTime();
-      if (Math.abs(currentPos - state.position) > 4) player.seekTo(state.position, true);
+      player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
     } catch(e) {}
+    $('trackTitle').textContent = track.title;
+    $('trackArtist').textContent = track.artist;
+    $('trackDj').textContent = '👤 ' + (track.dj || '');
+    $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">`;
   }
 }
 
-function updateTrackInfo(track) {
-  $('trackTitle').textContent = track.title;
-  $('trackArtist').textContent = track.artist;
-  $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
-}
-
-// ===== RENDER QUEUE CENTER =====
-function renderQueueCenter(queue, currentIndex) {
-  const list = $('queueCenterList');
-  const count = $('queueCenterCount');
+function renderQueue(queue, currentIndex) {
+  const list = $('queueList');
+  const count = $('queueCount');
   
-  if (!list) return;
-  
-  if (count) {
-    count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
-  }
-
+  count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
   list.innerHTML = '';
 
   if (queue.length === 0) {
-    list.innerHTML = `<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>`;
+    list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>';
     return;
   }
 
   queue.forEach((track, i) => {
     const div = document.createElement('div');
-    div.className = 'queue-center-item' + (i === currentIndex ? ' current' : '');
-    
+    div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
     if (i !== currentIndex && amIAdmin) {
       div.classList.add('clickable');
-      div.title = 'Clique para pular para esta música';
       div.onclick = () => socket.emit('skipTo', i);
     }
-
-    const positionLabel = i === currentIndex ? '▶' : (i + 1);
-
     div.innerHTML = `
-      <span class="position">${positionLabel}</span>
-      <div class="thumb">
-        <img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'">
-      </div>
+      <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
+      <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
       <div class="info">
         <div class="title">${escapeHtml(track.title)}</div>
         <div class="artist">${escapeHtml(track.artist)}</div>
       </div>
       <span class="dj">${escapeHtml(track.dj || '')}</span>
-      ${i !== currentIndex && amIAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();removeFromQueue(${i})" title="Remover da fila">✕</button>` : ''}
+      ${i !== currentIndex && amIAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})">✕</button>` : ''}
     `;
     list.appendChild(div);
   });
 }
 
-function removeFromQueue(index) {
-  if (!amIAdmin) {
-    toast('Apenas administradores podem remover músicas', 'error');
-    return;
-  }
-  socket.emit('removeFromQueue', index);
-}
-
-// ===== SOCKET EVENTS =====
-socket.on('roomState', (state) => {
-  const prevTrackId = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex]
-    ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
-  const newTrackId = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
-  if (newTrackId && newTrackId !== prevTrackId) currentTrackId = null;
-  currentRoomData = state;
-  syncPlayer(state);
-});
-
-socket.on('queueEmpty', () => {
-  currentTrackId = null;
-  $('trackTitle').textContent = 'Fila vazia';
-  $('trackArtist').textContent = 'Adicione mais músicas!';
-  $('trackDj').textContent = '';
-  $('trackCover').innerHTML = '🎵';
-  $('progressFill').style.width = '0%';
-  $('currentTime').textContent = '0:00';
-  $('totalTime').textContent = '0:00';
-  try { if (player && player.stopVideo) player.stopVideo(); } catch(e) {}
-  renderQueueCenter([], 0);
-  toast('Fila encerrada! Adicione mais músicas.', 'success');
-});
-
-socket.on('users', renderUsers);
-socket.on('chat', renderMessage);
-socket.on('chatHistory', (messages) => {
-  $('chatBox').innerHTML = '';
-  messages.forEach(m => renderMessage(m));
-  setTimeout(scrollChatToBottom, 100);
-});
-socket.on('error', (msg) => toast(msg, 'error'));
-socket.on('isAdmin', (isAdmin) => {
-  amIAdmin = isAdmin;
-  if (isAdmin) { show('adminBadge'); toast('Você é admin desta sala!', 'success'); }
-});
-socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
-socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
-socket.on('chatCleared', () => {
-  const box = $('chatBox');
-  if (box) {
-    box.innerHTML = '';
-    const div = document.createElement('div');
-    div.className = 'msg msg-system';
-    div.innerHTML = `<span class="msg-text">🧹 O chat foi limpo pelo administrador</span>`;
-    box.appendChild(div);
-  }
-  toast('Chat limpo pelo administrador', 'success');
-});
-socket.on('adminBroadcast', (data) => {
-  toast(`📢 ${data.message}`, 'success');
-  if (currentRoomSlug) {
-    const msg = {
-      user: '📢 Admin',
-      text: data.message,
-      isSystem: true,
-      createdAt: new Date()
-    };
-    renderMessage(msg);
-  }
-});
-socket.on('roomClosed', (msg) => {
-  alert(msg);
-  leaveRoom();
-});
-
 // ===== ADD SONG =====
-function extractYouTubeId(rawUrl) {
-  const url = (rawUrl || '').trim();
+function extractYouTubeId(url) {
   if (!url) return '';
   if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-  let normalized = url;
-  if (!/^https?:\/\//i.test(normalized) && /^(www\.|m\.|music\.)?(youtube\.com|youtu\.be)/i.test(normalized)) {
-    normalized = 'https://' + normalized;
-  }
   try {
-    const u = new URL(normalized);
-    const host = u.hostname.replace(/^(www\.|m\.|music\.)/i, '');
-    if (host === 'youtu.be') return u.pathname.split('/').filter(Boolean)[0] || '';
-    if (host.endsWith('youtube.com')) {
-      const fromQuery = u.searchParams.get('v');
-      if (fromQuery) return fromQuery;
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) return u.pathname.split('/').filter(Boolean)[0] || '';
+    if (u.hostname.includes('youtube.com')) {
+      const v = u.searchParams.get('v');
+      if (v) return v;
       const parts = u.pathname.split('/').filter(Boolean);
       const markers = ['shorts', 'embed', 'live', 'watch'];
-      const markerIndex = parts.findIndex(part => markers.includes(part));
-      if (markerIndex >= 0 && parts[markerIndex + 1]) return parts[markerIndex + 1];
+      const idx = parts.findIndex(p => markers.includes(p));
+      if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
     }
   } catch(e) {}
-  const fallback = url.match(/[a-zA-Z0-9_-]{11}/);
-  return fallback ? fallback[0] : '';
+  const match = url.match(/[a-zA-Z0-9_-]{11}/);
+  return match ? match[0] : '';
 }
 
-function handleSongUrlInput() {
-  clearTimeout(songPreviewTimer);
-  songPreviewTimer = setTimeout(previewSongFromInput, 350);
-}
-
-function previewSongFromInput() {
-  const input = $('songUrl');
-  const url = input.value.trim();
-  if (!url) { clearSongPreview(); return; }
+async function previewSong() {
+  const url = $('songUrl').value.trim();
+  if (!url) { clearPreview(); return; }
   const videoId = extractYouTubeId(url);
-  if (!videoId) { songPreviewData = null; setSongPreview('error'); return; }
+  if (!videoId) { clearPreview(); return; }
 
-  if (songPreviewForUrl === url && songPreviewData && songPreviewData.id === videoId) {
-    setSongPreview('ready', songPreviewData);
-    return;
+  try {
+    const res = await fetch(`/api/video-info?id=${videoId}`);
+    const data = await res.json();
+    if (res.ok && data.title) {
+      songData = { id: videoId, title: data.title, artist: data.artist || 'Desconhecido', duration: data.duration || 0 };
+      showPreview(songData);
+    } else {
+      songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: 0 };
+      showPreview(songData);
+    }
+  } catch (e) {
+    songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: 0 };
+    showPreview(songData);
   }
-
-  songPreviewForUrl = url;
-  setSongPreview('loading');
-  const requestId = ++songPreviewRequest;
-
-  fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
-    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-    .then(data => {
-      if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-      
-      const duration = data.duration || 0;
-      
-      let state = 'ready';
-      let statusMsg = '';
-      if (duration > 0 && duration > 600) {
-        state = 'too_long';
-        statusMsg = '⛔ Vídeo muito longo! Limite: 10 minutos.';
-      }
-
-      songPreviewData = {
-        id: videoId,
-        title: (data.title || 'Música do YouTube').trim(),
-        artist: (data.author_name || 'Canal desconhecido').trim(),
-        duration: duration,
-      };
-      setSongPreview(state, songPreviewData, statusMsg);
-    })
-    .catch(() => {
-      if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-      
-      fetch(`https://www.youtube.com/watch?v=${videoId}`)
-        .then(r => r.text())
-        .then(html => {
-          if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-          
-          let duration = 0;
-          const match = html.match(/"duration":\s*(\d+)/);
-          if (match) duration = parseInt(match[1]);
-
-          if (!duration) {
-            const metaMatch = html.match(/<meta itemprop="duration" content="PT(\d+)M/);
-            if (metaMatch) duration = parseInt(metaMatch[1]) * 60;
-          }
-
-          let state = 'ready';
-          let statusMsg = '';
-          if (duration > 0 && duration > 600) {
-            state = 'too_long';
-            statusMsg = '⛔ Vídeo muito longo! Limite: 10 minutos.';
-          } else if (duration === 0) {
-            state = 'unknown';
-            statusMsg = '⚠️ Não foi possível verificar a duração. Certifique-se de que seja menor que 10 min.';
-          }
-
-          songPreviewData = {
-            id: videoId,
-            title: 'Música do YouTube',
-            artist: 'Canal desconhecido',
-            duration: duration,
-          };
-          setSongPreview(state, songPreviewData, statusMsg);
-        })
-        .catch(() => {
-          if (requestId !== songPreviewRequest || songPreviewForUrl !== url) return;
-          
-          songPreviewData = { 
-            id: videoId, 
-            title: 'Música do YouTube', 
-            artist: 'Prévia indisponível', 
-            duration: 0 
-          };
-          setSongPreview('unknown', songPreviewData, '⚠️ Duração não verificada. Confirme se é menor que 10 min.');
-        });
-    });
 }
 
-function setSongPreview(state, data, customStatus) {
+function showPreview(data) {
   const box = $('songPreview');
-  if (!box) return;
-  const thumb = $('songPreviewThumb');
-  const title = $('songPreviewTitle');
-  const artist = $('songPreviewArtist');
-  const status = $('songPreviewStatus');
-  const actions = $('songPreviewActions');
-  const confirmBtn = $('songPreviewConfirmBtn');
-
-  if (!data && state !== 'loading' && state !== 'error') { box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
-  status.textContent = '';
-  if (actions) actions.classList.remove('hidden');
-  if (confirmBtn) confirmBtn.disabled = false;
-
-  if (state === 'loading') {
-    thumb.textContent = '⏳';
-    title.textContent = 'Buscando música...';
-    artist.textContent = 'Analisando link do YouTube';
-    if (actions) actions.classList.add('hidden');
-    return;
-  }
-  if (state === 'error') {
-    thumb.textContent = '⚠️';
-    title.textContent = 'Link não reconhecido';
-    artist.textContent = 'Confira se é um link do YouTube';
-    if (actions) actions.classList.add('hidden');
-    return;
-  }
-
-  const durBadge = data.duration ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>` : '';
-  thumb.innerHTML = `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">${durBadge}`;
-  title.textContent = data.title;
-  artist.textContent = data.artist;
-
-  if (state === 'too_long') {
-    status.textContent = customStatus || '⛔ Vídeo muito longo! Limite: 10 minutos.';
-    status.style.color = 'var(--danger)';
-    if (confirmBtn) confirmBtn.disabled = true;
+  $('previewThumb').innerHTML = `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="">${data.duration ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>` : ''}`;
+  $('previewTitle').textContent = data.title;
+  $('previewArtist').textContent = data.artist;
+  if (data.duration && data.duration > 600) {
+    $('previewStatus').textContent = '⛔ Muito longo! Limite: 10 min';
+    $('previewStatus').style.color = 'var(--danger)';
+    $('songPreview .song-preview-confirm').disabled = true;
   } else {
-    status.textContent = customStatus || (data.duration ? `⏱ ${formatDuration(data.duration)} — confirme para adicionar` : 'Confirme para adicionar');
-    status.style.color = 'var(--text-muted)';
-    if (confirmBtn) confirmBtn.disabled = false;
+    $('previewStatus').textContent = data.duration ? `⏱ ${formatDuration(data.duration)}` : '';
+    $('previewStatus').style.color = 'var(--text-muted)';
+    $('songPreview .song-preview-confirm').disabled = false;
   }
+  $('previewActions').classList.remove('hidden');
 }
 
-function clearSongPreview() {
-  songPreviewData = null;
-  songPreviewForUrl = '';
+function clearPreview() {
   $('songPreview').classList.add('hidden');
+  songData = null;
 }
 
-function cancelSongPreview() {
+function confirmAdd() {
+  if (!songData || !songData.id) return;
+  if (songData.duration && songData.duration > 600) {
+    toast('⛔ Vídeo muito longo! Limite: 10 min', 'error');
+    return;
+  }
+  const now = Date.now();
+  if (now - lastAddTime < 180000) {
+    const wait = Math.ceil((180000 - (now - lastAddTime)) / 1000);
+    toast(`Aguarde ${wait}s`, 'error');
+    return;
+  }
+  
+  socket.emit('addSong', {
+    id: songData.id,
+    title: songData.title,
+    artist: songData.artist,
+    duration: songData.duration || null
+  });
+  lastAddTime = Date.now();
   $('songUrl').value = '';
-  clearSongPreview();
-  $('songUrl').focus();
+  clearPreview();
+  startCooldown();
 }
 
 function addSong() {
   const url = $('songUrl').value.trim();
   if (!url) return;
   const videoId = extractYouTubeId(url);
-  if (!videoId) { setSongPreview('error'); toast('Link inválido. Cole um link do YouTube.', 'error'); return; }
-  if (songPreviewForUrl === url && songPreviewData && songPreviewData.id === videoId) {
-    confirmAddSong();
+  if (!videoId) {
+    toast('Link inválido', 'error');
     return;
   }
-  previewSongFromInput();
-  toast('Confira a prévia e confirme para adicionar');
-}
-
-function confirmAddSong() {
-  if (!songPreviewData || !songPreviewData.id) return;
-  
-  if (songPreviewData.duration > 0 && songPreviewData.duration > 600) {
-    toast('⛔ Este vídeo é muito longo! Limite: 10 minutos.', 'error');
-    return;
+  if (songData && songData.id === videoId) {
+    confirmAdd();
+  } else {
+    previewSong();
+    toast('Confirme a prévia', 'success');
   }
-
-  const now = Date.now();
-  const timeSinceLast = now - lastAddTime;
-  if (timeSinceLast < addCooldown) {
-    const wait = Math.ceil((addCooldown - timeSinceLast) / 1000);
-    toast(`Aguarde ${wait}s para adicionar outra música`, 'error');
-    return;
-  }
-
-  const input = $('songUrl');
-  input.disabled = true;
-  $('addBtn').disabled = true;
-
-  socket.emit('addSong', {
-    id: songPreviewData.id,
-    title: songPreviewData.title,
-    artist: songPreviewData.artist,
-    duration: songPreviewData.duration > 0 ? Math.floor(songPreviewData.duration) : null,
-  });
-  lastAddTime = Date.now();
-  input.value = '';
-  clearSongPreview();
-  startCooldown();
 }
 
 function startCooldown() {
-  const input = $('songUrl');
-  const btn = $('addBtn');
   const text = $('cooldownText');
   let remaining = 180;
-  text.textContent = `Aguarde ${Math.floor(remaining / 60)}m${remaining % 60}s para adicionar outra música`;
+  text.textContent = `Aguarde ${Math.floor(remaining/60)}m${remaining%60}s`;
   text.classList.remove('hidden');
   const interval = setInterval(() => {
     remaining--;
-    if (remaining > 0) text.textContent = `Aguarde ${Math.floor(remaining / 60)}m${remaining % 60}s para adicionar outra música`;
-    else {
+    if (remaining > 0) {
+      text.textContent = `Aguarde ${Math.floor(remaining/60)}m${remaining%60}s`;
+    } else {
       clearInterval(interval);
-      input.disabled = false;
-      btn.disabled = false;
       text.classList.add('hidden');
-      input.focus();
     }
   }, 1000);
 }
 
-// ===== USERS =====
-function renderUsers(users) {
-  const count = users.length;
-  $('userCount').textContent = count;
-  $('userCountPlural').textContent = count === 1 ? '' : 's';
-}
-
 // ===== CHAT =====
-function sendMsg() {
+function sendMessage() {
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
-  if (text === '/confetti') { socket.emit('confetti'); launchConfetti(); input.value = ''; return; }
   socket.emit('chat', { text: censorText(text) });
   input.value = '';
-  isTyping = false;
-  clearTimeout(typingTimeout);
-  socket.emit('typing', { isTyping: false });
 }
 
 function renderMessage(msg) {
@@ -3698,7 +1763,7 @@ function renderMessage(msg) {
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
         <span style="font-size:14px;">🎵</span>
         <span style="font-weight:700;color:var(--accent);font-size:12px;">${escapeHtml(msg.user)}</span>
-        <span style="color:var(--text-muted);font-size:11px;">adicionou uma música</span>
+        <span style="color:var(--text-muted);font-size:11px;">adicionou</span>
         <span class="msg-time" style="opacity:1;margin-left:auto;">${formatTime(msg.createdAt)}</span>
       </div>
       <div class="music-info">${escapeHtml(msg.musicTitle)} — ${escapeHtml(msg.musicArtist)}</div>
@@ -3708,60 +1773,50 @@ function renderMessage(msg) {
     div.innerHTML = `<span class="msg-text">${escapeHtml(msg.text)}</span>`;
   } else {
     const avatar = msg.avatar || '👤';
+    const color = msg.color || '#888';
     div.className = 'msg';
-    let processedText = escapeHtml(msg.text);
-    processedText = processedText.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
+    let text = escapeHtml(msg.text);
+    text = text.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
     
-    const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-    div.dataset.msgId = msgId;
-
-    if (!messageLikes[msgId]) {
-      messageLikes[msgId] = { likes: 0, users: [] };
-    }
-
-    const likesData = messageLikes[msgId];
-    const userLiked = likesData.users.includes(myName);
-    const likeCount = likesData.likes;
+    const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    if (!messageLikes[msgId]) messageLikes[msgId] = { likes: 0, users: [] };
+    const liked = messageLikes[msgId].users.includes(myName);
+    const count = messageLikes[msgId].likes;
 
     div.innerHTML = `
       <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
-        <div class="msg-avatar" style="background:${msg.color || '#888'}22;color:${msg.color || '#888'};border-color:${msg.color || '#888'}40;">${avatar}</div>
+        <div class="msg-avatar" style="background:${color}22;color:${color};border-color:${color}40;">${avatar}</div>
         <div class="msg-content">
           <div class="msg-header">
-            <span class="msg-user" style="color:${msg.color || '#fff'};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
+            <span class="msg-user" style="color:${color};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
             <span class="msg-time">${formatTime(msg.createdAt)}</span>
           </div>
-          <span class="msg-text">${processedText}</span>
+          <span class="msg-text">${text}</span>
           <div class="msg-actions">
-            <button class="msg-like-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike('${msgId}', this)">
-              ${userLiked ? '❤️' : '🤍'} <span class="msg-like-count">${likeCount}</span>
-            </button>
-            <button class="msg-like-btn" onclick="toggleFire('${msgId}', this)">
-              🔥 <span class="msg-like-count">0</span>
+            <button class="msg-like-btn ${liked ? 'liked' : ''}" onclick="likeMessage('${msgId}', this)">
+              ${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>
             </button>
           </div>
         </div>
       </div>
     `;
   }
-  
-  const wasNearBottom = isChatNearBottom();
-  box.appendChild(div);
 
-  if (autoScrollEnabled && wasNearBottom) {
-    scrollChatToBottom();
-  } else {
-    showNewMessagesPill();
+  const nearBottom = isChatNearBottom();
+  box.appendChild(div);
+  if (autoScroll && nearBottom) {
+    scrollToBottom();
+  } else if (!nearBottom) {
+    $('newMsgPill').classList.remove('hidden');
   }
 }
 
-function toggleLike(msgId, btn) {
+function likeMessage(msgId, btn) {
   if (!messageLikes[msgId]) messageLikes[msgId] = { likes: 0, users: [] };
   const data = messageLikes[msgId];
-  const userIndex = data.users.indexOf(myName);
-
-  if (userIndex > -1) {
-    data.users.splice(userIndex, 1);
+  const idx = data.users.indexOf(myName);
+  if (idx > -1) {
+    data.users.splice(idx, 1);
     data.likes--;
     btn.classList.remove('liked');
     btn.innerHTML = `🤍 <span class="msg-like-count">${data.likes}</span>`;
@@ -3773,146 +1828,39 @@ function toggleLike(msgId, btn) {
   }
 }
 
-function toggleFire(msgId, btn) {
-  const countSpan = btn.querySelector('.msg-like-count');
-  let current = parseInt(countSpan.textContent) || 0;
-  current++;
-  countSpan.textContent = current;
-  btn.style.color = 'var(--accent)';
-  toast('🔥 Curtida com fogo!', 'success');
-}
-
 function isChatNearBottom() {
   const box = $('chatBox');
   if (!box) return true;
   return box.scrollHeight - box.scrollTop - box.clientHeight < 80;
 }
 
-function showNewMessagesPill() {
-  const pill = $('newMessagesPill');
-  if (pill) {
-    pill.classList.remove('hidden');
-    const unseen = document.querySelectorAll('.msg:not(.seen)').length;
-    if (unseen > 0) {
-      pill.textContent = `↓ ${unseen} novas mensagens`;
-    } else {
-      pill.textContent = '↓ Novas mensagens';
-    }
-  }
-  
-  if (!isPageVisible) {
-    unreadCount++;
-    document.title = `(${unreadCount}) 🎸 Sonora Fan`;
-  }
-}
-
-function hideNewMessagesPill() {
-  const pill = $('newMessagesPill');
-  if (pill) pill.classList.add('hidden');
-  document.querySelectorAll('.msg').forEach(el => {
-    el.classList.add('seen');
-  });
-}
-
-function scrollChatToBottom() {
+function scrollToBottom() {
   const box = $('chatBox');
   if (!box) return;
-  box.scrollTo({
-    top: box.scrollHeight,
-    behavior: 'smooth'
-  });
-  hideNewMessagesPill();
+  box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+  $('newMsgPill').classList.add('hidden');
 }
 
-// ===== CONTROLE DE AUTO-SCROLL =====
 function toggleAutoScroll() {
-  autoScrollEnabled = !autoScrollEnabled;
-  const btn = document.getElementById('toggleAutoScrollBtn');
-  
-  if (autoScrollEnabled) {
-    btn.textContent = '📌 Auto-scroll: ON';
-    btn.classList.remove('active');
-    toast('Auto-scroll ativado', 'success');
-    setTimeout(scrollChatToBottom, 100);
-  } else {
-    btn.textContent = '📌 Auto-scroll: OFF';
-    btn.classList.add('active');
-    toast('Auto-scroll desativado. Clique em "↓ Novas mensagens" para rolar.', 'success');
-  }
-  
-  localStorage.setItem('autoScrollEnabled', autoScrollEnabled);
+  autoScroll = !autoScroll;
+  $('scrollBtn').textContent = autoScroll ? '📌 Auto-scroll: ON' : '📌 Auto-scroll: OFF';
+  if (autoScroll) scrollToBottom();
 }
 
-function loadAutoScrollPreference() {
-  const saved = localStorage.getItem('autoScrollEnabled');
-  if (saved !== null) {
-    autoScrollEnabled = saved === 'true';
-    const btn = document.getElementById('toggleAutoScrollBtn');
-    if (btn) {
-      if (autoScrollEnabled) {
-        btn.textContent = '📌 Auto-scroll: ON';
-        btn.classList.remove('active');
-      } else {
-        btn.textContent = '📌 Auto-scroll: OFF';
-        btn.classList.add('active');
-      }
-    }
-  }
-}
-
-// ===== LIMPAR CHAT =====
 function clearChat() {
-  if (!currentRoomSlug) {
-    toast('Você precisa estar em uma sala', 'error');
-    return;
-  }
-  
-  if (!amIAdmin) {
-    toast('Apenas administradores podem limpar o chat', 'error');
-    return;
-  }
-  
-  if (confirm('Tem certeza que deseja limpar todo o histórico do chat?')) {
-    socket.emit('clearChat');
-    toast('Chat limpo!', 'success');
-  }
+  if (!amIAdmin) return toast('Apenas admin', 'error');
+  if (!confirm('Limpar o chat?')) return;
+  socket.emit('clearChat');
 }
 
-// ===== CHAT SCROLL TRACKING =====
-(function initChatScrollTracking() {
-  const box = $('chatBox');
-  if (!box || box.dataset.scrollBound) return;
-  box.dataset.scrollBound = '1';
-  
-  box.addEventListener('scroll', () => {
-    if (isChatNearBottom()) hideNewMessagesPill();
-  });
-})();
-
-// ===== TYPING =====
-function handleTyping() {
-  if (!isTyping) { isTyping = true; socket.emit('typing', { isTyping: true }); }
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => {
-    isTyping = false;
-    socket.emit('typing', { isTyping: false });
-  }, 2000);
+function toggleEmojis() {
+  $('emojiPanel').classList.toggle('show');
 }
 
-// ===== EMOJIS =====
-function toggleEmojiPanel() { $('emojiPanel').classList.toggle('show'); }
 function insertEmoji(emoji) {
   $('chatInput').value += emoji;
   $('chatInput').focus();
   $('emojiPanel').classList.remove('show');
-}
-
-// ===== EQUALIZER =====
-function updateEqualizer(playing) {
-  document.querySelectorAll('.eq-bar').forEach(bar => {
-    bar.style.animationPlayState = playing ? 'running' : 'paused';
-    if (!playing) bar.style.height = '4px';
-  });
 }
 
 // ===== VOLUME =====
@@ -3921,33 +1869,72 @@ function setVolume(val) {
   if (player && player.setVolume) player.setVolume(parseInt(val));
 }
 
-// ===== CONFETTI =====
-function launchConfetti() {
-  const container = document.getElementById('confettiContainer') || document.createElement('div');
-  if (!document.getElementById('confettiContainer')) {
-    container.id = 'confettiContainer';
-    container.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden;';
-    document.body.appendChild(container);
+// ===== SOCKET EVENTS =====
+socket.on('roomState', (state) => {
+  const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] 
+    ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
+  const next = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
+  if (next !== prev) currentTrackId = null;
+  currentRoomData = state;
+  syncPlayer(state);
+});
+
+socket.on('queueEmpty', () => {
+  currentTrackId = null;
+  $('trackTitle').textContent = 'Fila vazia';
+  $('trackArtist').textContent = 'Adicione uma música';
+  $('trackDj').textContent = '';
+  $('trackCover').innerHTML = '🎵';
+  $('progressFill').style.width = '0%';
+  $('currentTime').textContent = '0:00';
+  $('totalTime').textContent = '0:00';
+  try { player.stopVideo(); } catch(e) {}
+  renderQueue([], 0);
+  toast('Fila encerrada! Adicione músicas.', 'success');
+});
+
+socket.on('users', (users) => {
+  $('userCount').textContent = users.length;
+});
+
+socket.on('chat', renderMessage);
+
+socket.on('chatHistory', (messages) => {
+  $('chatBox').innerHTML = '';
+  messages.forEach(m => renderMessage(m));
+  setTimeout(scrollToBottom, 100);
+});
+
+socket.on('error', (msg) => toast(msg, 'error'));
+
+socket.on('isAdmin', (isAdmin) => {
+  amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
+  if (amIAdmin) {
+    $('adminBadge').classList.remove('hidden');
+    toast('Você é admin desta sala!', 'success');
   }
-  const colors = ['#ff6b35', '#7c3aed', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4'];
-  for (let i = 0; i < 50; i++) {
-    const piece = document.createElement('div');
-    piece.style.cssText = `
-      position:absolute;
-      width:${6 + Math.random() * 6}px;
-      height:${6 + Math.random() * 6}px;
-      background:${colors[Math.floor(Math.random() * colors.length)]};
-      left:${Math.random() * 100}vw;
-      top:-10px;
-      border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
-      animation:confettiFall ${2 + Math.random() * 2}s ease-out forwards;
-      animation-delay:${Math.random() * 2}s;
-      transform:rotate(${Math.random() * 360}deg);
-    `;
-    container.appendChild(piece);
-    setTimeout(() => piece.remove(), 5000);
+});
+
+socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
+socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
+socket.on('chatCleared', () => {
+  $('chatBox').innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'msg msg-system';
+  div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>';
+  $('chatBox').appendChild(div);
+  toast('Chat limpo!', 'success');
+});
+
+socket.on('adminBroadcast', (data) => {
+  toast(`📢 ${data.message}`, 'success');
+  if (currentRoom) {
+    const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() };
+    renderMessage(msg);
   }
-}
+});
+
+socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
 
 // ===== PROGRESS UPDATE =====
 setInterval(() => {
@@ -3963,479 +1950,13 @@ setInterval(() => {
   } catch(e) {}
 }, 1000);
 
-// ===== VISIBILITY CHANGE =====
-document.addEventListener('visibilitychange', () => {
-  isPageVisible = !document.hidden;
-  if (isPageVisible) {
-    unreadCount = 0;
-    document.title = '🎸 Sonora Fan';
-  }
+// ===== CHAT SCROLL =====
+$('chatBox')?.addEventListener('scroll', () => {
+  if (isChatNearBottom()) $('newMsgPill').classList.add('hidden');
 });
 
-// ===== CARREGA SALAS PERIODICAMENTE =====
-setInterval(() => {
-  const lobbyEl = document.getElementById('screen-lobby');
-  if (lobbyEl && lobbyEl.classList.contains('active')) loadRooms();
-}, 15000);
-
-// ===== PAINEL ADMIN =====
-let adminData = {
-  users: [],
-  rooms: [],
-  settings: {}
-};
-
-function openAdminPanel() {
-  const panel = document.getElementById('adminPanel');
-  if (!panel) return;
-  
-  if (!amIAdmin && currentUser?.email !== 'admin@sonora.com') {
-    toast('Acesso negado. Apenas administradores podem acessar.', 'error');
-    return;
-  }
-  
-  panel.classList.add('active');
-  document.body.style.overflow = 'hidden';
-  loadAdminData();
-}
-
-function closeAdminPanel() {
-  const panel = document.getElementById('adminPanel');
-  if (panel) {
-    panel.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-}
-
-function switchAdminTab(tab) {
-  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector(`.admin-tab[data-tab="${tab}"]`)?.classList.add('active');
-  
-  document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-  const content = document.getElementById(`admin${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
-  if (content) content.classList.add('active');
-  
-  if (tab === 'users') loadAdminUsers();
-  if (tab === 'rooms') loadAdminRooms();
-  if (tab === 'settings') loadAdminSettings();
-}
-
-async function loadAdminData() {
-  try {
-    const res = await fetch('/api/admin/stats', {
-      credentials: 'include'
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      document.getElementById('adminTotalUsers').textContent = data.totalUsers || 0;
-      document.getElementById('adminTotalRooms').textContent = data.totalRooms || 0;
-      document.getElementById('adminOnlineUsers').textContent = data.onlineUsers || 0;
-      document.getElementById('adminTotalSongs').textContent = data.totalSongs || 0;
-    }
-  } catch (e) {
-    console.error('Erro ao carregar dados admin:', e);
-  }
-}
-
-async function loadAdminUsers() {
-  try {
-    const res = await fetch('/api/admin/users', {
-      credentials: 'include'
-    });
-    const users = await res.json();
-    
-    const tbody = document.getElementById('adminUsersList');
-    if (!res.ok) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">${users.error || 'Erro ao carregar'}</td></tr>`;
-      return;
-    }
-    
-    if (users.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Nenhum usuário cadastrado</td></tr>`;
-      return;
-    }
-    
-    tbody.innerHTML = users.map(u => `
-      <tr>
-        <td><strong>${escapeHtml(u.nome)}</strong> ${u.isAdmin ? '<span class="admin-badge-table">Admin</span>' : ''}</td>
-        <td>${escapeHtml(u.email)}</td>
-        <td>${escapeHtml(u.genero || '-')}</td>
-        <td>${escapeHtml(u.regiao || '-')}</td>
-        <td>${u.estilos ? u.estilos.slice(0, 3).join(', ') + (u.estilos.length > 3 ? '...' : '') : '-'}</td>
-        <td>
-          <button class="admin-btn-small" onclick="adminPromoteUser('${u.email}')">👑 Promover</button>
-          <button class="admin-btn-small danger" onclick="adminDeleteUser('${u.email}')">🗑️</button>
-        </td>
-      </tr>
-    `).join('');
-  } catch (e) {
-    console.error('Erro ao carregar usuários:', e);
-  }
-}
-
-async function loadAdminRooms() {
-  try {
-    const res = await fetch('/api/admin/rooms', {
-      credentials: 'include'
-    });
-    const rooms = await res.json();
-    
-    const tbody = document.getElementById('adminRoomsList');
-    if (!res.ok) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">${rooms.error || 'Erro ao carregar'}</td></tr>`;
-      return;
-    }
-    
-    if (rooms.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Nenhuma sala ativa</td></tr>`;
-      return;
-    }
-    
-    tbody.innerHTML = rooms.map(r => `
-      <tr>
-        <td><strong>${escapeHtml(r.name)}</strong></td>
-        <td>${escapeHtml(r.admin || 'Sem admin')}</td>
-        <td>${r.listenerCount || 0}</td>
-        <td>${r.queueLength || 0}</td>
-        <td>${r.isPlaying ? '🟢 Ao vivo' : '⏸️ Parada'}</td>
-        <td>
-          <button class="admin-btn-small" onclick="adminSkipRoom('${r.slug}')">⏭️ Pular</button>
-          <button class="admin-btn-small danger" onclick="adminDeleteRoom('${r.slug}')">🗑️</button>
-        </td>
-      </tr>
-    `).join('');
-  } catch (e) {
-    console.error('Erro ao carregar salas:', e);
-  }
-}
-
-async function adminPromoteUser(email) {
-  if (!confirm(`Promover ${email} a administrador?`)) return;
-  
-  try {
-    const res = await fetch('/api/admin/promote', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast(`✅ ${email} agora é administrador!`, 'success');
-      loadAdminUsers();
-    } else {
-      toast(data.error || 'Erro ao promover', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao promover usuário', 'error');
-  }
-}
-
-async function adminDeleteUser(email) {
-  if (!confirm(`Tem certeza que deseja deletar o usuário ${email}?`)) return;
-  
-  try {
-    const res = await fetch('/api/admin/delete-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast(`✅ Usuário ${email} deletado!`, 'success');
-      loadAdminUsers();
-    } else {
-      toast(data.error || 'Erro ao deletar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao deletar usuário', 'error');
-  }
-}
-
-async function adminDeleteRoom(slug) {
-  if (!confirm(`Tem certeza que deseja deletar a sala?`)) return;
-  
-  try {
-    const res = await fetch(`/api/admin/delete-room/${slug}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast(`✅ Sala deletada!`, 'success');
-      loadAdminRooms();
-      loadRooms();
-    } else {
-      toast(data.error || 'Erro ao deletar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao deletar sala', 'error');
-  }
-}
-
-async function adminSkipRoom(slug) {
-  try {
-    const res = await fetch(`/api/admin/skip-room/${slug}`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast(`⏭️ Música pulada!`, 'success');
-      loadAdminRooms();
-    } else {
-      toast(data.error || 'Erro ao pular', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao pular música', 'error');
-  }
-}
-
-async function adminClearAllChats() {
-  if (!confirm('Tem certeza que deseja limpar TODOS os chats das salas?')) return;
-  
-  try {
-    const res = await fetch('/api/admin/clear-all-chats', {
-      method: 'POST',
-      credentials: 'include'
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast('✅ Todos os chats foram limpos!', 'success');
-    } else {
-      toast(data.error || 'Erro ao limpar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao limpar chats', 'error');
-  }
-}
-
-async function adminClearAllRooms() {
-  if (!confirm('Tem certeza que deseja LIMPAR TODAS as salas? Isso removerá todas as músicas!')) return;
-  
-  try {
-    const res = await fetch('/api/admin/clear-all-rooms', {
-      method: 'POST',
-      credentials: 'include'
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast('✅ Todas as salas foram limpas!', 'success');
-      loadAdminRooms();
-      loadRooms();
-    } else {
-      toast(data.error || 'Erro ao limpar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao limpar salas', 'error');
-  }
-}
-
-async function adminExportData() {
-  try {
-    const res = await fetch('/api/admin/export-data', {
-      credentials: 'include'
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sonora-fan-backup-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast('✅ Dados exportados com sucesso!', 'success');
-    } else {
-      toast(data.error || 'Erro ao exportar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao exportar dados', 'error');
-  }
-}
-
-function adminBroadcastMessage() {
-  const msg = prompt('Digite a mensagem que será enviada para TODOS os usuários:');
-  if (!msg) return;
-  
-  socket.emit('adminBroadcast', { message: msg });
-  toast('📢 Mensagem enviada para todos!', 'success');
-}
-
-async function loadAdminSettings() {
-  try {
-    const res = await fetch('/api/admin/settings', {
-      credentials: 'include'
-    });
-    const settings = await res.json();
-    
-    if (res.ok) {
-      document.getElementById('adminMaxQueue').value = settings.maxQueue || 20;
-      document.getElementById('adminCooldown').value = settings.cooldown || 180;
-      document.getElementById('adminMaxDuration').value = settings.maxDuration || 600;
-      document.getElementById('adminBadWords').value = (settings.badWords || []).join(', ');
-      loadAdminList();
-    }
-  } catch (e) {
-    console.error('Erro ao carregar configurações:', e);
-  }
-}
-
-async function adminSaveSetting(setting) {
-  const valueMap = {
-    maxQueue: document.getElementById('adminMaxQueue').value,
-    cooldown: document.getElementById('adminCooldown').value,
-    maxDuration: document.getElementById('adminMaxDuration').value
-  };
-  
-  try {
-    const res = await fetch('/api/admin/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ [setting]: valueMap[setting] })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast(`✅ Configuração salva!`, 'success');
-    } else {
-      toast(data.error || 'Erro ao salvar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao salvar configuração', 'error');
-  }
-}
-
-async function adminSaveBadWords() {
-  const words = document.getElementById('adminBadWords').value
-    .split(',')
-    .map(w => w.trim().toLowerCase())
-    .filter(w => w);
-  
-  try {
-    const res = await fetch('/api/admin/bad-words', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ words })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast(`✅ ${words.length} palavras proibidas salvas!`, 'success');
-      badWords.length = 0;
-      badWords.push(...words);
-    } else {
-      toast(data.error || 'Erro ao salvar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao salvar palavras', 'error');
-  }
-}
-
-async function loadAdminList() {
-  try {
-    const res = await fetch('/api/admin/list', {
-      credentials: 'include'
-    });
-    const admins = await res.json();
-    
-    const container = document.getElementById('adminList');
-    if (!res.ok) {
-      container.innerHTML = `<div style="color:var(--text-muted);font-size:12px;">${admins.error || 'Erro ao carregar'}</div>`;
-      return;
-    }
-    
-    container.innerHTML = admins.map(email => `
-      <div class="admin-list-item">
-        <span class="email">${escapeHtml(email)}</span>
-        ${email !== 'admin@sonora.com' ? `<button class="remove-btn" onclick="adminRemoveAdmin('${email}')">✕</button>` : '<span style="color:var(--text-muted);font-size:11px;">(Super Admin)</span>'}
-      </div>
-    `).join('');
-  } catch (e) {
-    console.error('Erro ao carregar admins:', e);
-  }
-}
-
-async function adminAddAdmin() {
-  const email = document.getElementById('adminAddEmail').value.trim();
-  if (!email) {
-    toast('Digite um e-mail válido', 'error');
-    return;
-  }
-  
-  try {
-    const res = await fetch('/api/admin/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast(`✅ ${email} adicionado como administrador!`, 'success');
-      document.getElementById('adminAddEmail').value = '';
-      loadAdminList();
-    } else {
-      toast(data.error || 'Erro ao adicionar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao adicionar administrador', 'error');
-  }
-}
-
-async function adminRemoveAdmin(email) {
-  if (!confirm(`Remover ${email} da lista de administradores?`)) return;
-  
-  try {
-    const res = await fetch('/api/admin/remove', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      toast(`✅ ${email} removido!`, 'success');
-      loadAdminList();
-    } else {
-      toast(data.error || 'Erro ao remover', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao remover administrador', 'error');
-  }
-}
-
-function filterAdminUsers() {
-  const search = document.getElementById('adminUserSearch').value.toLowerCase();
-  const rows = document.querySelectorAll('#adminUsersList tr');
-  
-  rows.forEach(row => {
-    if (row.cells.length < 6) return;
-    const name = row.cells[0]?.textContent?.toLowerCase() || '';
-    const email = row.cells[1]?.textContent?.toLowerCase() || '';
-    const match = name.includes(search) || email.includes(search);
-    row.style.display = match ? '' : 'none';
-  });
-}
-
 // ===== INIT =====
-applyTheme();
-loadAutoScrollPreference();
-
-async function checkSession() {
+async function init() {
   try {
     const res = await fetch('/api/me');
     if (res.ok) {
@@ -4444,33 +1965,33 @@ async function checkSession() {
         currentUser = data.user;
         myName = currentUser.nome;
         myAvatar = currentUser.avatar || '🎸';
-        hide('landingScreen');
+        $('landingScreen').style.display = 'none';
         hideLogin();
         showScreen('lobby');
-        $('userDisplayName').textContent = myName;
-        $('userAvatar').textContent = myAvatar;
+        updateUserInfo();
         loadRooms();
-        toast('Bem-vindo(a) de volta, ' + myName + '! 🎉', 'success');
-        return true;
+        checkAdmin();
+        toast('Bem-vindo(a) ' + myName + '!', 'success');
       }
     }
-  } catch (e) {
-    console.error('Erro ao verificar sessão:', e);
+  } catch (e) {}
+  
+  const params = new URLSearchParams(window.location.search);
+  const room = params.get('room');
+  if (room) {
+    setTimeout(() => {
+      if (currentUser) joinRoom(room);
+      else toast('Faça login para entrar', 'error');
+    }, 1000);
   }
-  return false;
 }
 
-checkSession();
+init();
 
-const urlParams = new URLSearchParams(window.location.search);
-const roomParam = urlParams.get('room');
-if (roomParam) {
-  setTimeout(() => {
-    if (currentUser) joinRoom(roomParam);
-    else toast('Faça login para entrar na sala', 'error');
-  }, 1000);
-}
-
+// Carregar salas a cada 15s
+setInterval(() => {
+  if ($('screen-lobby').classList.contains('active')) loadRooms();
+}, 15000);
 </script>
 </body>
 </html>
