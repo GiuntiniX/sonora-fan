@@ -624,10 +624,35 @@
     .queue-item.current .info .title { color: var(--text); font-weight: 600; }
     .queue-item .info .artist { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .queue-item .dj { font-size: 10px; color: var(--text-muted); flex-shrink: 0; padding: 2px 8px; background: var(--bg); border-radius: 10px; }
-    .queue-item .remove-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px; transition: all 0.15s; opacity: 0; font-family: inherit; }
-    .queue-item:hover .remove-btn { opacity: 1; }
-    .queue-item .remove-btn:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
-    .queue-item.current .remove-btn { display: none; }
+    
+    /* ===== BOTÃO DE REMOVER ===== */
+    .queue-item .remove-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      opacity: 0;
+      font-family: inherit;
+    }
+
+    .queue-item:hover .remove-btn {
+      opacity: 1;
+    }
+
+    .queue-item .remove-btn:hover {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.15);
+      transform: scale(1.1);
+    }
+
+    .queue-item.current .remove-btn {
+      display: none;
+    }
+
     .queue-item.clickable { cursor: pointer; }
     .queue-item.clickable:hover { background: var(--bg-hover); border-left-color: var(--accent2); }
 
@@ -1266,7 +1291,7 @@ let messageLikes = {};
 let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
 
 // ===== CONSTANTES =====
-const MAX_CHAT_MESSAGES = 10; // Mantém apenas as últimas 10 mensagens
+const MAX_CHAT_MESSAGES = 10;
 
 // ===== UTILS =====
 function $(id) { return document.getElementById(id); }
@@ -1836,9 +1861,44 @@ function syncPlayer(state) {
   }
 }
 
+// ===== REMOVER MÚSICA DA FILA (ADMIN) =====
+function removeFromQueue(index) {
+  if (!amIAdmin) {
+    toast('Apenas administradores podem remover músicas', 'error');
+    return;
+  }
+  
+  if (!currentRoom) {
+    toast('Você não está em uma sala', 'error');
+    return;
+  }
+  
+  if (!currentRoomData || !currentRoomData.queue || index >= currentRoomData.queue.length) {
+    toast('Música não encontrada', 'error');
+    return;
+  }
+  
+  if (index === currentRoomData.currentIndex) {
+    toast('Não é possível remover a música que está tocando', 'error');
+    return;
+  }
+  
+  const track = currentRoomData.queue[index];
+  if (!track) {
+    toast('Música não encontrada', 'error');
+    return;
+  }
+  
+  if (!confirm(`Remover "${track.title}" da fila?`)) return;
+  
+  socket.emit('removeFromQueue', index);
+}
+
 function renderQueue(queue, currentIndex) {
   const list = $('queueList');
   const count = $('queueCount');
+  
+  if (!list) return;
   
   count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
   list.innerHTML = '';
@@ -1851,10 +1911,21 @@ function renderQueue(queue, currentIndex) {
   queue.forEach((track, i) => {
     const div = document.createElement('div');
     div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
+    
     if (i !== currentIndex && amIAdmin) {
       div.classList.add('clickable');
-      div.onclick = () => socket.emit('skipTo', i);
+      div.title = 'Clique para pular para esta música';
+      div.onclick = () => {
+        if (confirm(`Pular para "${track.title}"?`)) {
+          socket.emit('skipTo', i);
+        }
+      };
     }
+    
+    const removeBtn = (i !== currentIndex && amIAdmin) 
+      ? `<button class="remove-btn" onclick="event.stopPropagation();removeFromQueue(${i})" title="Remover da fila">✕</button>` 
+      : '';
+
     div.innerHTML = `
       <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
       <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
@@ -1863,7 +1934,7 @@ function renderQueue(queue, currentIndex) {
         <div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div>
       </div>
       <span class="dj">${escapeHtml(track.dj || '')}</span>
-      ${i !== currentIndex && amIAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})">✕</button>` : ''}
+      ${removeBtn}
     `;
     list.appendChild(div);
   });
@@ -2248,6 +2319,11 @@ socket.on('isAdmin', (isAdmin) => {
     $('adminBadge').classList.remove('hidden');
     toast('Você é admin desta sala!', 'success');
   }
+});
+
+// ===== EVENTO DE REMOÇÃO DE MÚSICA =====
+socket.on('songRemoved', (data) => {
+  toast(`🗑️ "${data.title}" removida da fila`, 'success');
 });
 
 socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
