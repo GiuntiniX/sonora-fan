@@ -3022,7 +3022,7 @@ function renderHistory(history) {
     return;
   }
   list.innerHTML = '';
-  history.slice(0, 10).forEach(h => {
+  history.slice(0, 3).forEach(h => {
     const div = document.createElement('div');
     div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:all 0.15s;font-size:12px;';
     div.onmouseenter = () => div.style.background = 'var(--bg-hover)';
