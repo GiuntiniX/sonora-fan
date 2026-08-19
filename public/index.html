@@ -517,7 +517,7 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM - NOVO LAYOUT 3 COLUNAS ===== */
+    /* ===== ROOM ===== */
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 1.2fr 1fr;
@@ -727,25 +727,6 @@
     .vote-count.negative { color: var(--danger); }
     .vote-count.positive { color: var(--success); }
 
-    .queue-item .remove-btn { 
-      background: transparent; 
-      border: none; 
-      color: var(--text-muted); 
-      cursor: pointer; 
-      font-size: 12px; 
-      padding: 2px 4px; 
-      border-radius: 4px; 
-      transition: all 0.15s; 
-      opacity: 0; 
-      font-family: inherit; 
-      flex-shrink: 0;
-    }
-    .queue-item:hover .remove-btn { opacity: 1; }
-    .queue-item .remove-btn:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
-    .queue-item.current .remove-btn { display: none; }
-    .queue-item.clickable { cursor: pointer; }
-    .queue-item.clickable:hover { background: var(--bg-hover); border-left-color: var(--accent2); }
-
     /* PLAYER */
     #youtube-player {
       width: 100%;
@@ -834,7 +815,7 @@
     .cooldown-text { font-size: 12px; color: var(--accent); text-align: center; padding: 6px; border-radius: 8px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2); flex-shrink: 0; }
     .cooldown-text.hidden { display: none; }
 
-    /* CHAT (mesmo estilo anterior) */
+    /* CHAT */
     .chat-messages {
       flex: 1;
       overflow: hidden;
@@ -1133,6 +1114,7 @@
         <button onclick="adminBroadcast()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📢 Mensagem</button>
       </div>
 
+      <!-- SEÇÃO DE GERENCIAR FILAS (com botão Remover) -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <span style="font-weight:700;font-size:13px;">🎵 Gerenciar Filas</span>
@@ -1143,6 +1125,7 @@
         </div>
       </div>
 
+      <!-- SEÇÃO DE USUÁRIOS -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
           <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
@@ -1198,7 +1181,7 @@
     </div>
   </div>
 
-  <!-- ROOM - NOVO LAYOUT 3 COLUNAS -->
+  <!-- ROOM -->
   <div class="screen" id="screen-room">
     <div class="app">
       <div class="header">
@@ -1215,7 +1198,7 @@
       </div>
 
       <div class="room-layout">
-        <!-- COLUNA ESQUERDA - FILA -->
+        <!-- COLUNA ESQUERDA - FILA (sem botão Remover) -->
         <div class="queue-column">
           <div class="queue-header">
             <span>🎵 Fila</span>
@@ -1352,7 +1335,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO (mesmo da versão anterior, adaptado)
+    //  JAVASCRIPT COMPLETO
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1668,6 +1651,7 @@
       } catch (e) { toast('Erro ao banir', 'error'); }
     }
 
+    // ===== ADMIN - GERENCIAR FILAS (com botão Remover) =====
     async function loadAdminQueues() {
       try {
         const res = await fetch('/api/rooms', { credentials: 'include' });
@@ -2057,7 +2041,7 @@
       }, interval);
     }
 
-    // ===== RENDER QUEUE =====
+    // ===== RENDER QUEUE (SEM BOTÃO REMOVER) =====
     function renderQueue(queue, currentIndex) {
       const list = $('queueList');
       const count = $('queueCount');
@@ -2121,7 +2105,7 @@
             <span class="vote-count ${scoreClass}">${totalVotes > 0 ? scoreSymbol + score : '0'}</span>
             <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="👎 Remover">👎</button>
           </div>
-          ${i !== currentIndex && isUserAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})" style="opacity:1;background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">Remover</button>` : ''}
+          <!-- Botão Remover removido da fila principal -->
         `;
         list.appendChild(div);
       });
