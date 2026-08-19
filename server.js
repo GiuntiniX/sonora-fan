@@ -297,7 +297,7 @@ function fetchUrl(url) {
   });
 }
 
-// ===== VIDEO INFO (tolerante a falhas - retorna duration: null se não encontrar) =====
+// ===== VIDEO INFO (com extração robusta e bloqueio se falhar) =====
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
   if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
@@ -306,7 +306,7 @@ app.get('/api/video-info', async (req, res) => {
 
   const info = { id, title: null, artist: null, duration: null };
 
-  // Tenta oembed primeiro (para título e artista)
+  // Tenta oembed (título e artista)
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
@@ -314,7 +314,7 @@ app.get('/api/video-info', async (req, res) => {
     info.artist = data.author_name || null;
   } catch (e) {}
 
-  // Estratégias para extrair duração (em ordem de prioridade)
+  // Tenta extrair duração com várias estratégias
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
 
@@ -378,7 +378,6 @@ app.get('/api/video-info', async (req, res) => {
       }
     }
 
-    // Se ainda não tiver título, extrair do <title>
     if (!info.title) {
       const titleMatch = html.match(/<title>([^<]+)<\/title>/);
       if (titleMatch) {
@@ -387,12 +386,26 @@ app.get('/api/video-info', async (req, res) => {
     }
   } catch (e) {}
 
-  // Se não tiver título, tenta preencher com o ID
+  // Se não tiver título, preenche com o ID
   if (!info.title) {
     info.title = 'Vídeo do YouTube (ID: ' + id + ')';
   }
 
-  // SEMPRE retorna 200, com duration: null se não encontrou
+  // 🔥 BLOQUEIA se a duração não foi encontrada
+  if (!info.duration) {
+    return res.status(404).json({
+      error: 'Não foi possível obter a duração do vídeo. Tente novamente ou use outro link.'
+    });
+  }
+
+  // 🔥 BLOQUEIA se a duração for maior que o limite (10 min)
+  if (info.duration > settings.maxDuration) {
+    return res.status(400).json({
+      error: `Vídeo muito longo! Duração: ${Math.floor(info.duration / 60)} minutos. Limite: ${settings.maxDuration / 60} minutos.`,
+      duration: info.duration
+    });
+  }
+
   res.json(info);
 });
 
@@ -640,18 +653,21 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', msg);
   });
 
+  // 🔥 VALIDAÇÃO DE DURAÇÃO NO BACKEND
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     const now = Date.now();
     const lastAdd = room.lastAddTime.get(socket.userName) || 0;
 
+    // Cooldown
     if (now - lastAdd < 30000) {
       const wait = Math.ceil((30000 - (now - lastAdd)) / 1000);
       socket.emit('error', `Aguarde ${wait}s`);
       return;
     }
 
+    // Limite de músicas por usuário
     const userSongs = room.queue.filter(t => t.dj === socket.userName).length;
     if (userSongs >= MAX_SONGS_PER_USER) {
       socket.emit('error', `Você já tem ${MAX_SONGS_PER_USER} músicas na fila. Aguarde outras serem tocadas.`);
@@ -663,9 +679,14 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Se a duração foi enviada e é maior que o limite, bloqueia
-    if (song.duration && song.duration > settings.maxDuration) {
-      socket.emit('error', `⛔ Vídeo muito longo! Limite: ${settings.maxDuration/60} min`);
+    // 🔥 BLOQUEIA se a duração for nula ou maior que o limite
+    if (!song.duration || song.duration <= 0) {
+      socket.emit('error', '❌ Duração do vídeo não verificada. Não é possível adicionar.');
+      return;
+    }
+
+    if (song.duration > settings.maxDuration) {
+      socket.emit('error', `⛔ Vídeo muito longo! Duração: ${Math.floor(song.duration / 60)} min. Limite: ${settings.maxDuration / 60} min.`);
       return;
     }
 
