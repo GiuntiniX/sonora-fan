@@ -34,7 +34,6 @@
       --accent2-glow: rgba(124,58,237,0.3);
     }
 
-    /* ===== FIXAR PÁGINA ===== */
     html, body {
       overflow: hidden;
       height: 100%;
@@ -579,7 +578,7 @@
     .volume-control input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
     .volume-control input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); cursor: pointer; }
 
-    /* ===== QUEUE ===== */
+    /* ===== QUEUE COM VOTAÇÃO ===== */
     .queue-center {
       flex: 1;
       min-height: 0;
@@ -606,25 +605,67 @@
     .queue-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 8px 10px;
+      gap: 8px;
+      padding: 6px 10px;
       border-radius: 8px;
       transition: all 0.15s;
       cursor: default;
       border-left: 3px solid transparent;
+      flex-wrap: wrap;
     }
     .queue-item:hover { background: var(--bg-hover); }
     .queue-item.current { background: var(--bg-hover); border-left-color: var(--accent); }
-    .queue-item .pos { font-size: 11px; color: var(--text-muted); min-width: 24px; text-align: center; font-weight: 600; }
+    .queue-item .pos { font-size: 11px; color: var(--text-muted); min-width: 20px; text-align: center; font-weight: 600; }
     .queue-item.current .pos { color: var(--accent); }
-    .queue-item .thumb { width: 40px; height: 30px; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: var(--bg); }
+    .queue-item .thumb { width: 36px; height: 27px; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: var(--bg); }
     .queue-item .thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .queue-item .info { flex: 1; min-width: 0; }
-    .queue-item .info .title { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .queue-item .info { flex: 1; min-width: 80px; }
+    .queue-item .info .title { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .queue-item.current .info .title { color: var(--text); font-weight: 600; }
-    .queue-item .info .artist { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .queue-item .dj { font-size: 10px; color: var(--text-muted); flex-shrink: 0; padding: 2px 8px; background: var(--bg); border-radius: 10px; }
-    .queue-item .remove-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 4px; border-radius: 4px; transition: all 0.15s; opacity: 0; font-family: inherit; }
+    .queue-item .info .artist { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .queue-item .dj { font-size: 9px; color: var(--text-muted); flex-shrink: 0; padding: 1px 6px; background: var(--bg); border-radius: 10px; }
+    
+    /* ===== VOTAÇÃO ===== */
+    .queue-votes {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .vote-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      font-family: inherit;
+      opacity: 0.5;
+    }
+    .vote-btn:hover { opacity: 1; transform: scale(1.1); }
+    .vote-btn.up:hover { color: var(--success); }
+    .vote-btn.down:hover { color: var(--danger); }
+    .vote-btn.voted-up { opacity: 1; color: var(--success); }
+    .vote-btn.voted-down { opacity: 1; color: var(--danger); }
+    .vote-count { font-size: 10px; font-weight: 700; min-width: 16px; text-align: center; color: var(--text-muted); }
+    .vote-count.negative { color: var(--danger); }
+    .vote-count.positive { color: var(--success); }
+    
+    .queue-item .remove-btn { 
+      background: transparent; 
+      border: none; 
+      color: var(--text-muted); 
+      cursor: pointer; 
+      font-size: 12px; 
+      padding: 2px 4px; 
+      border-radius: 4px; 
+      transition: all 0.15s; 
+      opacity: 0; 
+      font-family: inherit; 
+      flex-shrink: 0;
+    }
     .queue-item:hover .remove-btn { opacity: 1; }
     .queue-item .remove-btn:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
     .queue-item.current .remove-btn { display: none; }
@@ -753,11 +794,6 @@
       background: rgba(255,255,255,0.02);
     }
 
-    .msg:not(.seen) {
-      border-left: 2px solid var(--accent);
-      padding-left: 6px;
-    }
-
     .msg.removing {
       opacity: 0;
       transform: translateY(-10px) scale(0.95);
@@ -794,34 +830,6 @@
     .msg-like-btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
     .msg-like-btn.liked { color: var(--accent); background: rgba(255,107,53,0.1); }
     .msg-like-count { font-size: 10px; font-weight: 600; }
-
-    .new-messages-pill {
-      position: absolute;
-      bottom: 70px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      border: none;
-      border-radius: 20px;
-      padding: 6px 16px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      z-index: 10;
-      box-shadow: 0 4px 20px rgba(255,107,53,0.4);
-      transition: all 0.3s;
-      font-family: inherit;
-      animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .new-messages-pill.hidden { display: none; }
-    .new-messages-pill:hover { transform: translateX(-50%) scale(1.05); box-shadow: 0 6px 30px rgba(124,58,237,0.5); }
-
-    @keyframes bounceIn {
-      0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
-      100% { opacity: 1; transform: translateX(-50%) scale(1); }
-    }
 
     .chat-input-bar {
       padding: 8px 12px;
@@ -869,9 +877,10 @@
       .player-info { padding: 10px 12px; }
       .cover { width: 48px; height: 48px; font-size: 18px; }
       .track-title { font-size: 14px; }
-      .queue-item { padding: 6px 8px; }
+      .queue-item { padding: 6px 8px; flex-wrap: wrap; }
       .queue-item .thumb { width: 32px; height: 24px; }
-      .queue-item .info .title { font-size: 12px; }
+      .queue-item .info .title { font-size: 11px; }
+      .queue-votes { margin-left: 0; }
       .room-layout { grid-template-rows: 1fr 380px; }
       .sidebar { height: 380px; max-height: 380px; }
     }
@@ -928,9 +937,9 @@
         <p>Comente as músicas, reaja com emojis e curta as escolhas da galera.</p>
       </div>
       <div class="landing-feature-card">
-        <div class="icon">🕺</div>
-        <h3>Salas com identidade</h3>
-        <p>Crie sua própria sala e convide a galera pra construir a vibe com você.</p>
+        <div class="icon">🗳️</div>
+        <h3>Votação democrática</h3>
+        <p>Curta ou dispense músicas da fila. Com 10 votos negativos, a música sai!</p>
       </div>
     </div>
     <div class="landing-cta-band">
@@ -1175,7 +1184,6 @@
               <!-- Mensagens aparecem aqui -->
             </div>
           </div>
-          <button class="new-messages-pill hidden" id="newMsgPill" onclick="markMessagesAsSeen();">↓ Novas mensagens</button>
           <div class="chat-input-bar">
             <button class="emoji-btn" onclick="toggleEmojis()">😀</button>
             <input type="text" id="chatInput" placeholder="Mensagem..." onkeydown="if(event.key==='Enter') sendMessage()">
@@ -1234,6 +1242,7 @@
 <script>
 // ===== CONFIGURAÇÕES =====
 const MAX_SONG_DURATION = 600; // 10 minutos em segundos
+const DISLIKE_THRESHOLD = 10; // Número de dislikes para remover a música
 
 // ===== SOCKET =====
 const socket = io();
@@ -1251,6 +1260,7 @@ let lastAddTime = 0;
 let songData = null;
 let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
 let messageLikesSync = {};
+let queueVotes = {}; // { trackIndex: { up: [users], down: [users] } }
 
 // ===== CONSTANTES =====
 const MAX_CHAT_MESSAGES = 10;
@@ -1823,7 +1833,7 @@ function syncPlayer(state) {
   }
 }
 
-// ===== RENDER QUEUE - CORRIGIDA =====
+// ===== RENDER QUEUE COM VOTAÇÃO =====
 function renderQueue(queue, currentIndex) {
   const list = $('queueList');
   const count = $('queueCount');
@@ -1836,17 +1846,32 @@ function renderQueue(queue, currentIndex) {
     return;
   }
 
-  // ✅ VERIFICA SE O USUÁRIO É ADMIN (GLOBAL OU DA SALA)
   const isUserAdmin = amIAdmin || currentUser?.email === 'admin@sonora.com';
 
   queue.forEach((track, i) => {
     const div = document.createElement('div');
     div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
     
+    // Clique para pular (apenas admin)
     if (i !== currentIndex && isUserAdmin) {
       div.classList.add('clickable');
       div.onclick = () => socket.emit('skipTo', i);
     }
+    
+    // Dados de votação
+    const votes = queueVotes[i] || { up: [], down: [] };
+    const upCount = votes.up.length;
+    const downCount = votes.down.length;
+    const userVotedUp = votes.up.includes(myName);
+    const userVotedDown = votes.down.includes(myName);
+    const totalVotes = upCount + downCount;
+    const score = upCount - downCount;
+    
+    // Cor do placar
+    let scoreClass = '';
+    let scoreSymbol = '⚪';
+    if (score > 0) { scoreClass = 'positive'; scoreSymbol = '👍'; }
+    if (score < 0) { scoreClass = 'negative'; scoreSymbol = '👎'; }
     
     div.innerHTML = `
       <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
@@ -1856,9 +1881,34 @@ function renderQueue(queue, currentIndex) {
         <div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div>
       </div>
       <span class="dj">${escapeHtml(track.dj || '')}</span>
+      <div class="queue-votes">
+        <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')" title="👍 Manter">👍</button>
+        <span class="vote-count ${scoreClass}">${totalVotes > 0 ? scoreSymbol + score : '0'}</span>
+        <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="👎 Remover">👎</button>
+      </div>
       ${i !== currentIndex && isUserAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})">✕</button>` : ''}
     `;
     list.appendChild(div);
+  });
+}
+
+// ===== VOTAÇÃO =====
+function voteSong(index, type) {
+  if (!currentRoom) {
+    toast('Entre em uma sala para votar', 'error');
+    return;
+  }
+  
+  // Não pode votar na música que está tocando
+  if (currentRoomData && currentRoomData.currentIndex === index) {
+    toast('Não é possível votar na música atual', 'error');
+    return;
+  }
+  
+  socket.emit('voteSong', { 
+    index: index,
+    type: type,
+    room: currentRoom
   });
 }
 
@@ -2134,7 +2184,6 @@ function renderMessage(msg) {
 
   container.appendChild(div);
   limitChatMessages(container);
-  updateNewMessagesPill();
 }
 
 function limitChatMessages(container) {
@@ -2201,32 +2250,6 @@ function updateLikeDisplay(msgId) {
   }
 }
 
-function updateNewMessagesPill() {
-  const pill = $('newMsgPill');
-  const container = document.getElementById('chatMessagesInner');
-  if (!pill || !container) return;
-  
-  const unseen = container.querySelectorAll('.msg:not(.seen)').length;
-  if (unseen > 0) {
-    pill.textContent = `↓ ${unseen} novas mensagens`;
-    pill.classList.remove('hidden');
-  } else {
-    pill.classList.add('hidden');
-  }
-}
-
-function markMessagesAsSeen() {
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  container.querySelectorAll('.msg').forEach(el => el.classList.add('seen'));
-  updateNewMessagesPill();
-  
-  container.scrollTo({
-    top: container.scrollHeight,
-    behavior: 'smooth'
-  });
-}
-
 function sendMessage() {
   const input = $('chatInput');
   const text = input.value.trim();
@@ -2290,7 +2313,6 @@ socket.on('chatHistory', (messages) => {
   const recentMessages = messages.slice(start);
   
   recentMessages.forEach(m => renderMessage(m));
-  setTimeout(markMessagesAsSeen, 100);
 });
 
 socket.on('likeUpdate', (data) => {
@@ -2315,10 +2337,36 @@ socket.on('likesState', (likesData) => {
   }
 });
 
+// ===== EVENTOS DE VOTAÇÃO =====
+socket.on('voteUpdate', (data) => {
+  const { index, up, down } = data;
+  queueVotes[index] = { up, down };
+  
+  // Verifica se atingiu o limite de dislikes
+  if (down.length >= DISLIKE_THRESHOLD) {
+    toast(`👎 Música removida por votação! (${down.length} votos negativos)`, 'error');
+    // A música já foi removida pelo servidor, apenas atualizamos a UI
+    if (currentRoomData && currentRoomData.queue) {
+      renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+    }
+  } else {
+    // Atualiza apenas a UI da fila
+    if (currentRoomData && currentRoomData.queue) {
+      renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+    }
+  }
+});
+
+socket.on('votesState', (votesData) => {
+  queueVotes = votesData || {};
+  if (currentRoomData && currentRoomData.queue) {
+    renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+  }
+});
+
 socket.on('error', (msg) => toast(msg, 'error'));
 
 socket.on('isAdmin', (isAdmin) => {
-  // ✅ Verifica se é admin global OU admin da sala
   amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
   if (amIAdmin) {
     $('adminBadge').classList.remove('hidden');
@@ -2370,9 +2418,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const container = document.getElementById('chatMessagesInner');
   if (container) {
     container.addEventListener('scroll', () => {
-      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 20) {
-        markMessagesAsSeen();
-      }
+      // Rolagem automática mantida
     });
   }
 });
