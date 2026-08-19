@@ -6,7 +6,7 @@
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    /* ===== ESTILOS GLOBAIS ===== */
+    /* ===== ESTILOS GLOBAIS (mesmo conteúdo anterior) ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -417,6 +417,7 @@
       backdrop-filter: blur(20px);
       flex-shrink: 0;
       z-index: 50;
+      position: relative;
     }
     .header-left { display: flex; align-items: center; gap: 16px; }
     .header h1 { font-size: 18px; font-weight: 700; }
@@ -894,6 +895,56 @@
       .room-layout { grid-template-rows: 1fr 320px; }
       .sidebar { height: 320px; max-height: 320px; }
     }
+
+    /* NOVOS ESTILOS PARA MENU ADMIN DA SALA */
+    .room-admin-menu {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      min-width: 220px;
+      z-index: 100;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .room-admin-menu.show {
+      display: block;
+    }
+    .room-admin-menu button {
+      display: block;
+      width: 100%;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 4px;
+    }
+    .room-admin-menu button:hover {
+      background: var(--bg-hover);
+    }
+    .room-admin-menu .danger {
+      color: var(--danger);
+    }
+    .room-admin-menu .danger:hover {
+      background: rgba(239,68,68,0.1);
+    }
+    .room-admin-menu .success {
+      color: var(--success);
+    }
+    .room-admin-menu hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 6px 0;
+    }
   </style>
 </head>
 <body>
@@ -1056,7 +1107,17 @@
       <button onclick="adminBroadcast()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📢 Mensagem</button>
     </div>
 
-    <div style="border-top:1px solid var(--border);padding-top:12px;">
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
+      <h4 style="font-weight:700;font-size:13px;margin-bottom:8px;">⚙️ Configurações Globais</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <input type="number" id="adminMaxQueue" placeholder="Máx fila" value="20" style="padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;">
+        <input type="number" id="adminCooldown" placeholder="Cooldown (s)" value="180" style="padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;">
+        <input type="number" id="adminMaxDuration" placeholder="Duração máx (s)" value="600" style="padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;">
+        <button onclick="adminSaveSettings()" style="padding:6px;border-radius:6px;border:none;background:var(--accent2);color:#fff;font-weight:600;cursor:pointer;">💾 Salvar</button>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
         <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
         <span style="font-size:11px;color:var(--text-muted);" id="adminUserCount">0</span>
@@ -1104,7 +1165,20 @@
     <div class="header">
       <div class="header-left">
         <button onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;">← Voltar</button>
-        <h1 id="roomTitle">Sala</h1>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <h1 id="roomTitle">Sala</h1>
+          <button id="roomAdminMenuBtn" style="background:transparent;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:none;" onclick="toggleRoomAdminMenu()">⚙️</button>
+          <div class="room-admin-menu" id="roomAdminMenu">
+            <button onclick="roomAdminBan()">🚫 Banir usuário</button>
+            <button onclick="roomAdminKick()">👢 Expulsar usuário</button>
+            <button onclick="roomAdminTransfer()">👑 Transferir admin</button>
+            <hr>
+            <button onclick="roomAdminPause()">⏸️ Pausar</button>
+            <button onclick="roomAdminResume()">▶️ Retomar</button>
+            <button onclick="roomAdminClearQueue()">🧹 Limpar fila</button>
+            <button onclick="roomAdminRemoveCurrent()" class="danger">⏭️ Pular música atual</button>
+          </div>
+        </div>
       </div>
       <div class="header-right">
         <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom" style="display:none;">🎛️</button>
@@ -1676,6 +1750,23 @@ function adminBroadcast() {
   toast('📢 Enviado!', 'success');
 }
 
+async function adminSaveSettings() {
+  const maxQueue = parseInt(document.getElementById('adminMaxQueue').value) || 20;
+  const cooldown = parseInt(document.getElementById('adminCooldown').value) || 180;
+  const maxDuration = parseInt(document.getElementById('adminMaxDuration').value) || 600;
+  try {
+    const res = await fetch('/api/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ maxQueue, cooldown, maxDuration })
+    });
+    if (res.ok) {
+      toast('Configurações salvas!', 'success');
+    }
+  } catch (e) {}
+}
+
 // ===== LOBBY =====
 async function loadRooms() {
   try {
@@ -1753,6 +1844,8 @@ function joinRoom(slug) {
   document.getElementById('chatMessagesInner').innerHTML = '';
   amIAdmin = false;
   $('adminBadge').classList.add('hidden');
+  $('roomAdminMenuBtn').style.display = 'none';
+  $('roomAdminMenu').classList.remove('show');
   loadYouTubeAPI();
 }
 
@@ -2274,6 +2367,61 @@ function setVolume(val) {
   if (player && player.setVolume) player.setVolume(parseInt(val));
 }
 
+// ===== ADMIN DA SALA - MENU =====
+function toggleRoomAdminMenu() {
+  const menu = document.getElementById('roomAdminMenu');
+  menu.classList.toggle('show');
+}
+
+// Fechar menu ao clicar fora
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('roomAdminMenu');
+  const btn = document.getElementById('roomAdminMenuBtn');
+  if (menu && btn) {
+    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.classList.remove('show');
+    }
+  }
+});
+
+function roomAdminBan() {
+  const name = prompt('Nome do usuário para banir:');
+  if (name) socket.emit('banUser', { targetName: name.trim() });
+  document.getElementById('roomAdminMenu').classList.remove('show');
+}
+
+function roomAdminKick() {
+  const name = prompt('Nome do usuário para expulsar:');
+  if (name) socket.emit('kickUser', { targetName: name.trim() });
+  document.getElementById('roomAdminMenu').classList.remove('show');
+}
+
+function roomAdminTransfer() {
+  const name = prompt('Nome do novo admin:');
+  if (name) socket.emit('transferAdmin', { targetName: name.trim() });
+  document.getElementById('roomAdminMenu').classList.remove('show');
+}
+
+function roomAdminPause() {
+  socket.emit('pauseQueue');
+  document.getElementById('roomAdminMenu').classList.remove('show');
+}
+
+function roomAdminResume() {
+  socket.emit('resumeQueue');
+  document.getElementById('roomAdminMenu').classList.remove('show');
+}
+
+function roomAdminClearQueue() {
+  if (confirm('Limpar toda a fila?')) socket.emit('clearQueue');
+  document.getElementById('roomAdminMenu').classList.remove('show');
+}
+
+function roomAdminRemoveCurrent() {
+  if (confirm('Pular a música atual?')) socket.emit('removeCurrentSong');
+  document.getElementById('roomAdminMenu').classList.remove('show');
+}
+
 // ===== SOCKET EVENTS =====
 socket.on('roomState', (state) => {
   const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] 
@@ -2370,7 +2518,11 @@ socket.on('isAdmin', (isAdmin) => {
   amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
   if (amIAdmin) {
     $('adminBadge').classList.remove('hidden');
+    $('roomAdminMenuBtn').style.display = 'flex';
     toast('Você é admin desta sala!', 'success');
+  } else {
+    $('adminBadge').classList.add('hidden');
+    $('roomAdminMenuBtn').style.display = 'none';
   }
 });
 
@@ -2398,6 +2550,20 @@ socket.on('adminBroadcast', (data) => {
 });
 
 socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
+
+// Eventos de admin da sala
+socket.on('userBanned', ({ name }) => {
+  toast(`🚫 ${name} foi banido`, 'error');
+});
+
+socket.on('adminChanged', ({ newAdmin }) => {
+  toast(`👑 Novo admin: ${newAdmin}`, 'success');
+  if (newAdmin === myName) {
+    amIAdmin = true;
+    document.getElementById('adminBadge').classList.remove('hidden');
+    document.getElementById('roomAdminMenuBtn').style.display = 'flex';
+  }
+});
 
 // ===== PROGRESS UPDATE =====
 setInterval(() => {
