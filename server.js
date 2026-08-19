@@ -25,8 +25,10 @@ const sessions = new Map();
 
 // ========== ESTADO ==========
 const rooms = new Map();
+const roomLikes = new Map(); // ✅ Estado de curtidas por sala
 
 function createRoom(slug, name, adminName = null) {
+  roomLikes.set(slug, {});
   return {
     slug, name, admin: adminName,
     queue: [], currentIndex: 0, startedAt: Date.now(),
@@ -34,6 +36,13 @@ function createRoom(slug, name, adminName = null) {
     chatHistory: [], listenerCount: 0,
     lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0
   };
+}
+
+function getRoomLikes(slug) {
+  if (!roomLikes.has(slug)) {
+    roomLikes.set(slug, {});
+  }
+  return roomLikes.get(slug);
 }
 
 rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
@@ -274,7 +283,11 @@ app.post('/api/admin/delete-user', isAdmin, (req, res) => {
 });
 
 app.post('/api/admin/clear-all-chats', isAdmin, (req, res) => {
-  for (const [slug, room] of rooms) { room.chatHistory = []; io.to(slug).emit('chatCleared'); }
+  for (const [slug, room] of rooms) { 
+    room.chatHistory = [];
+    roomLikes.set(slug, {}); // ✅ Limpa curtidas também
+    io.to(slug).emit('chatCleared');
+  }
   res.json({ success: true });
 });
 
@@ -283,6 +296,7 @@ app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
     room.queue = [];
     room.currentIndex = 0;
     room.isPlaying = false;
+    roomLikes.set(slug, {}); // ✅ Limpa curtidas também
     broadcastState(slug);
     io.to(slug).emit('queueEmpty');
   }
@@ -330,7 +344,6 @@ io.on('connection', (socket) => {
     socket.userAvatar = avatar || '👤';
     room.listenerCount++;
 
-    // ✅ VERIFICAÇÃO MELHORADA: admin global OU admin da sala
     const cookie = socket.handshake.headers.cookie || '';
     const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
     const email = tokenMatch ? sessions.get(tokenMatch[1]) : null;
@@ -338,8 +351,11 @@ io.on('connection', (socket) => {
     const isRoomAdmin = room.admin === name;
     socket.isAdmin = isGlobalAdmin || isRoomAdmin;
 
-    // Se for admin global, define como admin da sala
     if (isGlobalAdmin && !room.admin) room.admin = name;
+
+    // ✅ Envia o estado atual de curtidas
+    const likes = getRoomLikes(slug);
+    socket.emit('likesState', likes);
 
     socket.emit('roomState', {
       slug: room.slug, name: room.name,
@@ -388,7 +404,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // ✅ VALIDAÇÃO DE DURAÇÃO NO BACKEND
     if (song.duration && song.duration > settings.maxDuration) {
       socket.emit('error', `⛔ Vídeo muito longo! Limite: ${settings.maxDuration/60} min`);
       return;
@@ -437,7 +452,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('removeFromQueue', (index) => {
-    // ✅ VERIFICAÇÃO MELHORADA: admin global OU admin da sala
     if (!currentRoom || !socket.isAdmin) {
       socket.emit('error', 'Apenas admin');
       return;
@@ -449,6 +463,34 @@ io.on('connection', (socket) => {
     if (index < room.currentIndex) room.currentIndex--;
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
+  });
+
+  // ✅ Evento de curtir mensagem
+  socket.on('likeMessage', ({ messageId, room }) => {
+    if (!room || !socket.userName) return;
+    
+    const likes = getRoomLikes(room);
+    
+    if (!likes[messageId]) {
+      likes[messageId] = { likes: 0, users: [] };
+    }
+    
+    const data = likes[messageId];
+    const userIndex = data.users.indexOf(socket.userName);
+    
+    if (userIndex > -1) {
+      data.users.splice(userIndex, 1);
+      data.likes = Math.max(0, data.likes - 1);
+    } else {
+      data.users.push(socket.userName);
+      data.likes++;
+    }
+    
+    io.to(room).emit('likeUpdate', {
+      messageId,
+      likes: data.likes,
+      users: data.users
+    });
   });
 
   socket.on('videoDuration', ({ duration }) => {
@@ -469,6 +511,7 @@ io.on('connection', (socket) => {
     }
     const room = rooms.get(currentRoom);
     room.chatHistory = [];
+    roomLikes.set(currentRoom, {}); // ✅ Limpa curtidas
     io.to(currentRoom).emit('chatCleared');
     addSystemMsg(currentRoom, '🧹 Chat limpo pelo admin');
   });
