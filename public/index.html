@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
+  <!-- ===== ESTILOS (igual ao anterior, mantido) ===== -->
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -443,7 +444,7 @@
     </div>
   </div>
 
-  <!-- SIGNUP -->
+  <!-- SIGNUP (sem gênero e região) -->
   <div class="modal-overlay" id="signupModal">
     <div class="modal">
       <h3>🎵 Criar conta</h3>
@@ -456,27 +457,6 @@
       <label class="form-label">Senha <span class="required">*</span> <span class="hint">(mínimo 6 caracteres)</span></label>
       <input type="password" id="signupPassword" placeholder="Crie uma senha" maxlength="30">
       <div class="form-error" id="signupPasswordError">Mínimo 6 caracteres</div>
-      <label class="form-label">Gênero <span class="required">*</span></label>
-      <select id="signupGenero">
-        <option value="">Selecione</option>
-        <option value="homem">Homem</option>
-        <option value="mulher">Mulher</option>
-        <option value="trans">Trans</option>
-        <option value="nao-binario">Não-binário</option>
-        <option value="prefiro-nao-dizer">Prefiro não dizer</option>
-      </select>
-      <div class="form-error" id="signupGeneroError">Selecione um gênero</div>
-      <label class="form-label">Região <span class="required">*</span></label>
-      <select id="signupRegiao">
-        <option value="">Selecione</option>
-        <option value="norte">Norte</option>
-        <option value="nordeste">Nordeste</option>
-        <option value="centro-oeste">Centro-Oeste</option>
-        <option value="sudeste">Sudeste</option>
-        <option value="sul">Sul</option>
-        <option value="fora-do-brasil">Fora do Brasil</option>
-      </select>
-      <div class="form-error" id="signupRegiaoError">Selecione sua região</div>
       <label class="form-label">Estilo musical <span class="required">*</span></label>
       <div class="chip-group" id="signupStyles">
         <div class="chip" data-style="sertanejo" onclick="toggleChip(this)">Sertanejo</div>
@@ -731,19 +711,16 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO (CONFIGURAÇÕES, VARIÁVEIS, FUNÇÕES, EVENTOS)
+    //  JAVASCRIPT COMPLETO
     // ============================================================
 
-    // ===== CONFIGURAÇÕES =====
     const MAX_SONG_DURATION = 600;
     const DISLIKE_THRESHOLD = 10;
     const COOLDOWN = 30000;
     const MAX_SONGS_PER_USER = 3;
 
-    // ===== SOCKET =====
     const socket = io();
 
-    // ===== VARIÁVEIS GLOBAIS =====
     let currentUser = null;
     let myName = '';
     let myAvatar = '🎸';
@@ -760,7 +737,6 @@
     let myFavorites = [];
     let crossfadeInterval = null;
 
-    // ===== UTILS =====
     function $(id) { return document.getElementById(id); }
 
     function toast(msg, type) {
@@ -795,7 +771,6 @@
       if (el) el.classList.add('active');
     }
 
-    // ===== BAD WORDS =====
     const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
 
     function censorText(text) {
@@ -807,7 +782,6 @@
       return censored;
     }
 
-    // ===== TEMAS =====
     function applyTheme() {
       const themes = {
         'dark': { btn: '🌙', bg: '#050508', card: '#0f0f18', hover: '#161620', border: '#1e1e2e', text: '#f0f0f8', textSec: '#9a9ab0', accent: '#ff6b35', accent2: '#7c3aed', bgImage: 'none', overlay: 'transparent' },
@@ -839,7 +813,6 @@
       toast('Tema: ' + currentTheme, 'success');
     }
 
-    // ===== AUTENTICAÇÃO =====
     function showLogin() { $('landingScreen').style.display = 'none'; $('loginScreen').classList.add('active'); }
     function hideLogin() { $('loginScreen').classList.remove('active'); }
     function openSignup() { hideLogin(); $('signupModal').classList.add('active'); }
@@ -850,19 +823,15 @@
       const nome = $('signupNome').value.trim();
       const email = $('signupEmail').value.trim();
       const senha = $('signupPassword').value.trim();
-      const genero = $('signupGenero').value;
-      const regiao = $('signupRegiao').value;
       const estilos = Array.from(document.querySelectorAll('#signupStyles .chip.selected')).map(c => c.dataset.style);
       if (nome.length < 2) return toast('Digite seu nome', 'error');
       if (!email.includes('@')) return toast('E-mail inválido', 'error');
       if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
-      if (!genero) return toast('Selecione um gênero', 'error');
-      if (!regiao) return toast('Selecione sua região', 'error');
       if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
       try {
         const res = await fetch('/api/signup', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome, email, senha, genero, regiao, estilos })
+          body: JSON.stringify({ nome, email, senha, estilos })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
@@ -954,7 +923,6 @@
       }
     }
 
-    // ===== ADMIN =====
     function toggleAdmin() {
       if (!amIAdmin) { toast('Apenas administradores', 'error'); return; }
       const panel = $('adminPanel');
@@ -1260,7 +1228,6 @@
       }
     }
 
-    // ===== CROSSFADE =====
     function startCrossfade() {
       if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
       crossfadeInterval = setInterval(() => {
@@ -1306,7 +1273,6 @@
       }, interval);
     }
 
-    // ===== RENDER QUEUE =====
     function renderQueue(queue, currentIndex) {
       const list = $('queueList');
       const count = $('queueCount');
@@ -1318,7 +1284,9 @@
         return;
       }
 
-      const isUserAdmin = amIAdmin || currentUser?.email === 'admin@sonora.com';
+      // Verifica se é admin global ou admin da sala
+      const isGlobalAdmin = currentUser && currentUser.email === 'admin@sonora.com';
+      const isUserAdmin = amIAdmin || isGlobalAdmin;
 
       queue.forEach((track, i) => {
         const div = document.createElement('div');
@@ -1375,14 +1343,12 @@
       });
     }
 
-    // ===== VOTAÇÃO =====
     function voteSong(index, type) {
       if (!currentRoom) { toast('Entre em uma sala para votar', 'error'); return; }
       if (currentRoomData && currentRoomData.currentIndex === index) { toast('Não é possível votar na música atual', 'error'); return; }
       socket.emit('voteSong', { index, type, room: currentRoom });
     }
 
-    // ===== ADD SONG =====
     function extractYouTubeId(url) {
       if (!url) return '';
       if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
@@ -1529,14 +1495,12 @@
       }, 1000);
     }
 
-    // ===== COPY QUEUE IDs =====
     function copyQueueIds() {
       if (!currentRoomData || !currentRoomData.queue || currentRoomData.queue.length === 0) { toast('Fila vazia', 'error'); return; }
       const ids = currentRoomData.queue.map(t => t.id).join(',');
       navigator.clipboard.writeText(ids).then(() => toast('📋 IDs copiados!', 'success')).catch(() => toast('Erro ao copiar', 'error'));
     }
 
-    // ===== CHAT =====
     function renderMessage(msg) {
       const container = document.getElementById('chatMessagesInner');
       if (!container) return;
@@ -1637,13 +1601,11 @@
     function toggleEmojis() { $('emojiPanel').classList.toggle('show'); }
     function insertEmoji(emoji) { $('chatInput').value += emoji; $('chatInput').focus(); $('emojiPanel').classList.remove('show'); }
 
-    // ===== VOLUME =====
     function setVolume(val) {
       $('volumeValue').textContent = val + '%';
       if (player && player.setVolume) player.setVolume(parseInt(val));
     }
 
-    // ===== SOCKET EVENTS =====
     socket.on('roomState', (state) => {
       const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
       const next = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
@@ -1668,7 +1630,6 @@
 
     socket.on('users', (users) => { $('userCount').textContent = users.length; });
     socket.on('chat', renderMessage);
-
     socket.on('chatHistory', (messages) => {
       const container = document.getElementById('chatMessagesInner');
       if (!container) return;
@@ -1677,13 +1638,11 @@
       const recentMessages = messages.slice(start);
       recentMessages.forEach(m => renderMessage(m));
     });
-
     socket.on('likeUpdate', (data) => {
       const { messageId, likes, users } = data;
       messageLikesSync[messageId] = { likes, users };
       updateLikeDisplay(messageId);
     });
-
     socket.on('likesState', (likesData) => {
       messageLikesSync = likesData || {};
       const container = document.getElementById('chatMessagesInner');
@@ -1694,7 +1653,6 @@
         if (msgId && messageLikesSync[msgId]) updateLikeDisplay(msgId);
       }
     });
-
     socket.on('voteUpdate', (data) => {
       const { index, up, down } = data;
       queueVotes[index] = { up, down };
@@ -1705,12 +1663,10 @@
         if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
       }
     });
-
     socket.on('votesState', (votesData) => {
       queueVotes = votesData || {};
       if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
     });
-
     socket.on('error', (msg) => toast(msg, 'error'));
     socket.on('isAdmin', (isAdmin) => {
       amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
@@ -1729,7 +1685,6 @@
     });
     socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
 
-    // ===== PROGRESS UPDATE =====
     setInterval(() => {
       if (!player || !player.getCurrentTime) return;
       try {
@@ -1743,7 +1698,6 @@
       } catch(e) {}
     }, 1000);
 
-    // ===== INICIALIZAÇÃO =====
     function init() {
       applyTheme();
       fetch('/api/me')
