@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
-  <!-- ===== ESTILOS (igual ao anterior, mantido) ===== -->
   <style>
+    /* ===== ESTILOS (mesmo conteúdo anterior, mantido) ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --bg: #050508;
@@ -711,7 +711,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO
+    //  JAVASCRIPT COMPLETO - CORREÇÃO: withCredentials
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -719,7 +719,8 @@
     const COOLDOWN = 30000;
     const MAX_SONGS_PER_USER = 3;
 
-    const socket = io();
+    // 🔥 CORREÇÃO: enviar cookies com a conexão Socket.IO
+    const socket = io({ withCredentials: true });
 
     let currentUser = null;
     let myName = '';
@@ -737,6 +738,7 @@
     let myFavorites = [];
     let crossfadeInterval = null;
 
+    // ===== UTILS =====
     function $(id) { return document.getElementById(id); }
 
     function toast(msg, type) {
@@ -1284,7 +1286,6 @@
         return;
       }
 
-      // Verifica se é admin global ou admin da sala
       const isGlobalAdmin = currentUser && currentUser.email === 'admin@sonora.com';
       const isUserAdmin = amIAdmin || isGlobalAdmin;
 
