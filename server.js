@@ -297,11 +297,16 @@ function fetchUrl(url) {
   });
 }
 
+// ===== VIDEO INFO (tenta extrair duração, mas sempre retorna 200) =====
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
-  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
 
   const info = { id, title: null, artist: null, duration: null };
+
+  // Tenta oembed (título e artista)
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
@@ -309,17 +314,78 @@ app.get('/api/video-info', async (req, res) => {
     info.artist = data.author_name || null;
   } catch (e) {}
 
+  // Tenta extrair duração com várias estratégias
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
-    const m = html.match(/"lengthSeconds":"?(\d+)"?/);
-    if (m) info.duration = parseInt(m[1], 10);
+
+    const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    if (jsonLdMatch) {
+      try {
+        const jsonLd = JSON.parse(jsonLdMatch[1]);
+        if (jsonLd.duration) {
+          const durStr = jsonLd.duration;
+          const match = durStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+          if (match) {
+            const hours = parseInt(match[1] || 0);
+            const minutes = parseInt(match[2] || 0);
+            const seconds = parseInt(match[3] || 0);
+            info.duration = hours * 3600 + minutes * 60 + seconds;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!info.duration) {
+      const playerResponseMatch = html.match(/var ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
+      if (playerResponseMatch) {
+        try {
+          const data = JSON.parse(playerResponseMatch[1]);
+          if (data.videoDetails && data.videoDetails.lengthSeconds) {
+            info.duration = parseInt(data.videoDetails.lengthSeconds, 10);
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (!info.duration) {
+      const ytcfgMatch = html.match(/ytcfg\.set\s*\(\s*({[\s\S]*?})\s*\)\s*;/);
+      if (ytcfgMatch) {
+        try {
+          const data = JSON.parse(ytcfgMatch[1]);
+          if (data.DURATION) {
+            info.duration = parseInt(data.DURATION, 10);
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (!info.duration) {
+      const regexMatch = html.match(/"lengthSeconds":"?(\d+)"?/);
+      if (regexMatch) {
+        info.duration = parseInt(regexMatch[1], 10);
+      }
+    }
+
+    if (!info.duration) {
+      const dataDurMatch = html.match(/data-duration="(\d+)"/);
+      if (dataDurMatch) {
+        info.duration = parseInt(dataDurMatch[1], 10);
+      }
+    }
+
     if (!info.title) {
-      const t = html.match(/<title>([^<]+)<\/title>/);
-      if (t) info.title = t[1].replace(/ - YouTube\s*$/, '').trim();
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+      if (titleMatch) {
+        info.title = titleMatch[1].replace(/ - YouTube\s*$/, '').trim();
+      }
     }
   } catch (e) {}
 
-  if (!info.title && !info.duration) return res.status(404).json({ error: 'Vídeo não encontrado' });
+  if (!info.title) {
+    info.title = 'Vídeo do YouTube (ID: ' + id + ')';
+  }
+
+  // Sempre retorna 200, mesmo se duration for null
   res.json(info);
 });
 
@@ -567,6 +633,7 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', msg);
   });
 
+  // 🔥 ADD SONG COM VALIDAÇÃO FLEXÍVEL
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -590,11 +657,13 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Se a duração foi fornecida e é maior que o limite, bloqueia
     if (song.duration && song.duration > settings.maxDuration) {
-      socket.emit('error', `⛔ Vídeo muito longo! Limite: ${settings.maxDuration/60} min`);
+      socket.emit('error', `⛔ Vídeo muito longo! Duração: ${Math.floor(song.duration / 60)} min. Limite: ${settings.maxDuration / 60} min.`);
       return;
     }
 
+    // Permite adição mesmo com duration: null, mas marca como não verificado
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
@@ -619,6 +688,41 @@ io.on('connection', (socket) => {
     room.chatHistory.push(musicMsg);
     if (room.chatHistory.length > 300) room.chatHistory.shift();
     io.to(currentRoom).emit('chat', musicMsg);
+  });
+
+  // 🔥 RECEBE DURAÇÃO REAL DO PLAYER E VALIDA
+  socket.on('videoDuration', ({ duration }) => {
+    if (!currentRoom || !duration) return;
+    const room = rooms.get(currentRoom);
+    const track = room.queue[room.currentIndex];
+    if (!track) return;
+
+    // Atualiza a duração no track
+    track.duration = duration;
+
+    // Se a duração for maior que o limite, remove a música
+    if (duration > settings.maxDuration) {
+      room.queue.shift(); // remove a música atual
+      room.currentIndex = 0;
+      room.isPlaying = false;
+      room.startedAt = Date.now();
+      addSystemMsg(currentRoom, `⛔ A música "${track.title}" foi removida automaticamente por ser muito longa (${Math.floor(duration / 60)} min). Limite: ${settings.maxDuration / 60} min.`);
+      
+      // Reindexa votos
+      const votes = getRoomVotes(currentRoom);
+      const newVotes = {};
+      room.queue.forEach((_, i) => {
+        if (votes[i + 1]) newVotes[i] = votes[i + 1];
+      });
+      roomVotes.set(currentRoom, newVotes);
+      
+      broadcastState(currentRoom);
+      io.to(currentRoom).emit('queueEmpty');
+      return;
+    }
+
+    // Se a duração foi atualizada e está OK, apenas broadcast do estado
+    broadcastState(currentRoom);
   });
 
   socket.on('skipTo', (index) => {
@@ -771,13 +875,6 @@ io.on('connection', (socket) => {
       data.likes++;
     }
     io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
-  });
-
-  socket.on('videoDuration', ({ duration }) => {
-    if (!currentRoom || !duration) return;
-    const room = rooms.get(currentRoom);
-    const track = room.queue[room.currentIndex];
-    if (track) track.duration = duration;
   });
 
   socket.on('videoEnded', () => {
