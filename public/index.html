@@ -517,7 +517,7 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM - LAYOUT 3 COLUNAS ===== */
+    /* ===== ROOM ===== */
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 1.2fr 1fr;
@@ -699,54 +699,33 @@
     .queue-item.dragging { opacity: 0.5; }
     .queue-item.drag-over { border: 2px dashed var(--accent); }
 
-    /* VOTAÇÃO MELHORADA */
+    /* VOTAÇÃO */
     .queue-votes {
       display: flex;
       align-items: center;
-      gap: 2px;
-      background: var(--bg-elevated);
-      padding: 2px 6px;
-      border-radius: 12px;
+      gap: 4px;
       flex-shrink: 0;
+      margin-left: 4px;
     }
     .vote-btn {
       background: transparent;
       border: none;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       padding: 2px 4px;
       border-radius: 4px;
-      transition: all 0.2s;
-      opacity: 0.6;
-      line-height: 1;
+      transition: all 0.15s;
       font-family: inherit;
+      opacity: 0.5;
     }
-    .vote-btn:hover {
-      opacity: 1;
-      transform: scale(1.1);
-    }
+    .vote-btn:hover { opacity: 1; transform: scale(1.1); }
     .vote-btn.up:hover { color: var(--success); }
     .vote-btn.down:hover { color: var(--danger); }
-    .vote-btn.voted-up {
-      opacity: 1;
-      color: var(--success);
-      background: rgba(34,197,94,0.1);
-    }
-    .vote-btn.voted-down {
-      opacity: 1;
-      color: var(--danger);
-      background: rgba(239,68,68,0.1);
-    }
-    .vote-count {
-      font-size: 12px;
-      font-weight: 700;
-      min-width: 24px;
-      text-align: center;
-      color: var(--text-secondary);
-      cursor: default;
-    }
-    .vote-count.positive { color: var(--success); }
+    .vote-btn.voted-up { opacity: 1; color: var(--success); }
+    .vote-btn.voted-down { opacity: 1; color: var(--danger); }
+    .vote-count { font-size: 10px; font-weight: 700; min-width: 16px; text-align: center; color: var(--text-muted); }
     .vote-count.negative { color: var(--danger); }
+    .vote-count.positive { color: var(--success); }
 
     /* PLAYER */
     #youtube-player {
@@ -1135,6 +1114,7 @@
         <button onclick="adminBroadcast()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📢 Mensagem</button>
       </div>
 
+      <!-- SEÇÃO DE GERENCIAR FILAS (com botão Remover) -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <span style="font-weight:700;font-size:13px;">🎵 Gerenciar Filas</span>
@@ -1145,6 +1125,7 @@
         </div>
       </div>
 
+      <!-- SEÇÃO DE USUÁRIOS -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
           <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
@@ -1217,7 +1198,7 @@
       </div>
 
       <div class="room-layout">
-        <!-- COLUNA ESQUERDA - FILA -->
+        <!-- COLUNA ESQUERDA - FILA (sem botão Remover) -->
         <div class="queue-column">
           <div class="queue-header">
             <span>🎵 Fila</span>
@@ -1354,7 +1335,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO - VERSÃO COM BLOQUEIO DE DURAÇÃO
+    //  JAVASCRIPT COMPLETO
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1670,6 +1651,7 @@
       } catch (e) { toast('Erro ao banir', 'error'); }
     }
 
+    // ===== ADMIN - GERENCIAR FILAS (com botão Remover) =====
     async function loadAdminQueues() {
       try {
         const res = await fetch('/api/rooms', { credentials: 'include' });
@@ -2119,16 +2101,11 @@
           </div>
           <span class="dj">${escapeHtml(track.dj || '')}</span>
           <div class="queue-votes">
-            <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')" title="${userVotedUp ? 'Remover voto' : '👍 Manter'}">
-              <span style="font-size:14px;">👍</span>
-            </button>
-            <span class="vote-count ${scoreClass}" title="Total: ${totalVotes} votos (${upCount} 👍, ${downCount} 👎)">
-              ${totalVotes > 0 ? scoreSymbol + score : '0'}
-            </span>
-            <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="${userVotedDown ? 'Remover voto' : '👎 Remover'}">
-              <span style="font-size:14px;">👎</span>
-            </button>
+            <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')" title="👍 Manter">👍</button>
+            <span class="vote-count ${scoreClass}">${totalVotes > 0 ? scoreSymbol + score : '0'}</span>
+            <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="👎 Remover">👎</button>
           </div>
+          <!-- Botão Remover removido da fila principal -->
         `;
         list.appendChild(div);
       });
@@ -2140,7 +2117,7 @@
       socket.emit('voteSong', { index, type, room: currentRoom });
     }
 
-    // ===== ADD SONG (COM BLOQUEIO DE DURAÇÃO) =====
+    // ===== ADD SONG =====
     function extractYouTubeId(url) {
       if (!url) return '';
       if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
@@ -2177,24 +2154,43 @@
         const res = await fetch(`/api/video-info?id=${videoId}`);
         const data = await res.json();
         if (res.ok && data.title) {
-          songData = { id: videoId, title: data.title, artist: data.artist || 'Desconhecido', duration: data.duration || null };
+          songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.artist || 'Desconhecido', duration: data.duration || null };
           showPreview(songData);
           return;
-        } else {
-          // Se a resposta veio com erro (404, 400, etc), mostra o erro
-          toast(data.error || 'Erro ao buscar informações do vídeo', 'error');
-          clearPreview();
+        }
+      } catch (e) {}
+
+      try {
+        const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+        if (res.ok) {
+          const data = await res.json();
+          songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.author_name || 'Desconhecido', duration: null };
+          try {
+            const htmlRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+            const html = await htmlRes.text();
+            const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+            if (m) songData.duration = parseInt(m[1], 10);
+          } catch (e) {}
+          showPreview(songData);
           return;
         }
-      } catch (e) {
-        toast('Erro ao buscar informações do vídeo. Tente novamente.', 'error');
-        clearPreview();
-        return;
-      }
+      } catch (e) {}
 
-      // Se chegou aqui, falhou a requisição
-      toast('Erro ao buscar informações do vídeo. Tente novamente.', 'error');
-      clearPreview();
+      try {
+        const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+        const html = await res.text();
+        const match = html.match(/<title>([^<]+)<\/title>/);
+        if (match) {
+          const title = match[1].replace(/ - YouTube\s*$/, '').trim();
+          const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+          songData = { id: videoId, title: title || 'Música do YouTube', artist: 'Desconhecido', duration: m ? parseInt(m[1], 10) : null };
+          showPreview(songData);
+          return;
+        }
+      } catch (e) {}
+
+      songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: null };
+      showPreview(songData);
     }
 
     function showPreview(data) {
@@ -2206,7 +2202,6 @@
       $('previewTitle').textContent = data.title || 'Música do YouTube';
       $('previewArtist').textContent = data.artist || 'Desconhecido';
       const confirmBtn = document.querySelector('.song-preview-confirm');
-
       if (data.duration > 0) {
         if (data.duration > MAX_SONG_DURATION) {
           $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > ${MAX_SONG_DURATION/60} min`;
@@ -2225,11 +2220,10 @@
           confirmBtn.textContent = '✓ Adicionar';
         }
       } else {
-        // 🔥 BLOQUEIA SE DURAÇÃO FOR NULA
-        $('previewStatus').textContent = '❌ Não foi possível verificar a duração. Tente novamente.';
-        $('previewStatus').style.color = 'var(--danger)';
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = '⛔ Verificação falhou';
+        $('previewStatus').textContent = '⚠️ Duração não verificada - tente novamente';
+        $('previewStatus').style.color = 'var(--warning)';
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = '✓ Adicionar (sem verificação)';
       }
       $('previewActions').classList.remove('hidden');
     }
@@ -2238,32 +2232,10 @@
 
     function confirmAdd() {
       if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
-      
-      // 🔥 BLOQUEIA SE A DURAÇÃO NÃO FOR VÁLIDA
-      if (!songData.duration || songData.duration <= 0) {
-        toast('❌ Duração não verificada. Tente novamente.', 'error');
-        return;
-      }
-
-      if (songData.duration > MAX_SONG_DURATION) { 
-        toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); 
-        return; 
-      }
-
+      if (songData.duration > 0 && songData.duration > MAX_SONG_DURATION) { toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); return; }
       const now = Date.now();
-      if (now - lastAddTime < COOLDOWN) { 
-        const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); 
-        toast(`Aguarde ${wait}s`, 'error'); 
-        return; 
-      }
-
-      socket.emit('addSong', { 
-        id: songData.id, 
-        title: songData.title || 'Música do YouTube', 
-        artist: songData.artist || 'Desconhecido', 
-        duration: songData.duration 
-      });
-
+      if (now - lastAddTime < COOLDOWN) { const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); toast(`Aguarde ${wait}s`, 'error'); return; }
+      socket.emit('addSong', { id: songData.id, title: songData.title || 'Música do YouTube', artist: songData.artist || 'Desconhecido', duration: songData.duration || null });
       lastAddTime = Date.now();
       $('songUrl').value = '';
       clearPreview();
@@ -2276,11 +2248,8 @@
       if (!url) { toast('Cole um link do YouTube', 'error'); return; }
       const videoId = extractYouTubeId(url);
       if (!videoId) { toast('Link inválido. Use um link do YouTube', 'error'); return; }
-      if (songData && songData.id === videoId && songData.duration) { 
-        confirmAdd(); 
-      } else { 
-        previewSong(); 
-      }
+      if (songData && songData.id === videoId) { confirmAdd(); }
+      else { previewSong(); toast('Verifique a prévia antes de adicionar', 'success'); }
     }
 
     function startCooldown() {
@@ -2301,9 +2270,201 @@
       navigator.clipboard.writeText(ids).then(() => toast('📋 IDs copiados!', 'success')).catch(() => toast('Erro ao copiar', 'error'));
     }
 
-    // ===== CHAT (não alterado) =====
-    // (mesmo código anterior para chat, mantido por brevidade)
-    // ...
+    // ===== CHAT =====
+    function renderMessage(msg) {
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      const div = document.createElement('div');
+      div.className = 'msg';
+      const msgId = msg._id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      div.dataset.msgId = msgId;
+
+      if (msg.isMusic) {
+        div.classList.add('msg-music');
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;width:100%;">
+            <span style="font-size:14px;">🎵</span>
+            <span style="font-weight:700;color:var(--accent);font-size:12px;">${escapeHtml(msg.user)}</span>
+            <span style="color:var(--text-muted);font-size:11px;">adicionou</span>
+            <span class="msg-time" style="opacity:1;margin-left:auto;font-size:10px;color:var(--text-muted);">${formatTime(msg.createdAt)}</span>
+          </div>
+          <div class="music-info" style="color:var(--text);font-weight:600;font-size:13px;">${escapeHtml(msg.musicTitle || 'Música')} — ${escapeHtml(msg.musicArtist || 'Desconhecido')}</div>
+        `;
+      } else if (msg.isSystem) {
+        div.classList.add('msg-system');
+        div.innerHTML = `<span class="msg-text" style="color:var(--text-muted);font-style:italic;font-size:12px;">${escapeHtml(msg.text)}</span>`;
+      } else {
+        const avatar = msg.avatar || '👤';
+        const color = msg.color || '#888';
+        let text = escapeHtml(msg.text);
+        text = text.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
+        const likeData = messageLikesSync[msgId] || { likes: 0, users: [] };
+        const liked = likeData.users.includes(myName);
+        const count = likeData.likes || 0;
+        div.innerHTML = `
+          <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
+            <div class="msg-avatar" style="background:${color}22;color:${color};border-color:${color}40;">${avatar}</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-user" style="color:${color};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
+                <span class="msg-time">${formatTime(msg.createdAt)}</span>
+              </div>
+              <span class="msg-text">${text}</span>
+              <div class="msg-actions">
+                <button class="msg-like-btn ${liked ? 'liked' : ''}" onclick="likeMessage('${msgId}', this)">
+                  ${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      container.appendChild(div);
+      limitChatMessages(container);
+    }
+
+    function limitChatMessages(container) {
+      const messages = container.querySelectorAll('.msg');
+      const total = messages.length;
+      if (total > 10) {
+        const toRemove = total - 10;
+        for (let i = 0; i < toRemove; i++) {
+          const msg = messages[i];
+          if (msg) { msg.classList.add('removing'); setTimeout(() => { if (msg.parentNode) msg.remove(); }, 400); }
+        }
+      }
+    }
+
+    function likeMessage(msgId, btn) {
+      if (!currentRoom) { toast('Entre em uma sala para curtir', 'error'); return; }
+      socket.emit('likeMessage', { messageId: msgId, room: currentRoom });
+    }
+
+    function updateLikeDisplay(msgId) {
+      const likeData = messageLikesSync[msgId];
+      if (!likeData) return;
+      const count = likeData.likes || 0;
+      const liked = likeData.users.includes(myName);
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      const msgElements = container.querySelectorAll('.msg');
+      let targetElement = null;
+      for (const el of msgElements) {
+        if (el.dataset.msgId === msgId) { targetElement = el; break; }
+      }
+      if (!targetElement) return;
+      const likeBtn = targetElement.querySelector('.msg-like-btn');
+      if (!likeBtn) return;
+      likeBtn.innerHTML = `${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>`;
+      if (liked) likeBtn.classList.add('liked');
+      else likeBtn.classList.remove('liked');
+    }
+
+    function sendMessage() {
+      const input = $('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      socket.emit('chat', { text: censorText(text) });
+      input.value = '';
+    }
+
+    function toggleEmojis() { $('emojiPanel').classList.toggle('show'); }
+    function insertEmoji(emoji) { $('chatInput').value += emoji; $('chatInput').focus(); $('emojiPanel').classList.remove('show'); }
+
+    function setVolume(val) {
+      $('volumeValue').textContent = val + '%';
+      if (player && player.setVolume) player.setVolume(parseInt(val));
+    }
+
+    // ===== SOCKET EVENTS =====
+    socket.on('adminUsersUpdated', () => {
+      if (amIAdmin) loadAdminUsers();
+    });
+
+    socket.on('roomState', (state) => {
+      const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
+      const next = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
+      if (next !== prev) { currentTrackId = null; if (next) setTimeout(startCrossfade, 1000); }
+      currentRoomData = state;
+      syncPlayer(state);
+    });
+
+    socket.on('queueEmpty', () => {
+      currentTrackId = null;
+      $('trackTitle').textContent = 'Fila vazia';
+      $('trackArtist').textContent = 'Adicione uma música';
+      $('trackDj').textContent = '';
+      $('trackCover').innerHTML = '🎵';
+      $('progressFill').style.width = '0%';
+      $('currentTime').textContent = '0:00';
+      $('totalTime').textContent = '0:00';
+      try { player.stopVideo(); } catch(e) {}
+      renderQueue([], 0);
+      toast('Fila encerrada! Adicione músicas.', 'success');
+    });
+
+    socket.on('users', (users) => { $('userCount').textContent = users.length; });
+    socket.on('chat', renderMessage);
+
+    socket.on('chatHistory', (messages) => {
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      container.innerHTML = '';
+      const start = Math.max(0, messages.length - 10);
+      const recentMessages = messages.slice(start);
+      recentMessages.forEach(m => renderMessage(m));
+    });
+
+    socket.on('likeUpdate', (data) => {
+      const { messageId, likes, users } = data;
+      messageLikesSync[messageId] = { likes, users };
+      updateLikeDisplay(messageId);
+    });
+
+    socket.on('likesState', (likesData) => {
+      messageLikesSync = likesData || {};
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      const msgElements = container.querySelectorAll('.msg');
+      for (const el of msgElements) {
+        const msgId = el.dataset.msgId;
+        if (msgId && messageLikesSync[msgId]) updateLikeDisplay(msgId);
+      }
+    });
+
+    socket.on('voteUpdate', (data) => {
+      const { index, up, down } = data;
+      queueVotes[index] = { up, down };
+      if (down.length >= DISLIKE_THRESHOLD) {
+        toast(`👎 Música removida por votação! (${down.length} votos negativos)`, 'error');
+        if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+      } else {
+        if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+      }
+    });
+
+    socket.on('votesState', (votesData) => {
+      queueVotes = votesData || {};
+      if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+    });
+
+    socket.on('error', (msg) => toast(msg, 'error'));
+    socket.on('isAdmin', (isAdmin) => {
+      amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
+      if (amIAdmin) { $('adminBadge').classList.remove('hidden'); toast('Você é admin desta sala!', 'success'); }
+    });
+    socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
+    socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
+    socket.on('chatCleared', () => {
+      const container = document.getElementById('chatMessagesInner');
+      if (container) { container.innerHTML = ''; const div = document.createElement('div'); div.className = 'msg msg-system'; div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>'; container.appendChild(div); }
+      toast('Chat limpo!', 'success');
+    });
+    socket.on('adminBroadcast', (data) => {
+      toast(`📢 ${data.message}`, 'success');
+      if (currentRoom) { const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() }; renderMessage(msg); }
+    });
+    socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
 
     // ===== PROGRESS UPDATE =====
     setInterval(() => {
