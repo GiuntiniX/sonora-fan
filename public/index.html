@@ -625,7 +625,6 @@
     .queue-item .info .artist { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .queue-item .dj { font-size: 10px; color: var(--text-muted); flex-shrink: 0; padding: 2px 8px; background: var(--bg); border-radius: 10px; }
     
-    /* ===== BOTÃO DE REMOVER ===== */
     .queue-item .remove-btn {
       background: transparent;
       border: none;
@@ -1266,6 +1265,11 @@
 
   <script>
     // ============================================================
+    // CONFIGURAÇÕES
+    // ============================================================
+    const FORCE_ADMIN_EMAILS = ['admin@sonora.com'];
+    
+    // ============================================================
     // SOCKET
     // ============================================================
     const socket = io();
@@ -1513,6 +1517,14 @@
     // ADMIN - VERIFICAR E ATIVAR
     // ============================================================
     function checkAdmin() {
+      // FORÇA ADMIN PELO EMAIL
+      if (currentUser && FORCE_ADMIN_EMAILS.includes(currentUser.email)) {
+        amIAdmin = true;
+        showAdminUI();
+        return;
+      }
+      
+      // Verifica se o usuário é admin pelo email
       if (currentUser && currentUser.email === 'admin@sonora.com') {
         amIAdmin = true;
         showAdminUI();
@@ -1532,9 +1544,13 @@
       
       amIAdmin = true;
       
+      // Força a atualização da fila
       if (currentRoomData) {
         renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
       }
+      
+      // Tenta forçar via socket também
+      socket.emit('checkAdmin');
       
       toast('✅ Modo Admin ativado!', 'success');
     }
@@ -1758,13 +1774,18 @@
       $('adminBadge').classList.add('hidden');
       loadYouTubeAPI();
       
+      // FORÇA ADMIN APÓS ENTRAR NA SALA
       setTimeout(() => {
-        if (currentUser && currentUser.email === 'admin@sonora.com') {
+        // Verifica se o email é admin
+        if (currentUser && FORCE_ADMIN_EMAILS.includes(currentUser.email)) {
+          amIAdmin = true;
+          showAdminUI();
+        } else if (currentUser && currentUser.email === 'admin@sonora.com') {
           amIAdmin = true;
           showAdminUI();
         }
         socket.emit('checkAdmin');
-      }, 1000);
+      }, 1500);
     }
 
     function leaveRoom() {
