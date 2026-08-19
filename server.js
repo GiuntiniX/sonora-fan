@@ -330,13 +330,16 @@ io.on('connection', (socket) => {
     socket.userAvatar = avatar || '👤';
     room.listenerCount++;
 
+    // ✅ VERIFICAÇÃO MELHORADA: admin global OU admin da sala
     const cookie = socket.handshake.headers.cookie || '';
     const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
     const email = tokenMatch ? sessions.get(tokenMatch[1]) : null;
-    const isAdmin = adminEmails.has(email) || room.admin === name;
-    socket.isAdmin = isAdmin;
+    const isGlobalAdmin = adminEmails.has(email);
+    const isRoomAdmin = room.admin === name;
+    socket.isAdmin = isGlobalAdmin || isRoomAdmin;
 
-    if (isAdmin && !room.admin) room.admin = name;
+    // Se for admin global, define como admin da sala
+    if (isGlobalAdmin && !room.admin) room.admin = name;
 
     socket.emit('roomState', {
       slug: room.slug, name: room.name,
@@ -385,6 +388,12 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // ✅ VALIDAÇÃO DE DURAÇÃO NO BACKEND
+    if (song.duration && song.duration > settings.maxDuration) {
+      socket.emit('error', `⛔ Vídeo muito longo! Limite: ${settings.maxDuration/60} min`);
+      return;
+    }
+
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
@@ -428,6 +437,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('removeFromQueue', (index) => {
+    // ✅ VERIFICAÇÃO MELHORADA: admin global OU admin da sala
     if (!currentRoom || !socket.isAdmin) {
       socket.emit('error', 'Apenas admin');
       return;
