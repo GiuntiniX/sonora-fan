@@ -625,6 +625,7 @@
     .queue-item .info .artist { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .queue-item .dj { font-size: 10px; color: var(--text-muted); flex-shrink: 0; padding: 2px 8px; background: var(--bg); border-radius: 10px; }
     
+    /* ===== BOTÃO DE REMOVER ===== */
     .queue-item .remove-btn {
       background: transparent;
       border: none;
@@ -1264,10 +1265,14 @@
   </div>
 
   <script>
-    // ===== SOCKET =====
+    // ============================================================
+    // SOCKET
+    // ============================================================
     const socket = io();
 
-    // ===== ESTADO =====
+    // ============================================================
+    // ESTADO
+    // ============================================================
     let currentUser = null;
     let myName = '';
     let myAvatar = '🎸';
@@ -1282,7 +1287,9 @@
     let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
     const MAX_CHAT_MESSAGES = 10;
 
-    // ===== UTILS =====
+    // ============================================================
+    // UTILS
+    // ============================================================
     function $(id) { return document.getElementById(id); }
 
     function toast(msg, type) {
@@ -1317,7 +1324,9 @@
       if (el) el.classList.add('active');
     }
 
-    // ===== BAD WORDS =====
+    // ============================================================
+    // BAD WORDS
+    // ============================================================
     const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
 
     function censorText(text) {
@@ -1329,7 +1338,9 @@
       return censored;
     }
 
-    // ===== TEMAS =====
+    // ============================================================
+    // TEMAS
+    // ============================================================
     function applyTheme() {
       const themes = {
         'dark': { btn: '🌙', bg: '#050508', card: '#0f0f18', hover: '#161620', border: '#1e1e2e', text: '#f0f0f8', textSec: '#9a9ab0', accent: '#ff6b35', accent2: '#7c3aed', bgImage: 'none', overlay: 'transparent' },
@@ -1364,7 +1375,9 @@
       toast('Tema: ' + currentTheme, 'success');
     }
 
-    // ===== AUTENTICAÇÃO =====
+    // ============================================================
+    // AUTENTICAÇÃO
+    // ============================================================
     function showLogin() {
       $('landingScreen').style.display = 'none';
       $('loginScreen').classList.add('active');
@@ -1496,21 +1509,39 @@
       $('userAvatar').textContent = myAvatar;
     }
 
+    // ============================================================
+    // ADMIN - VERIFICAR E ATIVAR
+    // ============================================================
     function checkAdmin() {
       if (currentUser && currentUser.email === 'admin@sonora.com') {
         amIAdmin = true;
-        $('adminBtn').style.display = 'flex';
-        $('adminBtnRoom').style.display = 'flex';
-        $('adminBadge').classList.remove('hidden');
+        showAdminUI();
       } else {
-        amIAdmin = false;
-        $('adminBtn').style.display = 'none';
-        $('adminBtnRoom').style.display = 'none';
-        $('adminBadge').classList.add('hidden');
+        socket.emit('checkAdmin');
       }
     }
 
-    // ===== ADMIN =====
+    function showAdminUI() {
+      const btn = document.getElementById('adminBtnRoom');
+      const btnLobby = document.getElementById('adminBtn');
+      const badge = document.getElementById('adminBadge');
+      
+      if (btn) btn.style.display = 'flex';
+      if (btnLobby) btnLobby.style.display = 'flex';
+      if (badge) badge.classList.remove('hidden');
+      
+      amIAdmin = true;
+      
+      if (currentRoomData) {
+        renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+      }
+      
+      toast('✅ Modo Admin ativado!', 'success');
+    }
+
+    // ============================================================
+    // ADMIN PANEL
+    // ============================================================
     function toggleAdmin() {
       if (!amIAdmin) {
         toast('Apenas administradores', 'error');
@@ -1644,7 +1675,9 @@
       toast('📢 Enviado!', 'success');
     }
 
-    // ===== LOBBY =====
+    // ============================================================
+    // LOBBY
+    // ============================================================
     async function loadRooms() {
       try {
         const res = await fetch('/api/rooms');
@@ -1709,7 +1742,9 @@
       }
     }
 
-    // ===== ROOM =====
+    // ============================================================
+    // ROOM
+    // ============================================================
     function joinRoom(slug) {
       if (!currentUser) {
         toast('Faça login primeiro', 'error');
@@ -1722,6 +1757,14 @@
       amIAdmin = false;
       $('adminBadge').classList.add('hidden');
       loadYouTubeAPI();
+      
+      setTimeout(() => {
+        if (currentUser && currentUser.email === 'admin@sonora.com') {
+          amIAdmin = true;
+          showAdminUI();
+        }
+        socket.emit('checkAdmin');
+      }, 1000);
     }
 
     function leaveRoom() {
@@ -1733,7 +1776,9 @@
       loadRooms();
     }
 
-    // ===== YOUTUBE =====
+    // ============================================================
+    // YOUTUBE
+    // ============================================================
     function loadYouTubeAPI() {
       if (window.YT && window.YT.Player) { initPlayer(); return; }
       const tag = document.createElement('script');
@@ -1801,46 +1846,73 @@
       }
     }
 
-    // ===== REMOVER MÚSICA DA FILA (ADMIN) =====
+    // ============================================================
+    // REMOVER MÚSICA DA FILA (ADMIN)
+    // ============================================================
     function removeFromQueue(index) {
+      console.log('=== REMOVER MÚSICA ===');
+      console.log('amIAdmin:', amIAdmin);
+      console.log('currentUser:', currentUser);
+      console.log('index:', index);
+      
       if (!amIAdmin) {
-        toast('Apenas administradores podem remover músicas', 'error');
+        socket.emit('checkAdmin');
+        toast('Verificando permissões...', 'success');
+        setTimeout(() => {
+          if (amIAdmin) {
+            removeFromQueue(index);
+          } else {
+            toast('Apenas administradores podem remover músicas', 'error');
+          }
+        }, 500);
         return;
       }
+      
       if (!currentRoom) {
         toast('Você não está em uma sala', 'error');
         return;
       }
+      
       if (!currentRoomData || !currentRoomData.queue || index >= currentRoomData.queue.length) {
         toast('Música não encontrada', 'error');
         return;
       }
+      
       if (index === currentRoomData.currentIndex) {
         toast('Não é possível remover a música que está tocando', 'error');
         return;
       }
+      
       const track = currentRoomData.queue[index];
       if (!track) {
         toast('Música não encontrada', 'error');
         return;
       }
+      
       if (!confirm(`Remover "${track.title}" da fila?`)) return;
+      
+      console.log('Enviando removeFromQueue para o servidor...');
       socket.emit('removeFromQueue', index);
     }
 
     function renderQueue(queue, currentIndex) {
       const list = $('queueList');
       const count = $('queueCount');
+      
       if (!list) return;
+      
       count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
       list.innerHTML = '';
+
       if (queue.length === 0) {
         list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>';
         return;
       }
+
       queue.forEach((track, i) => {
         const div = document.createElement('div');
         div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
+        
         if (i !== currentIndex && amIAdmin) {
           div.classList.add('clickable');
           div.title = 'Clique para pular para esta música';
@@ -1850,9 +1922,14 @@
             }
           };
         }
-        const removeBtn = (i !== currentIndex && amIAdmin) 
-          ? `<button class="remove-btn" onclick="event.stopPropagation();removeFromQueue(${i})" title="Remover da fila">✕</button>` 
-          : '';
+        
+        let removeBtn = '';
+        if (i !== currentIndex && amIAdmin) {
+          removeBtn = `<button class="remove-btn" onclick="event.stopPropagation();removeFromQueue(${i})" title="Remover da fila">✕</button>`;
+        } else if (i !== currentIndex) {
+          removeBtn = `<button class="remove-btn" style="opacity:0.3;cursor:not-allowed;" title="Apenas administradores podem remover" disabled>✕</button>`;
+        }
+
         div.innerHTML = `
           <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
           <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
@@ -1867,7 +1944,9 @@
       });
     }
 
-    // ===== ADD SONG =====
+    // ============================================================
+    // ADD SONG
+    // ============================================================
     function extractYouTubeId(url) {
       if (!url) return '';
       if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
@@ -2024,7 +2103,9 @@
       }, 1000);
     }
 
-    // ===== CHAT =====
+    // ============================================================
+    // CHAT
+    // ============================================================
     function renderMessage(msg) {
       const container = document.getElementById('chatMessagesInner');
       if (!container) return;
@@ -2150,13 +2231,17 @@
       $('emojiPanel').classList.remove('show');
     }
 
-    // ===== VOLUME =====
+    // ============================================================
+    // VOLUME
+    // ============================================================
     function setVolume(val) {
       $('volumeValue').textContent = val + '%';
       if (player && player.setVolume) player.setVolume(parseInt(val));
     }
 
-    // ===== SOCKET EVENTS =====
+    // ============================================================
+    // SOCKET EVENTS
+    // ============================================================
     socket.on('roomState', (state) => {
       const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] 
         ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
@@ -2198,16 +2283,27 @@
 
     socket.on('error', (msg) => toast(msg, 'error'));
 
+    // ===== ADMIN STATUS VIA SOCKET =====
+    socket.on('adminStatus', (isAdmin) => {
+      amIAdmin = isAdmin;
+      if (amIAdmin) {
+        showAdminUI();
+      }
+    });
+
+    // ===== CONFIRMAÇÃO DE REMOÇÃO =====
+    socket.on('songRemoved', (data) => {
+      toast(`🗑️ "${data.title}" removida da fila`, 'success');
+    });
+
+    // ===== ADMIN VIA SOCKET =====
     socket.on('isAdmin', (isAdmin) => {
       amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
       if (amIAdmin) {
         $('adminBadge').classList.remove('hidden');
+        showAdminUI();
         toast('Você é admin desta sala!', 'success');
       }
-    });
-
-    socket.on('songRemoved', (data) => {
-      toast(`🗑️ "${data.title}" removida da fila`, 'success');
     });
 
     socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
@@ -2235,7 +2331,9 @@
 
     socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
 
-    // ===== PROGRESS UPDATE =====
+    // ============================================================
+    // PROGRESS UPDATE
+    // ============================================================
     setInterval(() => {
       if (!player || !player.getCurrentTime) return;
       try {
@@ -2249,7 +2347,9 @@
       } catch(e) {}
     }, 1000);
 
-    // ===== CHAT SCROLL =====
+    // ============================================================
+    // CHAT SCROLL
+    // ============================================================
     document.addEventListener('DOMContentLoaded', () => {
       const container = document.getElementById('chatMessagesInner');
       if (container) {
@@ -2261,7 +2361,9 @@
       }
     });
 
-    // ===== INIT =====
+    // ============================================================
+    // INIT
+    // ============================================================
     applyTheme();
 
     async function init() {
@@ -2283,6 +2385,7 @@
           }
         }
       } catch (e) {}
+      
       const params = new URLSearchParams(window.location.search);
       const room = params.get('room');
       if (room) {
@@ -2291,6 +2394,11 @@
           else toast('Faça login para entrar', 'error');
         }, 1000);
       }
+      
+      // Verifica admin via socket
+      setTimeout(() => {
+        socket.emit('checkAdmin');
+      }, 500);
     }
 
     init();
