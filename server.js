@@ -312,16 +312,6 @@ app.get('*', (req, res) => {
 io.on('connection', (socket) => {
   let currentRoom = null;
 
-  // ===== VERIFICAR ADMIN =====
-  socket.on('checkAdmin', () => {
-    const cookie = socket.handshake.headers.cookie || '';
-    const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
-    const email = tokenMatch ? sessions.get(tokenMatch[1]) : null;
-    const isAdmin = adminEmails.has(email) || socket.isAdmin || false;
-    socket.isAdmin = socket.isAdmin || isAdmin;
-    socket.emit('adminStatus', socket.isAdmin);
-  });
-
   socket.on('joinRoom', ({ slug, name, avatar }) => {
     const room = rooms.get(slug);
     if (!room) { socket.emit('error', 'Sala não encontrada'); return; }
@@ -437,52 +427,18 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
   });
 
-  // ===== REMOVER MÚSICA DA FILA (ADMIN) =====
   socket.on('removeFromQueue', (index) => {
-    // Verifica se está em uma sala
-    if (!currentRoom) {
-      socket.emit('error', 'Você não está em uma sala');
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin');
       return;
     }
-    
-    // Verifica se é admin
-    if (!socket.isAdmin) {
-      socket.emit('error', 'Apenas administradores podem remover músicas');
-      return;
-    }
-    
     const room = rooms.get(currentRoom);
-    if (!room) {
-      socket.emit('error', 'Sala não encontrada');
-      return;
-    }
-    
-    // Verifica se o índice é válido
-    if (index < 0 || index >= room.queue.length) {
-      socket.emit('error', 'Música não encontrada');
-      return;
-    }
-    
-    // Verifica se não é a música atual
-    if (index === room.currentIndex) {
-      socket.emit('error', 'Não pode remover a música que está tocando');
-      return;
-    }
-    
-    // Remove a música
-    const removed = room.queue.splice(index, 1)[0];
-    
-    // Ajusta o índice atual se necessário
-    if (index < room.currentIndex) {
-      room.currentIndex--;
-    }
-    
-    // Atualiza o estado
+    const track = room.queue[index];
+    if (!track || index === room.currentIndex) return;
+    room.queue.splice(index, 1);
+    if (index < room.currentIndex) room.currentIndex--;
     broadcastState(currentRoom);
-    addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${removed.title}" da fila`);
-    
-    // Emite confirmação para o frontend
-    socket.emit('songRemoved', { index, title: removed.title });
+    addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
   });
 
   socket.on('videoDuration', ({ duration }) => {
