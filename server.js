@@ -5,24 +5,91 @@ const { Server } = require('socket.io');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
-
-// Banco de dados
-let db;
-try {
-  db = require('./database');
-} catch (e) {
-  console.error('❌ Erro ao carregar database.js:', e.message);
-  process.exit(1);
-}
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-// Servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(cookieParser());
+
+// ========== BANCO DE DADOS ==========
+const dbPath = path.join(__dirname, 'sonora.db');
+const db = new sqlite3.Database(dbPath);
+
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    email TEXT PRIMARY KEY,
+    nome TEXT,
+    senha TEXT,
+    genero TEXT,
+    regiao TEXT,
+    estilos TEXT,
+    avatar TEXT,
+    criadoEm DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total_added INTEGER DEFAULT 0,
+    total_upvotes INTEGER DEFAULT 0,
+    total_downvotes INTEGER DEFAULT 0
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS rooms (
+    slug TEXT PRIMARY KEY,
+    name TEXT,
+    admin TEXT,
+    isPlaying INTEGER DEFAULT 0,
+    currentIndex INTEGER DEFAULT 0,
+    startedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    listenerCount INTEGER DEFAULT 0
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    roomSlug TEXT,
+    videoId TEXT,
+    title TEXT,
+    artist TEXT,
+    duration INTEGER,
+    dj TEXT,
+    position INTEGER,
+    addedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(roomSlug) REFERENCES rooms(slug)
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    roomSlug TEXT,
+    videoId TEXT,
+    title TEXT,
+    artist TEXT,
+    dj TEXT,
+    playedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(roomSlug) REFERENCES rooms(slug)
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    roomSlug TEXT,
+    queueId INTEGER,
+    userName TEXT,
+    type TEXT CHECK(type IN ('up','down')),
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(roomSlug) REFERENCES rooms(slug),
+    FOREIGN KEY(queueId) REFERENCES queue(id)
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    roomSlug TEXT,
+    messageId TEXT,
+    userName TEXT,
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(roomSlug) REFERENCES rooms(slug)
+  )`);
+});
+
+console.log('✅ Banco de dados SQLite inicializado.');
 
 // ========== CONFIG ==========
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
@@ -30,7 +97,7 @@ const adminEmails = new Set(['admin@sonora.com']);
 const settings = { maxQueue: 20, cooldown: 180, maxDuration: 600 };
 const DISLIKE_THRESHOLD = 10;
 
-// ========== AUTENTICAÇÃO (em memória) ==========
+// ========== AUTENTICAÇÃO ==========
 const sessions = new Map();
 
 // ========== ESTADO EM MEMÓRIA ==========
@@ -39,7 +106,7 @@ const roomVotes = new Map();
 const roomLikes = new Map();
 
 // ========== FUNÇÕES DE BANCO ==========
-async function loadRoomsFromDB() {
+function loadRoomsFromDB() {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM rooms', (err, rows) => {
       if (err) return reject(err);
@@ -48,7 +115,7 @@ async function loadRoomsFromDB() {
   });
 }
 
-async function loadQueueFromDB(slug) {
+function loadQueueFromDB(slug) {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM queue WHERE roomSlug = ? ORDER BY position ASC', [slug], (err, rows) => {
       if (err) return reject(err);
@@ -57,7 +124,7 @@ async function loadQueueFromDB(slug) {
   });
 }
 
-async function loadVotesFromDB(slug) {
+function loadVotesFromDB(slug) {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM votes WHERE roomSlug = ?', [slug], (err, rows) => {
       if (err) return reject(err);
@@ -71,7 +138,7 @@ async function loadVotesFromDB(slug) {
   });
 }
 
-async function loadLikesFromDB(slug) {
+function loadLikesFromDB(slug) {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM likes WHERE roomSlug = ?', [slug], (err, rows) => {
       if (err) return reject(err);
@@ -565,7 +632,7 @@ app.get('/api/admin/export-data', isAdmin, (req, res) => {
   res.json({ message: 'Exportar dados - funcionalidade em breve' });
 });
 
-// Fallback para SPA
+// Fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -693,7 +760,6 @@ io.on('connection', (socket) => {
     if (room.chatHistory.length > 300) room.chatHistory.shift();
     io.to(currentRoom).emit('chat', musicMsg);
 
-    // Atualizar estatísticas do usuário
     const cookie = socket.handshake.headers.cookie || '';
     const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
     if (tokenMatch) {
@@ -771,13 +837,11 @@ io.on('connection', (socket) => {
     if (!votes[index]) votes[index] = { up: [], down: [] };
     const data = votes[index];
     
-    // Remover voto anterior
     const upIdx = data.up.indexOf(socket.userName);
     if (upIdx > -1) data.up.splice(upIdx, 1);
     const downIdx = data.down.indexOf(socket.userName);
     if (downIdx > -1) data.down.splice(downIdx, 1);
     
-    // Adicionar novo voto
     if (type === 'up') {
       data.up.push(socket.userName);
       const cookie = socket.handshake.headers.cookie || '';
@@ -805,7 +869,6 @@ io.on('connection', (socket) => {
       saveVoteToDB(room, queueId, socket.userName, type);
     }
     
-    // Verificar se atingiu limite
     if (data.down.length >= DISLIKE_THRESHOLD) {
       const removed = roomData.queue.splice(index, 1)[0];
       if (index < roomData.currentIndex) roomData.currentIndex--;
@@ -895,7 +958,6 @@ io.on('connection', (socket) => {
 // ========== INICIALIZAÇÃO ==========
 (async () => {
   await initServerState();
-  // Auto-advance
   setInterval(() => {
     for (const [slug, room] of rooms) {
       if (!room.isPlaying || room.queue.length === 0) continue;
