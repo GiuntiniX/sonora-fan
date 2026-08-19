@@ -1,1063 +1,1098 @@
-<script>
-// ===== CONFIGURAÇÕES =====
-const MAX_SONG_DURATION = 600;
-const DISLIKE_THRESHOLD = 10;
-const COOLDOWN = 30000;
-const MAX_SONGS_PER_USER = 3;
-
-// ===== SOCKET =====
-const socket = io();
-
-// ===== VARIÁVEIS GLOBAIS (declaradas primeiro) =====
-let currentUser = null;
-let myName = '';
-let myAvatar = '🎸';
-let amIAdmin = false;
-let currentRoom = null;
-let currentRoomData = null;
-let player = null;
-let currentTrackId = null;
-let lastAddTime = 0;
-let songData = null;
-let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
-let messageLikesSync = {};
-let queueVotes = {};
-let myFavorites = [];
-let crossfadeInterval = null;
-
-// ===== UTILS =====
-function $(id) { return document.getElementById(id); }
-
-function toast(msg, type) {
-  const el = $('toast');
-  el.textContent = msg;
-  el.className = 'toast' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function formatTime(d) {
-  const date = new Date(d);
-  return date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
-}
-
-function formatDuration(seconds) {
-  if (!seconds || seconds <= 0) return '0:00';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return m + ':' + s.toString().padStart(2,'0');
-}
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById('screen-' + id);
-  if (el) el.classList.add('active');
-}
-
-// ===== BAD WORDS =====
-const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
-
-function censorText(text) {
-  let censored = text;
-  badWords.forEach(word => {
-    const regex = new RegExp('\\b' + word + '\\b', 'gi');
-    censored = censored.replace(regex, '***');
-  });
-  return censored;
-}
-
-// ===== TEMAS =====
-function applyTheme() {
-  const themes = {
-    'dark': { btn: '🌙', bg: '#050508', card: '#0f0f18', hover: '#161620', border: '#1e1e2e', text: '#f0f0f8', textSec: '#9a9ab0', accent: '#ff6b35', accent2: '#7c3aed', bgImage: 'none', overlay: 'transparent' },
-    'light': { btn: '☀️', bg: '#f5f5fa', card: '#ffffff', hover: '#f0f0f5', border: '#e0e0e8', text: '#1a1a2e', textSec: '#666680', accent: '#e65c00', accent2: '#5b2c8e', bgImage: 'none', overlay: 'transparent' },
-    'neon': { btn: '🟢', bg: '#070a12', card: '#111827', hover: '#1a2236', border: '#1f2a4a', text: '#e0f0ff', textSec: '#88aacc', accent: '#22d3ee', accent2: '#10b981', bgImage: 'none', overlay: 'transparent' },
-    'terra-sonora': { btn: '🌄', bg: '#140a05', card: '#2a180e', hover: '#3a2216', border: '#4a2e1e', text: '#fcf3ee', textSec: '#cbaa98', accent: '#e85d3a', accent2: '#d94a20', bgImage: 'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay: 'rgba(0,0,0,0.65)' }
-  };
-  const t = themes[currentTheme] || themes['dark'];
-  document.documentElement.style.setProperty('--bg', t.bg);
-  document.documentElement.style.setProperty('--bg-card', t.card);
-  document.documentElement.style.setProperty('--bg-hover', t.hover);
-  document.documentElement.style.setProperty('--border', t.border);
-  document.documentElement.style.setProperty('--text', t.text);
-  document.documentElement.style.setProperty('--text-secondary', t.textSec);
-  document.documentElement.style.setProperty('--accent', t.accent);
-  document.documentElement.style.setProperty('--accent2', t.accent2);
-  document.documentElement.style.setProperty('--bg-image', t.bgImage);
-  document.documentElement.style.setProperty('--bg-overlay', t.overlay);
-  const btns = document.querySelectorAll('#themeBtn, #themeBtnRoom');
-  btns.forEach(btn => { if (btn) btn.textContent = t.btn; });
-  localStorage.setItem('sonoraTheme', currentTheme);
-}
-
-function toggleTheme() {
-  const keys = ['dark', 'light', 'neon', 'terra-sonora'];
-  const idx = keys.indexOf(currentTheme);
-  currentTheme = keys[(idx + 1) % keys.length];
-  applyTheme();
-  toast('Tema: ' + currentTheme, 'success');
-}
-
-// ===== AUTENTICAÇÃO =====
-function showLogin() { $('landingScreen').style.display = 'none'; $('loginScreen').classList.add('active'); }
-function hideLogin() { $('loginScreen').classList.remove('active'); }
-function openSignup() { hideLogin(); $('signupModal').classList.add('active'); }
-function closeSignup() { $('signupModal').classList.remove('active'); $('landingScreen').style.display = 'block'; }
-function toggleChip(el) { el.classList.toggle('selected'); }
-
-async function submitSignup() {
-  const nome = $('signupNome').value.trim();
-  const email = $('signupEmail').value.trim();
-  const senha = $('signupPassword').value.trim();
-  const genero = $('signupGenero').value;
-  const regiao = $('signupRegiao').value;
-  const estilos = Array.from(document.querySelectorAll('#signupStyles .chip.selected')).map(c => c.dataset.style);
-  if (nome.length < 2) return toast('Digite seu nome', 'error');
-  if (!email.includes('@')) return toast('E-mail inválido', 'error');
-  if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
-  if (!genero) return toast('Selecione um gênero', 'error');
-  if (!regiao) return toast('Selecione sua região', 'error');
-  if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
-  try {
-    const res = await fetch('/api/signup', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, email, senha, genero, regiao, estilos })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    const loginRes = await fetch('/api/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha })
-    });
-    const loginData = await loginRes.json();
-    if (!loginRes.ok) throw new Error(loginData.error);
-    currentUser = loginData.user;
-    myName = currentUser.nome;
-    myAvatar = currentUser.avatar || '🎸';
-    closeSignup();
-    hideLogin();
-    $('landingScreen').style.display = 'none';
-    showScreen('lobby');
-    updateUserInfo();
-    loadRooms();
-    checkAdmin();
-    loadFavorites();
-    toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
-  } catch (e) {
-    toast(e.message || 'Erro ao criar conta', 'error');
-  }
-}
-
-async function doLogin() {
-  const email = $('loginEmail').value.trim();
-  const senha = $('loginPassword').value.trim();
-  const errorEl = $('loginError');
-  if (!email || !senha) { errorEl.textContent = 'Preencha e-mail e senha'; errorEl.classList.add('show'); return; }
-  const btn = $('loginBtn');
-  btn.disabled = true;
-  btn.textContent = 'Entrando...';
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    currentUser = data.user;
-    myName = currentUser.nome;
-    myAvatar = currentUser.avatar || '🎸';
-    hideLogin();
-    $('landingScreen').style.display = 'none';
-    showScreen('lobby');
-    updateUserInfo();
-    loadRooms();
-    checkAdmin();
-    loadFavorites();
-    toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
-  } catch (e) {
-    errorEl.textContent = e.message || 'Erro ao fazer login';
-    errorEl.classList.add('show');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Entrar no palco';
-  }
-}
-
-function doLogout() {
-  fetch('/api/logout', { method: 'POST' }).catch(() => {});
-  if (currentRoom) { socket.emit('leaveRoom'); currentRoom = null; }
-  currentUser = null;
-  showScreen('lobby');
-  $('screen-lobby').classList.remove('active');
-  $('landingScreen').style.display = 'block';
-  hideLogin();
-  toast('Você saiu', 'success');
-}
-
-function updateUserInfo() {
-  $('userDisplayName').textContent = myName;
-  $('userAvatar').textContent = myAvatar;
-}
-
-function checkAdmin() {
-  if (currentUser && currentUser.email === 'admin@sonora.com') {
-    amIAdmin = true;
-    $('adminBtn').style.display = 'flex';
-    $('adminBtnRoom').style.display = 'flex';
-    $('adminBadge').classList.remove('hidden');
-  } else {
-    amIAdmin = false;
-    $('adminBtn').style.display = 'none';
-    $('adminBtnRoom').style.display = 'none';
-    $('adminBadge').classList.add('hidden');
-  }
-}
-
-// ===== ADMIN =====
-function toggleAdmin() {
-  if (!amIAdmin) { toast('Apenas administradores', 'error'); return; }
-  const panel = $('adminPanel');
-  panel.classList.toggle('active');
-  if (panel.classList.contains('active')) { loadAdminData(); loadAdminUsers(); }
-}
-function closeAdmin() { $('adminPanel').classList.remove('active'); }
-
-async function loadAdminData() {
-  try {
-    const res = await fetch('/api/admin/stats', { credentials: 'include' });
-    const data = await res.json();
-    if (res.ok) { $('adminUsers').textContent = data.totalUsers || 0; $('adminRooms').textContent = data.totalRooms || 0; $('adminOnline').textContent = data.onlineUsers || 0; }
-  } catch (e) {}
-}
-
-async function loadAdminUsers() {
-  try {
-    const res = await fetch('/api/admin/users', { credentials: 'include' });
-    const users = await res.json();
-    const list = $('adminUserList');
-    const count = $('adminUserCount');
-    if (!res.ok || !users.length) { list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Nenhum usuário</div>'; return; }
-    count.textContent = users.length;
-    list.innerHTML = users.map(u => `
-      <div class="admin-user-item">
-        <div>
-          <span class="name">${escapeHtml(u.nome)}</span>
-          ${u.isAdmin ? '<span class="admin-badge-mini">Admin</span>' : ''}
-          <div class="email">${escapeHtml(u.email)}</div>
-        </div>
-        <div class="actions">
-          ${!u.isAdmin ? `<button class="promote" onclick="adminPromote('${u.email}')">👑</button>` : ''}
-          <button class="delete" onclick="adminDeleteUser('${u.email}')">🗑️</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {}
-}
-
-async function adminPromote(email) {
-  if (!confirm(`Promover ${email}?`)) return;
-  try {
-    const res = await fetch('/api/admin/promote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
-    if (res.ok) { toast('✅ Promovido!', 'success'); loadAdminUsers(); }
-  } catch (e) {}
-}
-
-async function adminDeleteUser(email) {
-  if (!confirm(`Deletar ${email}?`)) return;
-  try {
-    const res = await fetch('/api/admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
-    if (res.ok) { toast('✅ Deletado!', 'success'); loadAdminUsers(); loadAdminData(); }
-  } catch (e) {}
-}
-
-async function adminClearChats() {
-  if (!confirm('Limpar TODOS os chats?')) return;
-  try { await fetch('/api/admin/clear-all-chats', { method: 'POST', credentials: 'include' }); toast('✅ Chats limpos!', 'success'); } catch (e) {}
-}
-
-async function adminClearRooms() {
-  if (!confirm('LIMPAR TODAS as salas?')) return;
-  try { await fetch('/api/admin/clear-all-rooms', { method: 'POST', credentials: 'include' }); toast('✅ Salas limpas!', 'success'); loadAdminData(); loadRooms(); } catch (e) {}
-}
-
-async function adminExport() {
-  try {
-    const res = await fetch('/api/admin/export-data', { credentials: 'include' });
-    const data = await res.json();
-    if (res.ok) {
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sonora-fan-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast('✅ Exportado!', 'success');
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sonora Fan — A melhor Vibe</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- ESTILOS (mesmo conteúdo anterior, omitido para brevidade – mantenha o CSS que já estava) -->
+  <style>
+    /* ===== ESTILOS GLOBAIS ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #050508;
+      --bg-elevated: #0a0a10;
+      --bg-card: #0f0f18;
+      --bg-hover: #161620;
+      --border: #1e1e2e;
+      --border-hover: #2a2a3e;
+      --text: #f0f0f8;
+      --text-secondary: #9a9ab0;
+      --text-muted: #555570;
+      --accent: #ff6b35;
+      --accent2: #7c3aed;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --radius: 16px;
+      --radius-sm: 12px;
+      --bg-image: none;
+      --bg-overlay: transparent;
+      --accent-glow: rgba(255,107,53,0.3);
+      --accent2-glow: rgba(124,58,237,0.3);
     }
-  } catch (e) {}
-}
+    /* ... todo o CSS existente (não alterado) ... */
+    /* (mantenha exatamente o mesmo CSS que você já tinha, pois as mudanças são apenas no JavaScript) */
+  </style>
+</head>
+<body>
+  <!-- ===== PARTÍCULAS, LANDING, LOGIN, MODAIS, LOBBY, ROOM, ETC ===== -->
+  <!-- TODO O HTML PERMANECE IGUAL – NÃO HÁ ALTERAÇÕES NA ESTRUTURA -->
+  <!-- (copie o HTML que você já tinha, pois a correção é apenas no script) -->
 
-function adminBroadcast() {
-  const msg = prompt('Mensagem para todos:');
-  if (!msg) return;
-  socket.emit('adminBroadcast', { message: msg });
-  toast('📢 Enviado!', 'success');
-}
+  <!-- ===== SCRIPTS ===== -->
+  <script>
+    // ===== CONFIGURAÇÕES =====
+    const MAX_SONG_DURATION = 600;
+    const DISLIKE_THRESHOLD = 10;
+    const COOLDOWN = 30000;
+    const MAX_SONGS_PER_USER = 3;
 
-// ===== FAVORITOS =====
-async function loadFavorites() {
-  try {
-    const res = await fetch('/api/favorites', { credentials: 'include' });
-    if (res.ok) { myFavorites = await res.json(); }
-  } catch (e) {}
-}
+    // ===== SOCKET =====
+    const socket = io();
 
-function toggleFavorites() {
-  const modal = $('favoritesModal');
-  modal.classList.toggle('active');
-  if (modal.classList.contains('active')) renderFavorites();
-}
-function closeFavorites() { $('favoritesModal').classList.remove('active'); }
+    // ===== VARIÁVEIS GLOBAIS (declaradas primeiro) =====
+    let currentUser = null;
+    let myName = '';
+    let myAvatar = '🎸';
+    let amIAdmin = false;
+    let currentRoom = null;
+    let currentRoomData = null;
+    let player = null;
+    let currentTrackId = null;
+    let lastAddTime = 0;
+    let songData = null;
+    let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
+    let messageLikesSync = {};
+    let queueVotes = {};
+    let myFavorites = [];
+    let crossfadeInterval = null;
 
-function renderFavorites() {
-  const container = $('favoritesList');
-  if (!myFavorites || myFavorites.length === 0) {
-    container.innerHTML = '<div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;">Nenhum favorito ainda. ⭐</div>';
-    return;
-  }
-  container.innerHTML = myFavorites.map(f => `
-    <div class="favorite-item">
-      <div class="info">
-        <div class="title">${escapeHtml(f.title || 'Música')}</div>
-        <div class="artist">${escapeHtml(f.artist || 'Desconhecido')}</div>
-      </div>
-      <div class="actions">
-        <button class="add" onclick="addFavoriteToQueue('${f.id}')">➕</button>
-        <button class="remove" onclick="removeFavorite('${f.id}')">🗑️</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-async function addFavoriteToQueue(videoId) {
-  const fav = myFavorites.find(f => f.id === videoId);
-  if (!fav) return toast('Favorito não encontrado', 'error');
-  if (!currentRoom) return toast('Entre em uma sala primeiro', 'error');
-  socket.emit('addSong', { id: fav.id, title: fav.title, artist: fav.artist, duration: null });
-  toast(`🎵 ${fav.title} adicionada!`, 'success');
-}
-
-async function removeFavorite(videoId) {
-  try {
-    const res = await fetch(`/api/favorites/${videoId}`, { method: 'DELETE', credentials: 'include' });
-    if (res.ok) { myFavorites = myFavorites.filter(f => f.id !== videoId); renderFavorites(); toast('🗑️ Removido dos favoritos', 'success'); }
-  } catch (e) {}
-}
-
-async function favoriteCurrent() {
-  if (!currentRoomData || !currentRoomData.queue || !currentRoomData.queue.length) return toast('Nenhuma música tocando', 'error');
-  const track = currentRoomData.queue[currentRoomData.currentIndex];
-  if (!track) return toast('Nenhuma música tocando', 'error');
-  await addFavorite(track.id, track.title, track.artist);
-}
-
-async function favPreview() {
-  if (!songData) return toast('Nenhuma música na prévia', 'error');
-  await addFavorite(songData.id, songData.title, songData.artist);
-}
-
-async function addFavorite(id, title, artist) {
-  if (myFavorites.find(f => f.id === id)) { toast('Já está nos favoritos ⭐', 'success'); return; }
-  try {
-    const res = await fetch('/api/favorites', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ videoId: id, title, artist })
-    });
-    if (res.ok) {
-      myFavorites.push({ id, title, artist });
-      toast('⭐ Adicionado aos favoritos!', 'success');
+    // ===== UTILS =====
+    function $(id) { return document.getElementById(id); }
+    function toast(msg, type) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.className = 'toast' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3000);
     }
-  } catch (e) {}
-}
-
-// ===== LOBBY =====
-async function loadRooms() {
-  try {
-    const res = await fetch('/api/rooms');
-    const rooms = await res.json();
-    const grid = $('roomGrid');
-    if (rooms.length === 0) { grid.innerHTML = '<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>'; return; }
-    grid.innerHTML = '';
-    rooms.forEach(r => {
-      const card = document.createElement('div');
-      card.className = 'room-card';
-      card.onclick = () => joinRoom(r.slug);
-      const track = r.currentTrack;
-      const thumb = track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>';
-      const live = r.isPlaying ? '<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>' : '';
-      card.innerHTML = `
-        <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div></div>
-        <div class="room-card-body">
-          <h3>${escapeHtml(r.name)}</h3>
-          <div class="meta"><span>👤 ${r.listenerCount || 0} ouvintes</span><span>🎶 ${r.queueLength || 0} na fila</span></div>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-  } catch (e) {
-    $('roomGrid').innerHTML = '<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar</p></div>';
-  }
-}
-
-function showCreateRoom() { $('createRoomModal').classList.add('active'); }
-function closeCreateRoom() { $('createRoomModal').classList.remove('active'); }
-
-async function createRoom() {
-  const name = $('newRoomName').value.trim();
-  if (!name) return toast('Digite um nome', 'error');
-  try {
-    const res = await fetch('/api/rooms', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, adminName: myName })
-    });
-    const data = await res.json();
-    if (data.slug) { closeCreateRoom(); joinRoom(data.slug); }
-  } catch (e) { toast('Erro ao criar sala', 'error'); }
-}
-
-async function joinRandomRoom() {
-  try {
-    const res = await fetch('/api/rooms/random');
-    const data = await res.json();
-    if (data.slug) joinRoom(data.slug);
-    else toast('Nenhuma sala disponível', 'error');
-  } catch (e) { toast('Erro ao buscar sala', 'error'); }
-}
-
-// ===== ROOM =====
-function joinRoom(slug) {
-  if (!currentUser) { toast('Faça login primeiro', 'error'); return; }
-  currentRoom = slug;
-  socket.emit('joinRoom', { slug, name: myName, avatar: myAvatar });
-  showScreen('room');
-  document.getElementById('chatMessagesInner').innerHTML = '';
-  amIAdmin = false;
-  $('adminBadge').classList.add('hidden');
-  loadYouTubeAPI();
-}
-
-function leaveRoom() {
-  if (currentRoom) socket.emit('leaveRoom');
-  currentRoom = null;
-  currentRoomData = null;
-  if (player && player.stopVideo) player.stopVideo();
-  if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-  showScreen('lobby');
-  loadRooms();
-}
-
-// ===== YOUTUBE =====
-function loadYouTubeAPI() {
-  if (window.YT && window.YT.Player) { initPlayer(); return; }
-  const tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
-}
-function onYouTubeIframeAPIReady() { initPlayer(); }
-
-function initPlayer() {
-  if (player) return;
-  player = new YT.Player('youtube-player', {
-    height: '280', width: '100%',
-    playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, enablejsapi: 1 },
-    events: {
-      onReady: () => { if (currentRoomData) syncPlayer(currentRoomData); },
-      onStateChange: (e) => {
-        if (e.data === YT.PlayerState.PLAYING) {
-          try { const d = player.getDuration(); if (d > 0) socket.emit('videoDuration', { duration: Math.floor(d) }); } catch(e) {}
-          if (crossfadeInterval) {
-            clearInterval(crossfadeInterval);
-            crossfadeInterval = null;
-          }
-          const vol = parseInt($('volumeSlider').value);
-          fadeVolume(vol, 500);
-        }
-        if (e.data === YT.PlayerState.ENDED) socket.emit('videoEnded');
-      },
-      onError: () => { toast('Erro no vídeo, pulando...', 'error'); setTimeout(() => socket.emit('videoEnded'), 2000); }
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
-  });
-}
-
-function syncPlayer(state) {
-  if (!player || !player.loadVideoById) return;
-  currentRoomData = state;
-  const track = state.queue[state.currentIndex];
-  renderQueue(state.queue, state.currentIndex);
-
-  if (!track) {
-    currentTrackId = null;
-    $('trackTitle').textContent = 'Fila vazia';
-    $('trackArtist').textContent = 'Adicione uma música';
-    $('trackDj').textContent = '';
-    $('trackCover').innerHTML = '🎵';
-    $('progressFill').style.width = '0%';
-    $('currentTime').textContent = '0:00';
-    $('totalTime').textContent = '0:00';
-    try { player.stopVideo(); } catch(e) {}
-    return;
-  }
-
-  $('roomTitle').textContent = state.name;
-
-  if (currentTrackId !== track.id) {
-    currentTrackId = track.id;
-    try {
-      player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
-    } catch(e) {}
-    $('trackTitle').textContent = track.title || 'Música';
-    $('trackArtist').textContent = track.artist || 'Desconhecido';
-    $('trackDj').textContent = '👤 ' + (track.dj || '');
-    $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
-  }
-}
-
-// ===== CROSSFADE =====
-function startCrossfade() {
-  if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-  crossfadeInterval = setInterval(() => {
-    try {
-      if (!player || !player.getCurrentTime) return;
-      const duration = player.getDuration();
-      if (!duration || duration <= 0) return;
-      const current = player.getCurrentTime();
-      const remaining = duration - current;
-      if (remaining <= 3 && remaining > 0) {
-        const vol = parseInt($('volumeSlider').value);
-        const targetVol = 0;
-        const steps = 20;
-        const step = vol / steps;
-        let currentVol = vol;
-        const fadeOut = setInterval(() => {
-          currentVol = Math.max(0, currentVol - step);
-          if (player && player.setVolume) player.setVolume(Math.round(currentVol));
-          if (currentVol <= 0) clearInterval(fadeOut);
-        }, 50);
-        setTimeout(() => clearInterval(fadeOut), 3000);
-      }
-    } catch(e) {}
-  }, 500);
-}
-
-function fadeVolume(target, duration) {
-  const startVol = player.getVolume ? player.getVolume() : parseInt($('volumeSlider').value);
-  const diff = target - startVol;
-  const steps = 20;
-  const step = diff / steps;
-  const interval = duration / steps;
-  let current = startVol;
-  const timer = setInterval(() => {
-    current += step;
-    if ((diff > 0 && current >= target) || (diff < 0 && current <= target)) {
-      current = target;
-      clearInterval(timer);
+    function formatTime(d) {
+      const date = new Date(d);
+      return date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
     }
-    if (player && player.setVolume) player.setVolume(Math.round(current));
-    $('volumeSlider').value = Math.round(current);
-    $('volumeValue').textContent = Math.round(current) + '%';
-  }, interval);
-}
+    function formatDuration(seconds) {
+      if (!seconds || seconds <= 0) return '0:00';
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60);
+      return m + ':' + s.toString().padStart(2,'0');
+    }
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const el = document.getElementById('screen-' + id);
+      if (el) el.classList.add('active');
+    }
 
-// ===== RENDER QUEUE COM VOTAÇÃO E DRAG =====
-function renderQueue(queue, currentIndex) {
-  const list = $('queueList');
-  const count = $('queueCount');
-  count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
-  list.innerHTML = '';
-
-  if (queue.length === 0) {
-    list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>';
-    return;
-  }
-
-  const isUserAdmin = amIAdmin || currentUser?.email === 'admin@sonora.com';
-
-  queue.forEach((track, i) => {
-    const div = document.createElement('div');
-    div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
-    if (i !== currentIndex && isUserAdmin) {
-      div.classList.add('clickable');
-      div.draggable = true;
-      div.dataset.index = i;
-      div.dataset.id = track.id;
-      div.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', i);
-        div.classList.add('dragging');
+    // ===== BAD WORDS =====
+    const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
+    function censorText(text) {
+      let censored = text;
+      badWords.forEach(word => {
+        const regex = new RegExp('\\b' + word + '\\b', 'gi');
+        censored = censored.replace(regex, '***');
       });
-      div.addEventListener('dragend', () => div.classList.remove('dragging'));
-      div.addEventListener('dragover', (e) => e.preventDefault());
-      div.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const from = parseInt(e.dataTransfer.getData('text/plain'));
-        if (from === i || from === currentIndex) return;
-        const newOrder = queue.map(t => t.id);
-        const [removed] = newOrder.splice(from, 1);
-        newOrder.splice(i, 0, removed);
-        socket.emit('reorderQueue', newOrder);
-      });
+      return censored;
     }
-    
-    const votes = queueVotes[i] || { up: [], down: [] };
-    const upCount = votes.up.length;
-    const downCount = votes.down.length;
-    const userVotedUp = votes.up.includes(myName);
-    const userVotedDown = votes.down.includes(myName);
-    const totalVotes = upCount + downCount;
-    const score = upCount - downCount;
-    let scoreClass = ''; let scoreSymbol = '⚪';
-    if (score > 0) { scoreClass = 'positive'; scoreSymbol = '👍'; }
-    if (score < 0) { scoreClass = 'negative'; scoreSymbol = '👎'; }
-    
-    div.innerHTML = `
-      <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
-      <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
-      <div class="info">
-        <div class="title">${escapeHtml(track.title || 'Música')}</div>
-        <div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div>
-      </div>
-      <span class="dj">${escapeHtml(track.dj || '')}</span>
-      <div class="queue-votes">
-        <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')" title="👍 Manter">👍</button>
-        <span class="vote-count ${scoreClass}">${totalVotes > 0 ? scoreSymbol + score : '0'}</span>
-        <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="👎 Remover">👎</button>
-      </div>
-      ${i !== currentIndex && isUserAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})">✕</button>` : ''}
-    `;
-    list.appendChild(div);
-  });
-}
 
-// ===== VOTAÇÃO =====
-function voteSong(index, type) {
-  if (!currentRoom) { toast('Entre em uma sala para votar', 'error'); return; }
-  if (currentRoomData && currentRoomData.currentIndex === index) { toast('Não é possível votar na música atual', 'error'); return; }
-  socket.emit('voteSong', { index, type, room: currentRoom });
-}
-
-// ===== ADD SONG =====
-function extractYouTubeId(url) {
-  if (!url) return '';
-  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) return u.pathname.split('/').filter(Boolean)[0] || '';
-    if (u.hostname.includes('youtube.com')) {
-      const v = u.searchParams.get('v');
-      if (v) return v;
-      const parts = u.pathname.split('/').filter(Boolean);
-      const markers = ['shorts', 'embed', 'live', 'watch'];
-      const idx = parts.findIndex(p => markers.includes(p));
-      if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
+    // ===== TEMAS =====
+    function applyTheme() {
+      const themes = {
+        'dark': { btn: '🌙', bg: '#050508', card: '#0f0f18', hover: '#161620', border: '#1e1e2e', text: '#f0f0f8', textSec: '#9a9ab0', accent: '#ff6b35', accent2: '#7c3aed', bgImage: 'none', overlay: 'transparent' },
+        'light': { btn: '☀️', bg: '#f5f5fa', card: '#ffffff', hover: '#f0f0f5', border: '#e0e0e8', text: '#1a1a2e', textSec: '#666680', accent: '#e65c00', accent2: '#5b2c8e', bgImage: 'none', overlay: 'transparent' },
+        'neon': { btn: '🟢', bg: '#070a12', card: '#111827', hover: '#1a2236', border: '#1f2a4a', text: '#e0f0ff', textSec: '#88aacc', accent: '#22d3ee', accent2: '#10b981', bgImage: 'none', overlay: 'transparent' },
+        'terra-sonora': { btn: '🌄', bg: '#140a05', card: '#2a180e', hover: '#3a2216', border: '#4a2e1e', text: '#fcf3ee', textSec: '#cbaa98', accent: '#e85d3a', accent2: '#d94a20', bgImage: 'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay: 'rgba(0,0,0,0.65)' }
+      };
+      const t = themes[currentTheme] || themes['dark'];
+      document.documentElement.style.setProperty('--bg', t.bg);
+      document.documentElement.style.setProperty('--bg-card', t.card);
+      document.documentElement.style.setProperty('--bg-hover', t.hover);
+      document.documentElement.style.setProperty('--border', t.border);
+      document.documentElement.style.setProperty('--text', t.text);
+      document.documentElement.style.setProperty('--text-secondary', t.textSec);
+      document.documentElement.style.setProperty('--accent', t.accent);
+      document.documentElement.style.setProperty('--accent2', t.accent2);
+      document.documentElement.style.setProperty('--bg-image', t.bgImage);
+      document.documentElement.style.setProperty('--bg-overlay', t.overlay);
+      const btns = document.querySelectorAll('#themeBtn, #themeBtnRoom');
+      btns.forEach(btn => { if (btn) btn.textContent = t.btn; });
+      localStorage.setItem('sonoraTheme', currentTheme);
     }
-  } catch(e) {}
-  const match = url.match(/[a-zA-Z0-9_-]{11}/);
-  return match ? match[0] : '';
-}
-
-async function previewSong() {
-  const url = $('songUrl').value.trim();
-  if (!url) { clearPreview(); return; }
-  const videoId = extractYouTubeId(url);
-  if (!videoId) { toast('Link do YouTube inválido', 'error'); clearPreview(); return; }
-  const box = $('songPreview');
-  box.classList.remove('hidden');
-  $('previewThumb').innerHTML = '⏳';
-  $('previewTitle').textContent = 'Buscando...';
-  $('previewArtist').textContent = 'Analisando link';
-  $('previewStatus').textContent = '';
-  $('previewActions').classList.add('hidden');
-
-  try {
-    const res = await fetch(`/api/video-info?id=${videoId}`);
-    const data = await res.json();
-    if (res.ok && data.title) {
-      songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.artist || 'Desconhecido', duration: data.duration || null };
-      showPreview(songData);
-      return;
+    function toggleTheme() {
+      const keys = ['dark', 'light', 'neon', 'terra-sonora'];
+      const idx = keys.indexOf(currentTheme);
+      currentTheme = keys[(idx + 1) % keys.length];
+      applyTheme();
+      toast('Tema: ' + currentTheme, 'success');
     }
-  } catch (e) {}
 
-  try {
-    const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-    if (res.ok) {
-      const data = await res.json();
-      songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.author_name || 'Desconhecido', duration: null };
+    // ===== AUTENTICAÇÃO =====
+    function showLogin() { $('landingScreen').style.display = 'none'; $('loginScreen').classList.add('active'); }
+    function hideLogin() { $('loginScreen').classList.remove('active'); }
+    function openSignup() { hideLogin(); $('signupModal').classList.add('active'); }
+    function closeSignup() { $('signupModal').classList.remove('active'); $('landingScreen').style.display = 'block'; }
+    function toggleChip(el) { el.classList.toggle('selected'); }
+
+    async function submitSignup() {
+      const nome = $('signupNome').value.trim();
+      const email = $('signupEmail').value.trim();
+      const senha = $('signupPassword').value.trim();
+      const genero = $('signupGenero').value;
+      const regiao = $('signupRegiao').value;
+      const estilos = Array.from(document.querySelectorAll('#signupStyles .chip.selected')).map(c => c.dataset.style);
+      if (nome.length < 2) return toast('Digite seu nome', 'error');
+      if (!email.includes('@')) return toast('E-mail inválido', 'error');
+      if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
+      if (!genero) return toast('Selecione um gênero', 'error');
+      if (!regiao) return toast('Selecione sua região', 'error');
+      if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
       try {
-        const htmlRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
-        const html = await htmlRes.text();
-        const m = html.match(/"lengthSeconds":"?(\d+)"?/);
-        if (m) songData.duration = parseInt(m[1], 10);
-      } catch (e) {}
-      showPreview(songData);
-      return;
-    }
-  } catch (e) {}
-
-  try {
-    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
-    const html = await res.text();
-    const match = html.match(/<title>([^<]+)<\/title>/);
-    if (match) {
-      const title = match[1].replace(/ - YouTube\s*$/, '').trim();
-      const m = html.match(/"lengthSeconds":"?(\d+)"?/);
-      songData = { id: videoId, title: title || 'Música do YouTube', artist: 'Desconhecido', duration: m ? parseInt(m[1], 10) : null };
-      showPreview(songData);
-      return;
-    }
-  } catch (e) {}
-
-  songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: null };
-  showPreview(songData);
-}
-
-function showPreview(data) {
-  const box = $('songPreview');
-  box.classList.remove('hidden');
-  const thumbHtml = data.id ? `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">` : '🎵';
-  const durBadge = data.duration > 0 ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>` : '';
-  $('previewThumb').innerHTML = thumbHtml + durBadge;
-  $('previewTitle').textContent = data.title || 'Música do YouTube';
-  $('previewArtist').textContent = data.artist || 'Desconhecido';
-  const confirmBtn = document.querySelector('.song-preview-confirm');
-  if (data.duration > 0) {
-    if (data.duration > MAX_SONG_DURATION) {
-      $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > ${MAX_SONG_DURATION/60} min`;
-      $('previewStatus').style.color = 'var(--danger)';
-      confirmBtn.disabled = true;
-      confirmBtn.textContent = '⛔ Muito longo';
-    } else if (data.duration > 300) {
-      $('previewStatus').textContent = `⚠️ ${formatDuration(data.duration)} - música longa (máx ${MAX_SONG_DURATION/60} min)`;
-      $('previewStatus').style.color = 'var(--warning)';
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = '✓ Adicionar';
-    } else {
-      $('previewStatus').textContent = `✅ ${formatDuration(data.duration)} - dentro do limite`;
-      $('previewStatus').style.color = 'var(--success)';
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = '✓ Adicionar';
-    }
-  } else {
-    $('previewStatus').textContent = '⚠️ Duração não verificada - tente novamente';
-    $('previewStatus').style.color = 'var(--warning)';
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = '✓ Adicionar (sem verificação)';
-  }
-  $('previewActions').classList.remove('hidden');
-}
-
-function clearPreview() { $('songPreview').classList.add('hidden'); songData = null; }
-
-function confirmAdd() {
-  if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
-  if (songData.duration > 0 && songData.duration > MAX_SONG_DURATION) { toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); return; }
-  const now = Date.now();
-  if (now - lastAddTime < COOLDOWN) { const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); toast(`Aguarde ${wait}s`, 'error'); return; }
-  socket.emit('addSong', { id: songData.id, title: songData.title || 'Música do YouTube', artist: songData.artist || 'Desconhecido', duration: songData.duration || null });
-  lastAddTime = Date.now();
-  $('songUrl').value = '';
-  clearPreview();
-  startCooldown();
-  toast('🎵 Música adicionada!', 'success');
-}
-
-function addSong() {
-  const url = $('songUrl').value.trim();
-  if (!url) { toast('Cole um link do YouTube', 'error'); return; }
-  const videoId = extractYouTubeId(url);
-  if (!videoId) { toast('Link inválido. Use um link do YouTube', 'error'); return; }
-  if (songData && songData.id === videoId) { confirmAdd(); }
-  else { previewSong(); toast('Verifique a prévia antes de adicionar', 'success'); }
-}
-
-function startCooldown() {
-  const text = $('cooldownText');
-  let remaining = COOLDOWN / 1000;
-  text.textContent = `Aguarde ${Math.floor(remaining/60)}m${remaining%60}s`;
-  text.classList.remove('hidden');
-  const interval = setInterval(() => {
-    remaining--;
-    if (remaining > 0) { text.textContent = `Aguarde ${Math.floor(remaining/60)}m${remaining%60}s`; }
-    else { clearInterval(interval); text.classList.add('hidden'); }
-  }, 1000);
-}
-
-// ===== COPY QUEUE IDs =====
-function copyQueueIds() {
-  if (!currentRoomData || !currentRoomData.queue || currentRoomData.queue.length === 0) { toast('Fila vazia', 'error'); return; }
-  const ids = currentRoomData.queue.map(t => t.id).join(',');
-  navigator.clipboard.writeText(ids).then(() => toast('📋 IDs copiados!', 'success')).catch(() => toast('Erro ao copiar', 'error'));
-}
-
-// ===== CHAT =====
-function renderMessage(msg) {
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  const div = document.createElement('div');
-  div.className = 'msg';
-  const msgId = msg._id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-  div.dataset.msgId = msgId;
-
-  if (msg.isMusic) {
-    div.classList.add('msg-music');
-    div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;width:100%;">
-        <span style="font-size:14px;">🎵</span>
-        <span style="font-weight:700;color:var(--accent);font-size:12px;">${escapeHtml(msg.user)}</span>
-        <span style="color:var(--text-muted);font-size:11px;">adicionou</span>
-        <span class="msg-time" style="opacity:1;margin-left:auto;font-size:10px;color:var(--text-muted);">${formatTime(msg.createdAt)}</span>
-      </div>
-      <div class="music-info" style="color:var(--text);font-weight:600;font-size:13px;">${escapeHtml(msg.musicTitle || 'Música')} — ${escapeHtml(msg.musicArtist || 'Desconhecido')}</div>
-    `;
-  } else if (msg.isSystem) {
-    div.classList.add('msg-system');
-    div.innerHTML = `<span class="msg-text" style="color:var(--text-muted);font-style:italic;font-size:12px;">${escapeHtml(msg.text)}</span>`;
-  } else {
-    const avatar = msg.avatar || '👤';
-    const color = msg.color || '#888';
-    let text = escapeHtml(msg.text);
-    text = text.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
-    const likeData = messageLikesSync[msgId] || { likes: 0, users: [] };
-    const liked = likeData.users.includes(myName);
-    const count = likeData.likes || 0;
-    div.innerHTML = `
-      <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
-        <div class="msg-avatar" style="background:${color}22;color:${color};border-color:${color}40;">${avatar}</div>
-        <div class="msg-content">
-          <div class="msg-header">
-            <span class="msg-user" style="color:${color};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
-            <span class="msg-time">${formatTime(msg.createdAt)}</span>
-          </div>
-          <span class="msg-text">${text}</span>
-          <div class="msg-actions">
-            <button class="msg-like-btn ${liked ? 'liked' : ''}" onclick="likeMessage('${msgId}', this)">
-              ${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  container.appendChild(div);
-  limitChatMessages(container);
-}
-
-function limitChatMessages(container) {
-  const messages = container.querySelectorAll('.msg');
-  const total = messages.length;
-  if (total > 10) {
-    const toRemove = total - 10;
-    for (let i = 0; i < toRemove; i++) {
-      const msg = messages[i];
-      if (msg) { msg.classList.add('removing'); setTimeout(() => { if (msg.parentNode) msg.remove(); }, 400); }
-    }
-  }
-}
-
-function likeMessage(msgId, btn) {
-  if (!currentRoom) { toast('Entre em uma sala para curtir', 'error'); return; }
-  socket.emit('likeMessage', { messageId: msgId, room: currentRoom });
-}
-
-function updateLikeDisplay(msgId) {
-  const likeData = messageLikesSync[msgId];
-  if (!likeData) return;
-  const count = likeData.likes || 0;
-  const liked = likeData.users.includes(myName);
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  const msgElements = container.querySelectorAll('.msg');
-  let targetElement = null;
-  for (const el of msgElements) {
-    if (el.dataset.msgId === msgId) { targetElement = el; break; }
-  }
-  if (!targetElement) return;
-  const likeBtn = targetElement.querySelector('.msg-like-btn');
-  if (!likeBtn) return;
-  likeBtn.innerHTML = `${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>`;
-  if (liked) likeBtn.classList.add('liked');
-  else likeBtn.classList.remove('liked');
-}
-
-function sendMessage() {
-  const input = $('chatInput');
-  const text = input.value.trim();
-  if (!text) return;
-  socket.emit('chat', { text: censorText(text) });
-  input.value = '';
-}
-
-function toggleEmojis() { $('emojiPanel').classList.toggle('show'); }
-function insertEmoji(emoji) { $('chatInput').value += emoji; $('chatInput').focus(); $('emojiPanel').classList.remove('show'); }
-
-// ===== VOLUME =====
-function setVolume(val) {
-  $('volumeValue').textContent = val + '%';
-  if (player && player.setVolume) player.setVolume(parseInt(val));
-}
-
-// ===== SOCKET EVENTS =====
-socket.on('roomState', (state) => {
-  const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
-  const next = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
-  if (next !== prev) { currentTrackId = null; if (next) setTimeout(startCrossfade, 1000); }
-  currentRoomData = state;
-  syncPlayer(state);
-});
-
-socket.on('queueEmpty', () => {
-  currentTrackId = null;
-  $('trackTitle').textContent = 'Fila vazia';
-  $('trackArtist').textContent = 'Adicione uma música';
-  $('trackDj').textContent = '';
-  $('trackCover').innerHTML = '🎵';
-  $('progressFill').style.width = '0%';
-  $('currentTime').textContent = '0:00';
-  $('totalTime').textContent = '0:00';
-  try { player.stopVideo(); } catch(e) {}
-  renderQueue([], 0);
-  toast('Fila encerrada! Adicione músicas.', 'success');
-});
-
-socket.on('users', (users) => { $('userCount').textContent = users.length; });
-socket.on('chat', renderMessage);
-
-socket.on('chatHistory', (messages) => {
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  container.innerHTML = '';
-  const start = Math.max(0, messages.length - 10);
-  const recentMessages = messages.slice(start);
-  recentMessages.forEach(m => renderMessage(m));
-});
-
-socket.on('likeUpdate', (data) => {
-  const { messageId, likes, users } = data;
-  messageLikesSync[messageId] = { likes, users };
-  updateLikeDisplay(messageId);
-});
-
-socket.on('likesState', (likesData) => {
-  messageLikesSync = likesData || {};
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  const msgElements = container.querySelectorAll('.msg');
-  for (const el of msgElements) {
-    const msgId = el.dataset.msgId;
-    if (msgId && messageLikesSync[msgId]) updateLikeDisplay(msgId);
-  }
-});
-
-socket.on('voteUpdate', (data) => {
-  const { index, up, down } = data;
-  queueVotes[index] = { up, down };
-  if (down.length >= DISLIKE_THRESHOLD) {
-    toast(`👎 Música removida por votação! (${down.length} votos negativos)`, 'error');
-    if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-  } else {
-    if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-  }
-});
-
-socket.on('votesState', (votesData) => {
-  queueVotes = votesData || {};
-  if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-});
-
-socket.on('error', (msg) => toast(msg, 'error'));
-socket.on('isAdmin', (isAdmin) => {
-  amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
-  if (amIAdmin) { $('adminBadge').classList.remove('hidden'); toast('Você é admin desta sala!', 'success'); }
-});
-socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
-socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
-socket.on('chatCleared', () => {
-  const container = document.getElementById('chatMessagesInner');
-  if (container) { container.innerHTML = ''; const div = document.createElement('div'); div.className = 'msg msg-system'; div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>'; container.appendChild(div); }
-  toast('Chat limpo!', 'success');
-});
-socket.on('adminBroadcast', (data) => {
-  toast(`📢 ${data.message}`, 'success');
-  if (currentRoom) { const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() }; renderMessage(msg); }
-});
-socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
-
-// ===== PROGRESS UPDATE =====
-setInterval(() => {
-  if (!player || !player.getCurrentTime) return;
-  try {
-    const current = player.getCurrentTime();
-    const duration = player.getDuration();
-    if (duration > 0) {
-      $('progressFill').style.width = (current / duration * 100) + '%';
-      $('currentTime').textContent = formatDuration(current);
-      $('totalTime').textContent = formatDuration(duration);
-    }
-  } catch(e) {}
-}, 1000);
-
-// ===== INICIALIZAÇÃO =====
-function init() {
-  // Já está tudo declarado, apenas aplica o tema e tenta carregar o usuário
-  applyTheme();
-  fetch('/api/me')
-    .then(res => {
-      if (res.ok) return res.json();
-      throw new Error('Não autenticado');
-    })
-    .then(data => {
-      if (data.success && data.user) {
-        currentUser = data.user;
+        const res = await fetch('/api/signup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, email, senha, genero, regiao, estilos })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        const loginRes = await fetch('/api/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha })
+        });
+        const loginData = await loginRes.json();
+        if (!loginRes.ok) throw new Error(loginData.error);
+        currentUser = loginData.user;
         myName = currentUser.nome;
         myAvatar = currentUser.avatar || '🎸';
-        $('landingScreen').style.display = 'none';
+        closeSignup();
         hideLogin();
+        $('landingScreen').style.display = 'none';
         showScreen('lobby');
         updateUserInfo();
         loadRooms();
         checkAdmin();
         loadFavorites();
-        toast('Bem-vindo(a) ' + myName + '!', 'success');
+        toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
+      } catch (e) {
+        toast(e.message || 'Erro ao criar conta', 'error');
       }
-    })
-    .catch(() => {
-      // Não está logado, mostra landing
+    }
+
+    async function doLogin() {
+      const email = $('loginEmail').value.trim();
+      const senha = $('loginPassword').value.trim();
+      const errorEl = $('loginError');
+      if (!email || !senha) { errorEl.textContent = 'Preencha e-mail e senha'; errorEl.classList.add('show'); return; }
+      const btn = $('loginBtn');
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        currentUser = data.user;
+        myName = currentUser.nome;
+        myAvatar = currentUser.avatar || '🎸';
+        hideLogin();
+        $('landingScreen').style.display = 'none';
+        showScreen('lobby');
+        updateUserInfo();
+        loadRooms();
+        checkAdmin();
+        loadFavorites();
+        toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
+      } catch (e) {
+        errorEl.textContent = e.message || 'Erro ao fazer login';
+        errorEl.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar no palco';
+      }
+    }
+
+    function doLogout() {
+      fetch('/api/logout', { method: 'POST' }).catch(() => {});
+      if (currentRoom) { socket.emit('leaveRoom'); currentRoom = null; }
+      currentUser = null;
+      showScreen('lobby');
+      $('screen-lobby').classList.remove('active');
       $('landingScreen').style.display = 'block';
-    });
+      hideLogin();
+      toast('Você saiu', 'success');
+    }
 
-  const params = new URLSearchParams(window.location.search);
-  const room = params.get('room');
-  if (room) {
-    setTimeout(() => {
-      if (currentUser) joinRoom(room);
-      else toast('Faça login para entrar', 'error');
-    }, 1000);
-  }
-}
+    function updateUserInfo() {
+      $('userDisplayName').textContent = myName;
+      $('userAvatar').textContent = myAvatar;
+    }
 
-// Aguarda o DOM carregar para iniciar
-document.addEventListener('DOMContentLoaded', () => {
-  init();
-  // Atualiza a lista de salas a cada 15 segundos apenas se estiver no lobby
-  setInterval(() => {
-    if (document.getElementById('screen-lobby').classList.contains('active')) {
+    function checkAdmin() {
+      if (currentUser && currentUser.email === 'admin@sonora.com') {
+        amIAdmin = true;
+        $('adminBtn').style.display = 'flex';
+        $('adminBtnRoom').style.display = 'flex';
+        $('adminBadge').classList.remove('hidden');
+      } else {
+        amIAdmin = false;
+        $('adminBtn').style.display = 'none';
+        $('adminBtnRoom').style.display = 'none';
+        $('adminBadge').classList.add('hidden');
+      }
+    }
+
+    // ===== ADMIN =====
+    function toggleAdmin() {
+      if (!amIAdmin) { toast('Apenas administradores', 'error'); return; }
+      const panel = $('adminPanel');
+      panel.classList.toggle('active');
+      if (panel.classList.contains('active')) { loadAdminData(); loadAdminUsers(); }
+    }
+    function closeAdmin() { $('adminPanel').classList.remove('active'); }
+
+    async function loadAdminData() {
+      try {
+        const res = await fetch('/api/admin/stats', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok) { $('adminUsers').textContent = data.totalUsers || 0; $('adminRooms').textContent = data.totalRooms || 0; $('adminOnline').textContent = data.onlineUsers || 0; }
+      } catch (e) {}
+    }
+
+    async function loadAdminUsers() {
+      try {
+        const res = await fetch('/api/admin/users', { credentials: 'include' });
+        const users = await res.json();
+        const list = $('adminUserList');
+        const count = $('adminUserCount');
+        if (!res.ok || !users.length) { list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Nenhum usuário</div>'; return; }
+        count.textContent = users.length;
+        list.innerHTML = users.map(u => `
+          <div class="admin-user-item">
+            <div>
+              <span class="name">${escapeHtml(u.nome)}</span>
+              ${u.isAdmin ? '<span class="admin-badge-mini">Admin</span>' : ''}
+              <div class="email">${escapeHtml(u.email)}</div>
+            </div>
+            <div class="actions">
+              ${!u.isAdmin ? `<button class="promote" onclick="adminPromote('${u.email}')">👑</button>` : ''}
+              <button class="delete" onclick="adminDeleteUser('${u.email}')">🗑️</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function adminPromote(email) {
+      if (!confirm(`Promover ${email}?`)) return;
+      try {
+        const res = await fetch('/api/admin/promote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
+        if (res.ok) { toast('✅ Promovido!', 'success'); loadAdminUsers(); }
+      } catch (e) {}
+    }
+
+    async function adminDeleteUser(email) {
+      if (!confirm(`Deletar ${email}?`)) return;
+      try {
+        const res = await fetch('/api/admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
+        if (res.ok) { toast('✅ Deletado!', 'success'); loadAdminUsers(); loadAdminData(); }
+      } catch (e) {}
+    }
+
+    async function adminClearChats() {
+      if (!confirm('Limpar TODOS os chats?')) return;
+      try { await fetch('/api/admin/clear-all-chats', { method: 'POST', credentials: 'include' }); toast('✅ Chats limpos!', 'success'); } catch (e) {}
+    }
+
+    async function adminClearRooms() {
+      if (!confirm('LIMPAR TODAS as salas?')) return;
+      try { await fetch('/api/admin/clear-all-rooms', { method: 'POST', credentials: 'include' }); toast('✅ Salas limpas!', 'success'); loadAdminData(); loadRooms(); } catch (e) {}
+    }
+
+    async function adminExport() {
+      try {
+        const res = await fetch('/api/admin/export-data', { credentials: 'include' });
+        const data = await res.json();
+        if (res.ok) {
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `sonora-fan-${new Date().toISOString().slice(0,10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          toast('✅ Exportado!', 'success');
+        }
+      } catch (e) {}
+    }
+
+    function adminBroadcast() {
+      const msg = prompt('Mensagem para todos:');
+      if (!msg) return;
+      socket.emit('adminBroadcast', { message: msg });
+      toast('📢 Enviado!', 'success');
+    }
+
+    // ===== FAVORITOS =====
+    async function loadFavorites() {
+      try {
+        const res = await fetch('/api/favorites', { credentials: 'include' });
+        if (res.ok) { myFavorites = await res.json(); }
+      } catch (e) {}
+    }
+
+    function toggleFavorites() {
+      const modal = $('favoritesModal');
+      modal.classList.toggle('active');
+      if (modal.classList.contains('active')) renderFavorites();
+    }
+    function closeFavorites() { $('favoritesModal').classList.remove('active'); }
+
+    function renderFavorites() {
+      const container = $('favoritesList');
+      if (!myFavorites || myFavorites.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;">Nenhum favorito ainda. ⭐</div>';
+        return;
+      }
+      container.innerHTML = myFavorites.map(f => `
+        <div class="favorite-item">
+          <div class="info">
+            <div class="title">${escapeHtml(f.title || 'Música')}</div>
+            <div class="artist">${escapeHtml(f.artist || 'Desconhecido')}</div>
+          </div>
+          <div class="actions">
+            <button class="add" onclick="addFavoriteToQueue('${f.id}')">➕</button>
+            <button class="remove" onclick="removeFavorite('${f.id}')">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function addFavoriteToQueue(videoId) {
+      const fav = myFavorites.find(f => f.id === videoId);
+      if (!fav) return toast('Favorito não encontrado', 'error');
+      if (!currentRoom) return toast('Entre em uma sala primeiro', 'error');
+      socket.emit('addSong', { id: fav.id, title: fav.title, artist: fav.artist, duration: null });
+      toast(`🎵 ${fav.title} adicionada!`, 'success');
+    }
+
+    async function removeFavorite(videoId) {
+      try {
+        const res = await fetch(`/api/favorites/${videoId}`, { method: 'DELETE', credentials: 'include' });
+        if (res.ok) { myFavorites = myFavorites.filter(f => f.id !== videoId); renderFavorites(); toast('🗑️ Removido dos favoritos', 'success'); }
+      } catch (e) {}
+    }
+
+    async function favoriteCurrent() {
+      if (!currentRoomData || !currentRoomData.queue || !currentRoomData.queue.length) return toast('Nenhuma música tocando', 'error');
+      const track = currentRoomData.queue[currentRoomData.currentIndex];
+      if (!track) return toast('Nenhuma música tocando', 'error');
+      await addFavorite(track.id, track.title, track.artist);
+    }
+
+    async function favPreview() {
+      if (!songData) return toast('Nenhuma música na prévia', 'error');
+      await addFavorite(songData.id, songData.title, songData.artist);
+    }
+
+    async function addFavorite(id, title, artist) {
+      if (myFavorites.find(f => f.id === id)) { toast('Já está nos favoritos ⭐', 'success'); return; }
+      try {
+        const res = await fetch('/api/favorites', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+          body: JSON.stringify({ videoId: id, title, artist })
+        });
+        if (res.ok) {
+          myFavorites.push({ id, title, artist });
+          toast('⭐ Adicionado aos favoritos!', 'success');
+        }
+      } catch (e) {}
+    }
+
+    // ===== LOBBY =====
+    async function loadRooms() {
+      try {
+        const res = await fetch('/api/rooms');
+        const rooms = await res.json();
+        const grid = $('roomGrid');
+        if (rooms.length === 0) { grid.innerHTML = '<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>'; return; }
+        grid.innerHTML = '';
+        rooms.forEach(r => {
+          const card = document.createElement('div');
+          card.className = 'room-card';
+          card.onclick = () => joinRoom(r.slug);
+          const track = r.currentTrack;
+          const thumb = track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>';
+          const live = r.isPlaying ? '<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>' : '';
+          card.innerHTML = `
+            <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div></div>
+            <div class="room-card-body">
+              <h3>${escapeHtml(r.name)}</h3>
+              <div class="meta"><span>👤 ${r.listenerCount || 0} ouvintes</span><span>🎶 ${r.queueLength || 0} na fila</span></div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      } catch (e) {
+        $('roomGrid').innerHTML = '<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar</p></div>';
+      }
+    }
+
+    function showCreateRoom() { $('createRoomModal').classList.add('active'); }
+    function closeCreateRoom() { $('createRoomModal').classList.remove('active'); }
+
+    async function createRoom() {
+      const name = $('newRoomName').value.trim();
+      if (!name) return toast('Digite um nome', 'error');
+      try {
+        const res = await fetch('/api/rooms', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, adminName: myName })
+        });
+        const data = await res.json();
+        if (data.slug) { closeCreateRoom(); joinRoom(data.slug); }
+      } catch (e) { toast('Erro ao criar sala', 'error'); }
+    }
+
+    async function joinRandomRoom() {
+      try {
+        const res = await fetch('/api/rooms/random');
+        const data = await res.json();
+        if (data.slug) joinRoom(data.slug);
+        else toast('Nenhuma sala disponível', 'error');
+      } catch (e) { toast('Erro ao buscar sala', 'error'); }
+    }
+
+    // ===== ROOM =====
+    function joinRoom(slug) {
+      if (!currentUser) { toast('Faça login primeiro', 'error'); return; }
+      currentRoom = slug;
+      socket.emit('joinRoom', { slug, name: myName, avatar: myAvatar });
+      showScreen('room');
+      document.getElementById('chatMessagesInner').innerHTML = '';
+      amIAdmin = false;
+      $('adminBadge').classList.add('hidden');
+      loadYouTubeAPI();
+    }
+
+    function leaveRoom() {
+      if (currentRoom) socket.emit('leaveRoom');
+      currentRoom = null;
+      currentRoomData = null;
+      if (player && player.stopVideo) player.stopVideo();
+      if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
+      showScreen('lobby');
       loadRooms();
     }
-  }, 15000);
-});
-</script>
+
+    // ===== YOUTUBE =====
+    function loadYouTubeAPI() {
+      if (window.YT && window.YT.Player) { initPlayer(); return; }
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+    }
+    function onYouTubeIframeAPIReady() { initPlayer(); }
+
+    function initPlayer() {
+      if (player) return;
+      player = new YT.Player('youtube-player', {
+        height: '280', width: '100%',
+        playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, enablejsapi: 1 },
+        events: {
+          onReady: () => { if (currentRoomData) syncPlayer(currentRoomData); },
+          onStateChange: (e) => {
+            if (e.data === YT.PlayerState.PLAYING) {
+              try { const d = player.getDuration(); if (d > 0) socket.emit('videoDuration', { duration: Math.floor(d) }); } catch(e) {}
+              if (crossfadeInterval) {
+                clearInterval(crossfadeInterval);
+                crossfadeInterval = null;
+              }
+              const vol = parseInt($('volumeSlider').value);
+              fadeVolume(vol, 500);
+            }
+            if (e.data === YT.PlayerState.ENDED) socket.emit('videoEnded');
+          },
+          onError: () => { toast('Erro no vídeo, pulando...', 'error'); setTimeout(() => socket.emit('videoEnded'), 2000); }
+        }
+      });
+    }
+
+    function syncPlayer(state) {
+      if (!player || !player.loadVideoById) return;
+      currentRoomData = state;
+      const track = state.queue[state.currentIndex];
+      renderQueue(state.queue, state.currentIndex);
+
+      if (!track) {
+        currentTrackId = null;
+        $('trackTitle').textContent = 'Fila vazia';
+        $('trackArtist').textContent = 'Adicione uma música';
+        $('trackDj').textContent = '';
+        $('trackCover').innerHTML = '🎵';
+        $('progressFill').style.width = '0%';
+        $('currentTime').textContent = '0:00';
+        $('totalTime').textContent = '0:00';
+        try { player.stopVideo(); } catch(e) {}
+        return;
+      }
+
+      $('roomTitle').textContent = state.name;
+
+      if (currentTrackId !== track.id) {
+        currentTrackId = track.id;
+        try {
+          player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
+        } catch(e) {}
+        $('trackTitle').textContent = track.title || 'Música';
+        $('trackArtist').textContent = track.artist || 'Desconhecido';
+        $('trackDj').textContent = '👤 ' + (track.dj || '');
+        $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
+      }
+    }
+
+    // ===== CROSSFADE =====
+    function startCrossfade() {
+      if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
+      crossfadeInterval = setInterval(() => {
+        try {
+          if (!player || !player.getCurrentTime) return;
+          const duration = player.getDuration();
+          if (!duration || duration <= 0) return;
+          const current = player.getCurrentTime();
+          const remaining = duration - current;
+          if (remaining <= 3 && remaining > 0) {
+            const vol = parseInt($('volumeSlider').value);
+            const targetVol = 0;
+            const steps = 20;
+            const step = vol / steps;
+            let currentVol = vol;
+            const fadeOut = setInterval(() => {
+              currentVol = Math.max(0, currentVol - step);
+              if (player && player.setVolume) player.setVolume(Math.round(currentVol));
+              if (currentVol <= 0) clearInterval(fadeOut);
+            }, 50);
+            setTimeout(() => clearInterval(fadeOut), 3000);
+          }
+        } catch(e) {}
+      }, 500);
+    }
+
+    function fadeVolume(target, duration) {
+      const startVol = player.getVolume ? player.getVolume() : parseInt($('volumeSlider').value);
+      const diff = target - startVol;
+      const steps = 20;
+      const step = diff / steps;
+      const interval = duration / steps;
+      let current = startVol;
+      const timer = setInterval(() => {
+        current += step;
+        if ((diff > 0 && current >= target) || (diff < 0 && current <= target)) {
+          current = target;
+          clearInterval(timer);
+        }
+        if (player && player.setVolume) player.setVolume(Math.round(current));
+        $('volumeSlider').value = Math.round(current);
+        $('volumeValue').textContent = Math.round(current) + '%';
+      }, interval);
+    }
+
+    // ===== RENDER QUEUE COM VOTAÇÃO E DRAG =====
+    function renderQueue(queue, currentIndex) {
+      const list = $('queueList');
+      const count = $('queueCount');
+      count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
+      list.innerHTML = '';
+
+      if (queue.length === 0) {
+        list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>';
+        return;
+      }
+
+      const isUserAdmin = amIAdmin || currentUser?.email === 'admin@sonora.com';
+
+      queue.forEach((track, i) => {
+        const div = document.createElement('div');
+        div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
+        if (i !== currentIndex && isUserAdmin) {
+          div.classList.add('clickable');
+          div.draggable = true;
+          div.dataset.index = i;
+          div.dataset.id = track.id;
+          div.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', i);
+            div.classList.add('dragging');
+          });
+          div.addEventListener('dragend', () => div.classList.remove('dragging'));
+          div.addEventListener('dragover', (e) => e.preventDefault());
+          div.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const from = parseInt(e.dataTransfer.getData('text/plain'));
+            if (from === i || from === currentIndex) return;
+            const newOrder = queue.map(t => t.id);
+            const [removed] = newOrder.splice(from, 1);
+            newOrder.splice(i, 0, removed);
+            socket.emit('reorderQueue', newOrder);
+          });
+        }
+        
+        const votes = queueVotes[i] || { up: [], down: [] };
+        const upCount = votes.up.length;
+        const downCount = votes.down.length;
+        const userVotedUp = votes.up.includes(myName);
+        const userVotedDown = votes.down.includes(myName);
+        const totalVotes = upCount + downCount;
+        const score = upCount - downCount;
+        let scoreClass = ''; let scoreSymbol = '⚪';
+        if (score > 0) { scoreClass = 'positive'; scoreSymbol = '👍'; }
+        if (score < 0) { scoreClass = 'negative'; scoreSymbol = '👎'; }
+        
+        div.innerHTML = `
+          <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
+          <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
+          <div class="info">
+            <div class="title">${escapeHtml(track.title || 'Música')}</div>
+            <div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div>
+          </div>
+          <span class="dj">${escapeHtml(track.dj || '')}</span>
+          <div class="queue-votes">
+            <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')" title="👍 Manter">👍</button>
+            <span class="vote-count ${scoreClass}">${totalVotes > 0 ? scoreSymbol + score : '0'}</span>
+            <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="👎 Remover">👎</button>
+          </div>
+          ${i !== currentIndex && isUserAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})">✕</button>` : ''}
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    // ===== VOTAÇÃO =====
+    function voteSong(index, type) {
+      if (!currentRoom) { toast('Entre em uma sala para votar', 'error'); return; }
+      if (currentRoomData && currentRoomData.currentIndex === index) { toast('Não é possível votar na música atual', 'error'); return; }
+      socket.emit('voteSong', { index, type, room: currentRoom });
+    }
+
+    // ===== ADD SONG =====
+    function extractYouTubeId(url) {
+      if (!url) return '';
+      if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+      try {
+        const u = new URL(url);
+        if (u.hostname.includes('youtu.be')) return u.pathname.split('/').filter(Boolean)[0] || '';
+        if (u.hostname.includes('youtube.com')) {
+          const v = u.searchParams.get('v');
+          if (v) return v;
+          const parts = u.pathname.split('/').filter(Boolean);
+          const markers = ['shorts', 'embed', 'live', 'watch'];
+          const idx = parts.findIndex(p => markers.includes(p));
+          if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
+        }
+      } catch(e) {}
+      const match = url.match(/[a-zA-Z0-9_-]{11}/);
+      return match ? match[0] : '';
+    }
+
+    async function previewSong() {
+      const url = $('songUrl').value.trim();
+      if (!url) { clearPreview(); return; }
+      const videoId = extractYouTubeId(url);
+      if (!videoId) { toast('Link do YouTube inválido', 'error'); clearPreview(); return; }
+      const box = $('songPreview');
+      box.classList.remove('hidden');
+      $('previewThumb').innerHTML = '⏳';
+      $('previewTitle').textContent = 'Buscando...';
+      $('previewArtist').textContent = 'Analisando link';
+      $('previewStatus').textContent = '';
+      $('previewActions').classList.add('hidden');
+
+      try {
+        const res = await fetch(`/api/video-info?id=${videoId}`);
+        const data = await res.json();
+        if (res.ok && data.title) {
+          songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.artist || 'Desconhecido', duration: data.duration || null };
+          showPreview(songData);
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+        if (res.ok) {
+          const data = await res.json();
+          songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.author_name || 'Desconhecido', duration: null };
+          try {
+            const htmlRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+            const html = await htmlRes.text();
+            const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+            if (m) songData.duration = parseInt(m[1], 10);
+          } catch (e) {}
+          showPreview(songData);
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+        const html = await res.text();
+        const match = html.match(/<title>([^<]+)<\/title>/);
+        if (match) {
+          const title = match[1].replace(/ - YouTube\s*$/, '').trim();
+          const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+          songData = { id: videoId, title: title || 'Música do YouTube', artist: 'Desconhecido', duration: m ? parseInt(m[1], 10) : null };
+          showPreview(songData);
+          return;
+        }
+      } catch (e) {}
+
+      songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: null };
+      showPreview(songData);
+    }
+
+    function showPreview(data) {
+      const box = $('songPreview');
+      box.classList.remove('hidden');
+      const thumbHtml = data.id ? `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">` : '🎵';
+      const durBadge = data.duration > 0 ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>` : '';
+      $('previewThumb').innerHTML = thumbHtml + durBadge;
+      $('previewTitle').textContent = data.title || 'Música do YouTube';
+      $('previewArtist').textContent = data.artist || 'Desconhecido';
+      const confirmBtn = document.querySelector('.song-preview-confirm');
+      if (data.duration > 0) {
+        if (data.duration > MAX_SONG_DURATION) {
+          $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > ${MAX_SONG_DURATION/60} min`;
+          $('previewStatus').style.color = 'var(--danger)';
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = '⛔ Muito longo';
+        } else if (data.duration > 300) {
+          $('previewStatus').textContent = `⚠️ ${formatDuration(data.duration)} - música longa (máx ${MAX_SONG_DURATION/60} min)`;
+          $('previewStatus').style.color = 'var(--warning)';
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = '✓ Adicionar';
+        } else {
+          $('previewStatus').textContent = `✅ ${formatDuration(data.duration)} - dentro do limite`;
+          $('previewStatus').style.color = 'var(--success)';
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = '✓ Adicionar';
+        }
+      } else {
+        $('previewStatus').textContent = '⚠️ Duração não verificada - tente novamente';
+        $('previewStatus').style.color = 'var(--warning)';
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = '✓ Adicionar (sem verificação)';
+      }
+      $('previewActions').classList.remove('hidden');
+    }
+
+    function clearPreview() { $('songPreview').classList.add('hidden'); songData = null; }
+
+    function confirmAdd() {
+      if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
+      if (songData.duration > 0 && songData.duration > MAX_SONG_DURATION) { toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); return; }
+      const now = Date.now();
+      if (now - lastAddTime < COOLDOWN) { const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); toast(`Aguarde ${wait}s`, 'error'); return; }
+      socket.emit('addSong', { id: songData.id, title: songData.title || 'Música do YouTube', artist: songData.artist || 'Desconhecido', duration: songData.duration || null });
+      lastAddTime = Date.now();
+      $('songUrl').value = '';
+      clearPreview();
+      startCooldown();
+      toast('🎵 Música adicionada!', 'success');
+    }
+
+    function addSong() {
+      const url = $('songUrl').value.trim();
+      if (!url) { toast('Cole um link do YouTube', 'error'); return; }
+      const videoId = extractYouTubeId(url);
+      if (!videoId) { toast('Link inválido. Use um link do YouTube', 'error'); return; }
+      if (songData && songData.id === videoId) { confirmAdd(); }
+      else { previewSong(); toast('Verifique a prévia antes de adicionar', 'success'); }
+    }
+
+    function startCooldown() {
+      const text = $('cooldownText');
+      let remaining = COOLDOWN / 1000;
+      text.textContent = `Aguarde ${Math.floor(remaining/60)}m${remaining%60}s`;
+      text.classList.remove('hidden');
+      const interval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) { text.textContent = `Aguarde ${Math.floor(remaining/60)}m${remaining%60}s`; }
+        else { clearInterval(interval); text.classList.add('hidden'); }
+      }, 1000);
+    }
+
+    // ===== COPY QUEUE IDs =====
+    function copyQueueIds() {
+      if (!currentRoomData || !currentRoomData.queue || currentRoomData.queue.length === 0) { toast('Fila vazia', 'error'); return; }
+      const ids = currentRoomData.queue.map(t => t.id).join(',');
+      navigator.clipboard.writeText(ids).then(() => toast('📋 IDs copiados!', 'success')).catch(() => toast('Erro ao copiar', 'error'));
+    }
+
+    // ===== CHAT =====
+    function renderMessage(msg) {
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      const div = document.createElement('div');
+      div.className = 'msg';
+      const msgId = msg._id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      div.dataset.msgId = msgId;
+
+      if (msg.isMusic) {
+        div.classList.add('msg-music');
+        div.innerHTML = `
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;width:100%;">
+            <span style="font-size:14px;">🎵</span>
+            <span style="font-weight:700;color:var(--accent);font-size:12px;">${escapeHtml(msg.user)}</span>
+            <span style="color:var(--text-muted);font-size:11px;">adicionou</span>
+            <span class="msg-time" style="opacity:1;margin-left:auto;font-size:10px;color:var(--text-muted);">${formatTime(msg.createdAt)}</span>
+          </div>
+          <div class="music-info" style="color:var(--text);font-weight:600;font-size:13px;">${escapeHtml(msg.musicTitle || 'Música')} — ${escapeHtml(msg.musicArtist || 'Desconhecido')}</div>
+        `;
+      } else if (msg.isSystem) {
+        div.classList.add('msg-system');
+        div.innerHTML = `<span class="msg-text" style="color:var(--text-muted);font-style:italic;font-size:12px;">${escapeHtml(msg.text)}</span>`;
+      } else {
+        const avatar = msg.avatar || '👤';
+        const color = msg.color || '#888';
+        let text = escapeHtml(msg.text);
+        text = text.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
+        const likeData = messageLikesSync[msgId] || { likes: 0, users: [] };
+        const liked = likeData.users.includes(myName);
+        const count = likeData.likes || 0;
+        div.innerHTML = `
+          <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
+            <div class="msg-avatar" style="background:${color}22;color:${color};border-color:${color}40;">${avatar}</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-user" style="color:${color};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
+                <span class="msg-time">${formatTime(msg.createdAt)}</span>
+              </div>
+              <span class="msg-text">${text}</span>
+              <div class="msg-actions">
+                <button class="msg-like-btn ${liked ? 'liked' : ''}" onclick="likeMessage('${msgId}', this)">
+                  ${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      container.appendChild(div);
+      limitChatMessages(container);
+    }
+
+    function limitChatMessages(container) {
+      const messages = container.querySelectorAll('.msg');
+      const total = messages.length;
+      if (total > 10) {
+        const toRemove = total - 10;
+        for (let i = 0; i < toRemove; i++) {
+          const msg = messages[i];
+          if (msg) { msg.classList.add('removing'); setTimeout(() => { if (msg.parentNode) msg.remove(); }, 400); }
+        }
+      }
+    }
+
+    function likeMessage(msgId, btn) {
+      if (!currentRoom) { toast('Entre em uma sala para curtir', 'error'); return; }
+      socket.emit('likeMessage', { messageId: msgId, room: currentRoom });
+    }
+
+    function updateLikeDisplay(msgId) {
+      const likeData = messageLikesSync[msgId];
+      if (!likeData) return;
+      const count = likeData.likes || 0;
+      const liked = likeData.users.includes(myName);
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      const msgElements = container.querySelectorAll('.msg');
+      let targetElement = null;
+      for (const el of msgElements) {
+        if (el.dataset.msgId === msgId) { targetElement = el; break; }
+      }
+      if (!targetElement) return;
+      const likeBtn = targetElement.querySelector('.msg-like-btn');
+      if (!likeBtn) return;
+      likeBtn.innerHTML = `${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>`;
+      if (liked) likeBtn.classList.add('liked');
+      else likeBtn.classList.remove('liked');
+    }
+
+    function sendMessage() {
+      const input = $('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      socket.emit('chat', { text: censorText(text) });
+      input.value = '';
+    }
+
+    function toggleEmojis() { $('emojiPanel').classList.toggle('show'); }
+    function insertEmoji(emoji) { $('chatInput').value += emoji; $('chatInput').focus(); $('emojiPanel').classList.remove('show'); }
+
+    // ===== VOLUME =====
+    function setVolume(val) {
+      $('volumeValue').textContent = val + '%';
+      if (player && player.setVolume) player.setVolume(parseInt(val));
+    }
+
+    // ===== SOCKET EVENTS =====
+    socket.on('roomState', (state) => {
+      const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
+      const next = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
+      if (next !== prev) { currentTrackId = null; if (next) setTimeout(startCrossfade, 1000); }
+      currentRoomData = state;
+      syncPlayer(state);
+    });
+
+    socket.on('queueEmpty', () => {
+      currentTrackId = null;
+      $('trackTitle').textContent = 'Fila vazia';
+      $('trackArtist').textContent = 'Adicione uma música';
+      $('trackDj').textContent = '';
+      $('trackCover').innerHTML = '🎵';
+      $('progressFill').style.width = '0%';
+      $('currentTime').textContent = '0:00';
+      $('totalTime').textContent = '0:00';
+      try { player.stopVideo(); } catch(e) {}
+      renderQueue([], 0);
+      toast('Fila encerrada! Adicione músicas.', 'success');
+    });
+
+    socket.on('users', (users) => { $('userCount').textContent = users.length; });
+    socket.on('chat', renderMessage);
+
+    socket.on('chatHistory', (messages) => {
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      container.innerHTML = '';
+      const start = Math.max(0, messages.length - 10);
+      const recentMessages = messages.slice(start);
+      recentMessages.forEach(m => renderMessage(m));
+    });
+
+    socket.on('likeUpdate', (data) => {
+      const { messageId, likes, users } = data;
+      messageLikesSync[messageId] = { likes, users };
+      updateLikeDisplay(messageId);
+    });
+
+    socket.on('likesState', (likesData) => {
+      messageLikesSync = likesData || {};
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      const msgElements = container.querySelectorAll('.msg');
+      for (const el of msgElements) {
+        const msgId = el.dataset.msgId;
+        if (msgId && messageLikesSync[msgId]) updateLikeDisplay(msgId);
+      }
+    });
+
+    socket.on('voteUpdate', (data) => {
+      const { index, up, down } = data;
+      queueVotes[index] = { up, down };
+      if (down.length >= DISLIKE_THRESHOLD) {
+        toast(`👎 Música removida por votação! (${down.length} votos negativos)`, 'error');
+        if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+      } else {
+        if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+      }
+    });
+
+    socket.on('votesState', (votesData) => {
+      queueVotes = votesData || {};
+      if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+    });
+
+    socket.on('error', (msg) => toast(msg, 'error'));
+    socket.on('isAdmin', (isAdmin) => {
+      amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
+      if (amIAdmin) { $('adminBadge').classList.remove('hidden'); toast('Você é admin desta sala!', 'success'); }
+    });
+    socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
+    socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
+    socket.on('chatCleared', () => {
+      const container = document.getElementById('chatMessagesInner');
+      if (container) { container.innerHTML = ''; const div = document.createElement('div'); div.className = 'msg msg-system'; div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>'; container.appendChild(div); }
+      toast('Chat limpo!', 'success');
+    });
+    socket.on('adminBroadcast', (data) => {
+      toast(`📢 ${data.message}`, 'success');
+      if (currentRoom) { const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() }; renderMessage(msg); }
+    });
+    socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
+
+    // ===== PROGRESS UPDATE =====
+    setInterval(() => {
+      if (!player || !player.getCurrentTime) return;
+      try {
+        const current = player.getCurrentTime();
+        const duration = player.getDuration();
+        if (duration > 0) {
+          $('progressFill').style.width = (current / duration * 100) + '%';
+          $('currentTime').textContent = formatDuration(current);
+          $('totalTime').textContent = formatDuration(duration);
+        }
+      } catch(e) {}
+    }, 1000);
+
+    // ===== INICIALIZAÇÃO =====
+    function init() {
+      applyTheme();
+      fetch('/api/me')
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Não autenticado');
+        })
+        .then(data => {
+          if (data.success && data.user) {
+            currentUser = data.user;
+            myName = currentUser.nome;
+            myAvatar = currentUser.avatar || '🎸';
+            $('landingScreen').style.display = 'none';
+            hideLogin();
+            showScreen('lobby');
+            updateUserInfo();
+            loadRooms();
+            checkAdmin();
+            loadFavorites();
+            toast('Bem-vindo(a) ' + myName + '!', 'success');
+          }
+        })
+        .catch(() => {
+          $('landingScreen').style.display = 'block';
+        });
+
+      const params = new URLSearchParams(window.location.search);
+      const room = params.get('room');
+      if (room) {
+        setTimeout(() => {
+          if (currentUser) joinRoom(room);
+          else toast('Faça login para entrar', 'error');
+        }, 1000);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      init();
+      setInterval(() => {
+        if (document.getElementById('screen-lobby').classList.contains('active')) {
+          loadRooms();
+        }
+      }, 15000);
+    });
+  </script>
+</body>
+</html>
