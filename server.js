@@ -297,11 +297,16 @@ function fetchUrl(url) {
   });
 }
 
+// ===== VIDEO INFO (tolerante a falhas - retorna duration: null se não encontrar) =====
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
-  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
+    return res.status(400).json({ error: 'ID inválido' });
+  }
 
   const info = { id, title: null, artist: null, duration: null };
+
+  // Tenta oembed primeiro (para título e artista)
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
@@ -309,17 +314,85 @@ app.get('/api/video-info', async (req, res) => {
     info.artist = data.author_name || null;
   } catch (e) {}
 
+  // Estratégias para extrair duração (em ordem de prioridade)
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
-    const m = html.match(/"lengthSeconds":"?(\d+)"?/);
-    if (m) info.duration = parseInt(m[1], 10);
+
+    // 1. JSON-LD
+    const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    if (jsonLdMatch) {
+      try {
+        const jsonLd = JSON.parse(jsonLdMatch[1]);
+        if (jsonLd.duration) {
+          const durStr = jsonLd.duration;
+          const match = durStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+          if (match) {
+            const hours = parseInt(match[1] || 0);
+            const minutes = parseInt(match[2] || 0);
+            const seconds = parseInt(match[3] || 0);
+            info.duration = hours * 3600 + minutes * 60 + seconds;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. ytInitialPlayerResponse
+    if (!info.duration) {
+      const playerResponseMatch = html.match(/var ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
+      if (playerResponseMatch) {
+        try {
+          const data = JSON.parse(playerResponseMatch[1]);
+          if (data.videoDetails && data.videoDetails.lengthSeconds) {
+            info.duration = parseInt(data.videoDetails.lengthSeconds, 10);
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 3. ytcfg
+    if (!info.duration) {
+      const ytcfgMatch = html.match(/ytcfg\.set\s*\(\s*({[\s\S]*?})\s*\)\s*;/);
+      if (ytcfgMatch) {
+        try {
+          const data = JSON.parse(ytcfgMatch[1]);
+          if (data.DURATION) {
+            info.duration = parseInt(data.DURATION, 10);
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 4. Regex fallback
+    if (!info.duration) {
+      const regexMatch = html.match(/"lengthSeconds":"?(\d+)"?/);
+      if (regexMatch) {
+        info.duration = parseInt(regexMatch[1], 10);
+      }
+    }
+
+    // 5. data-duration
+    if (!info.duration) {
+      const dataDurMatch = html.match(/data-duration="(\d+)"/);
+      if (dataDurMatch) {
+        info.duration = parseInt(dataDurMatch[1], 10);
+      }
+    }
+
+    // Se ainda não tiver título, extrair do <title>
     if (!info.title) {
-      const t = html.match(/<title>([^<]+)<\/title>/);
-      if (t) info.title = t[1].replace(/ - YouTube\s*$/, '').trim();
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+      if (titleMatch) {
+        info.title = titleMatch[1].replace(/ - YouTube\s*$/, '').trim();
+      }
     }
   } catch (e) {}
 
-  if (!info.title && !info.duration) return res.status(404).json({ error: 'Vídeo não encontrado' });
+  // Se não tiver título, tenta preencher com o ID
+  if (!info.title) {
+    info.title = 'Vídeo do YouTube (ID: ' + id + ')';
+  }
+
+  // SEMPRE retorna 200, com duration: null se não encontrou
   res.json(info);
 });
 
@@ -590,6 +663,7 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Se a duração foi enviada e é maior que o limite, bloqueia
     if (song.duration && song.duration > settings.maxDuration) {
       socket.emit('error', `⛔ Vídeo muito longo! Limite: ${settings.maxDuration/60} min`);
       return;
