@@ -17,9 +17,9 @@ app.use(cookieParser());
 // ========== CONFIG ==========
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
 const adminEmails = new Set(['admin@sonora.com']);
-const settings = { maxQueue: 20, cooldown: 30, maxDuration: 600 }; // cooldown agora 30s
+const settings = { maxQueue: 20, cooldown: 30, maxDuration: 600 };
 const DISLIKE_THRESHOLD = 10;
-const MAX_SONGS_PER_USER = 3; // DJ Rotation
+const MAX_SONGS_PER_USER = 3;
 
 // ========== AUTENTICAÇÃO ==========
 const users = new Map();
@@ -44,16 +44,12 @@ function createRoom(slug, name, adminName = null) {
 }
 
 function getRoomLikes(slug) {
-  if (!roomLikes.has(slug)) {
-    roomLikes.set(slug, {});
-  }
+  if (!roomLikes.has(slug)) roomLikes.set(slug, {});
   return roomLikes.get(slug);
 }
 
 function getRoomVotes(slug) {
-  if (!roomVotes.has(slug)) {
-    roomVotes.set(slug, {});
-  }
+  if (!roomVotes.has(slug)) roomVotes.set(slug, {});
   return roomVotes.get(slug);
 }
 
@@ -104,6 +100,29 @@ function addSystemMsg(slug, text) {
   io.to(slug).emit('chat', msg);
 }
 
+function reorderQueueByVotes(room) {
+  if (!room || room.queue.length <= 1) return;
+  const currentTrack = room.queue[room.currentIndex];
+  if (!currentTrack) return;
+  const rest = room.queue.filter((_, i) => i !== room.currentIndex);
+  const votes = getRoomVotes(room.slug);
+  rest.sort((a, b) => {
+    const aIdx = room.queue.indexOf(a);
+    const bIdx = room.queue.indexOf(b);
+    const aUp = votes[aIdx] ? votes[aIdx].up.length : 0;
+    const bUp = votes[bIdx] ? votes[bIdx].up.length : 0;
+    return bUp - aUp;
+  });
+  room.queue = [currentTrack, ...rest];
+  room.currentIndex = 0;
+  const newVotes = {};
+  room.queue.forEach((track, i) => {
+    const oldIndex = room.queue.indexOf(track);
+    if (votes[oldIndex]) newVotes[i] = votes[oldIndex];
+  });
+  roomVotes.set(room.slug, newVotes);
+}
+
 function advanceQueue(slug) {
   const room = rooms.get(slug);
   if (!room || !room.isPlaying || room.queue.length === 0) return false;
@@ -115,19 +134,14 @@ function advanceQueue(slug) {
   room.startedAt = Date.now();
   room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
   
-  // Reindexa os votos
   const votes = getRoomVotes(slug);
   const newVotes = {};
   room.queue.forEach((_, i) => {
-    if (votes[i + 1]) {
-      newVotes[i] = votes[i + 1];
-    }
+    if (votes[i + 1]) newVotes[i] = votes[i + 1];
   });
   roomVotes.set(slug, newVotes);
   
-  // Reordena a fila após avançar (para manter ordem por upvotes)
   reorderQueueByVotes(room);
-  
   broadcastState(slug);
 
   if (room.queue.length > 0) {
@@ -140,41 +154,6 @@ function advanceQueue(slug) {
     io.to(slug).emit('queueEmpty');
   }
   return true;
-}
-
-// ===== REORDENAÇÃO POR UPVOTES =====
-function reorderQueueByVotes(room) {
-  if (!room || room.queue.length <= 1) return;
-  
-  const currentTrack = room.queue[room.currentIndex];
-  if (!currentTrack) return;
-  
-  // Separa a música atual do restante
-  const rest = room.queue.filter((_, i) => i !== room.currentIndex);
-  const votes = getRoomVotes(room.slug);
-  
-  // Ordena o restante por número de upvotes (decrescente)
-  rest.sort((a, b) => {
-    const aIdx = room.queue.indexOf(a);
-    const bIdx = room.queue.indexOf(b);
-    const aUp = votes[aIdx] ? votes[aIdx].up.length : 0;
-    const bUp = votes[bIdx] ? votes[bIdx].up.length : 0;
-    return bUp - aUp;
-  });
-  
-  // Nova fila: [música atual, ...restante ordenado]
-  room.queue = [currentTrack, ...rest];
-  room.currentIndex = 0;
-  
-  // Reindexa os votos (mantém a referência por índice)
-  const newVotes = {};
-  room.queue.forEach((track, i) => {
-    const oldIndex = room.queue.indexOf(track);
-    if (votes[oldIndex]) {
-      newVotes[i] = votes[oldIndex];
-    }
-  });
-  roomVotes.set(room.slug, newVotes);
 }
 
 // Auto-advance
@@ -238,9 +217,7 @@ app.get('/api/me', (req, res) => {
 
 // ===== FAVORITOS =====
 function getUserFavorites(email) {
-  if (!userFavorites.has(email)) {
-    userFavorites.set(email, []);
-  }
+  if (!userFavorites.has(email)) userFavorites.set(email, []);
   return userFavorites.get(email);
 }
 
@@ -260,9 +237,7 @@ app.post('/api/favorites', (req, res) => {
   const { videoId, title, artist } = req.body;
   if (!videoId) return res.status(400).json({ error: 'ID do vídeo obrigatório' });
   const favs = getUserFavorites(email);
-  if (!favs.find(f => f.id === videoId)) {
-    favs.push({ id: videoId, title, artist });
-  }
+  if (!favs.find(f => f.id === videoId)) favs.push({ id: videoId, title, artist });
   res.json({ success: true, favorites: favs });
 });
 
@@ -460,11 +435,8 @@ io.on('connection', (socket) => {
 
     if (isGlobalAdmin && !room.admin) room.admin = name;
 
-    // Envia estado de curtidas
     const likes = getRoomLikes(slug);
     socket.emit('likesState', likes);
-    
-    // Envia estado de votos
     const votes = getRoomVotes(slug);
     socket.emit('votesState', votes);
 
@@ -504,14 +476,12 @@ io.on('connection', (socket) => {
     const now = Date.now();
     const lastAdd = room.lastAddTime.get(socket.userName) || 0;
 
-    // Cooldown de 30 segundos
     if (now - lastAdd < 30000) {
       const wait = Math.ceil((30000 - (now - lastAdd)) / 1000);
       socket.emit('error', `Aguarde ${wait}s`);
       return;
     }
 
-    // Limite de músicas por usuário na fila (DJ Rotation)
     const userSongs = room.queue.filter(t => t.dj === socket.userName).length;
     if (userSongs >= MAX_SONGS_PER_USER) {
       socket.emit('error', `Você já tem ${MAX_SONGS_PER_USER} músicas na fila. Aguarde outras serem tocadas.`);
@@ -567,19 +537,13 @@ io.on('connection', (socket) => {
     room.startedAt = Date.now();
     room.isPlaying = true;
     
-    // Reindexa os votos
     const votes = getRoomVotes(currentRoom);
     const newVotes = {};
     room.queue.forEach((_, i) => {
-      if (votes[i]) {
-        newVotes[i] = votes[i];
-      }
+      if (votes[i]) newVotes[i] = votes[i];
     });
     roomVotes.set(currentRoom, newVotes);
-    
-    // Reordena por upvotes
     reorderQueueByVotes(room);
-    
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
   });
@@ -595,16 +559,12 @@ io.on('connection', (socket) => {
     room.queue.splice(index, 1);
     if (index < room.currentIndex) room.currentIndex--;
     
-    // Reindexa os votos
     const votes = getRoomVotes(currentRoom);
     const newVotes = {};
     room.queue.forEach((_, i) => {
-      if (votes[i + 1]) {
-        newVotes[i] = votes[i + 1];
-      }
+      if (votes[i + 1]) newVotes[i] = votes[i + 1];
     });
     roomVotes.set(currentRoom, newVotes);
-    
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
   });
@@ -618,34 +578,26 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoom);
     if (!room || room.queue.length === 0) return;
     
-    // newOrder é um array de IDs ou de objetos (vamos receber array de IDs)
     const currentTrack = room.queue[room.currentIndex];
     const currentId = currentTrack ? currentTrack.id : null;
     
-    // Reconstroi a fila na nova ordem
     const newQueue = [];
     for (const id of newOrder) {
       const track = room.queue.find(t => t.id === id);
       if (track) newQueue.push(track);
     }
-    // Mantém apenas os que foram encontrados
     if (newQueue.length === room.queue.length) {
       room.queue = newQueue;
-      // Ajusta currentIndex para a posição da música que estava tocando
       const newIndex = room.queue.findIndex(t => t.id === currentId);
       room.currentIndex = newIndex !== -1 ? newIndex : 0;
       
-      // Reindexa os votos
       const votes = getRoomVotes(currentRoom);
       const newVotes = {};
       room.queue.forEach((track, i) => {
-        const oldIndex = room.queue.indexOf(track); // na verdade, já está na nova ordem
-        if (votes[oldIndex]) {
-          newVotes[i] = votes[oldIndex];
-        }
+        const oldIndex = room.queue.indexOf(track);
+        if (votes[oldIndex]) newVotes[i] = votes[oldIndex];
       });
       roomVotes.set(currentRoom, newVotes);
-      
       broadcastState(currentRoom);
     }
   });
@@ -653,105 +605,55 @@ io.on('connection', (socket) => {
   // ===== VOTAÇÃO =====
   socket.on('voteSong', ({ index, type, room }) => {
     if (!room || !socket.userName) return;
-    
     const roomData = rooms.get(room);
     if (!roomData) return;
-    
-    // Não pode votar na música atual
     if (roomData.currentIndex === index) {
       socket.emit('error', 'Não é possível votar na música atual');
       return;
     }
-    
-    // Verifica se a música existe
     if (index >= roomData.queue.length) {
       socket.emit('error', 'Música não encontrada');
       return;
     }
     
     const votes = getRoomVotes(room);
-    
-    if (!votes[index]) {
-      votes[index] = { up: [], down: [] };
-    }
-    
+    if (!votes[index]) votes[index] = { up: [], down: [] };
     const data = votes[index];
     
-    // Remove voto anterior do usuário
     const upIndex = data.up.indexOf(socket.userName);
     if (upIndex > -1) data.up.splice(upIndex, 1);
-    
     const downIndex = data.down.indexOf(socket.userName);
     if (downIndex > -1) data.down.splice(downIndex, 1);
     
-    // Adiciona novo voto
-    if (type === 'up') {
-      data.up.push(socket.userName);
-    } else if (type === 'down') {
-      data.down.push(socket.userName);
-    }
+    if (type === 'up') data.up.push(socket.userName);
+    else if (type === 'down') data.down.push(socket.userName);
     
-    // Verifica se atingiu o limite de dislikes
     if (data.down.length >= DISLIKE_THRESHOLD) {
-      // Remove a música da fila
       const removed = roomData.queue.splice(index, 1)[0];
-      if (index < roomData.currentIndex) {
-        roomData.currentIndex--;
-      }
-      
-      // Remove os votos da música removida
+      if (index < roomData.currentIndex) roomData.currentIndex--;
       delete votes[index];
-      // Reindexa os votos
       const newVotes = {};
       roomData.queue.forEach((_, i) => {
-        if (votes[i + 1]) {
-          newVotes[i] = votes[i + 1];
-        }
+        if (votes[i + 1]) newVotes[i] = votes[i + 1];
       });
       roomVotes.set(room, newVotes);
-      
       broadcastState(room);
-      
-      // Notifica todos sobre a remoção
-      io.to(room).emit('voteUpdate', { 
-        index, 
-        up: data.up, 
-        down: data.down,
-        removed: true 
-      });
-      
+      io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down, removed: true });
       addSystemMsg(room, `👎 "${removed.title}" foi removida por votação! (${data.down.length} votos negativos)`);
       return;
     }
     
-    // Se for upvote, reordena a fila por upvotes
-    if (type === 'up') {
-      reorderQueueByVotes(roomData);
-    }
-    
-    // Atualiza todos na sala com os votos
-    io.to(room).emit('voteUpdate', { 
-      index, 
-      up: data.up, 
-      down: data.down 
-    });
-    
-    // Broadcast do novo estado (já reordenado)
+    if (type === 'up') reorderQueueByVotes(roomData);
+    io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down });
     broadcastState(room);
   });
 
   socket.on('likeMessage', ({ messageId, room }) => {
     if (!room || !socket.userName) return;
-    
     const likes = getRoomLikes(room);
-    
-    if (!likes[messageId]) {
-      likes[messageId] = { likes: 0, users: [] };
-    }
-    
+    if (!likes[messageId]) likes[messageId] = { likes: 0, users: [] };
     const data = likes[messageId];
     const userIndex = data.users.indexOf(socket.userName);
-    
     if (userIndex > -1) {
       data.users.splice(userIndex, 1);
       data.likes = Math.max(0, data.likes - 1);
@@ -759,12 +661,7 @@ io.on('connection', (socket) => {
       data.users.push(socket.userName);
       data.likes++;
     }
-    
-    io.to(room).emit('likeUpdate', {
-      messageId,
-      likes: data.likes,
-      users: data.users
-    });
+    io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
   });
 
   socket.on('videoDuration', ({ duration }) => {
