@@ -170,16 +170,14 @@ setInterval(() => {
 
 // ========== API ==========
 app.post('/api/signup', (req, res) => {
-  const { nome, email, senha, genero, regiao, estilos } = req.body;
+  const { nome, email, senha, estilos } = req.body;
   if (!nome || nome.length < 2) return res.status(400).json({ error: 'Nome inválido' });
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'E-mail inválido' });
   if (!senha || senha.length < 6) return res.status(400).json({ error: 'Senha deve ter 6+ caracteres' });
-  if (!genero) return res.status(400).json({ error: 'Selecione um gênero' });
-  if (!regiao) return res.status(400).json({ error: 'Selecione uma região' });
   if (!estilos || estilos.length === 0) return res.status(400).json({ error: 'Escolha um estilo' });
   if (users.has(email)) return res.status(400).json({ error: 'E-mail já cadastrado' });
 
-  users.set(email, { nome, email, senha, genero, regiao, estilos, avatar: '🎸', criadoEm: new Date() });
+  users.set(email, { nome, email, senha, estilos, avatar: '🎸', criadoEm: new Date() });
   res.json({ success: true, nome, email });
 });
 
@@ -549,13 +547,23 @@ io.on('connection', (socket) => {
   });
 
   socket.on('removeFromQueue', (index) => {
-    if (!currentRoom || !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin');
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
       return;
     }
+    // Verifica se o usuário é admin global OU admin da sala
+    const isGlobalAdmin = adminEmails.has(userEmail);
     const room = rooms.get(currentRoom);
+    if (!socket.isAdmin && !isGlobalAdmin) {
+      socket.emit('error', 'Apenas admin pode remover músicas');
+      return;
+    }
+    if (!room) return;
     const track = room.queue[index];
-    if (!track || index === room.currentIndex) return;
+    if (!track || index === room.currentIndex) {
+      socket.emit('error', 'Não é possível remover a música atual');
+      return;
+    }
     room.queue.splice(index, 1);
     if (index < room.currentIndex) room.currentIndex--;
     
@@ -571,7 +579,12 @@ io.on('connection', (socket) => {
 
   // ===== REORDER QUEUE (drag-and-drop) =====
   socket.on('reorderQueue', (newOrder) => {
-    if (!currentRoom || !socket.isAdmin) {
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
+      return;
+    }
+    const isGlobalAdmin = adminEmails.has(userEmail);
+    if (!socket.isAdmin && !isGlobalAdmin) {
       socket.emit('error', 'Apenas admin pode reordenar');
       return;
     }
@@ -676,8 +689,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('clearChat', () => {
-    if (!currentRoom || !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin');
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
+      return;
+    }
+    const isGlobalAdmin = adminEmails.has(userEmail);
+    if (!socket.isAdmin && !isGlobalAdmin) {
+      socket.emit('error', 'Apenas admin pode limpar o chat');
       return;
     }
     const room = rooms.get(currentRoom);
@@ -688,7 +706,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('adminBroadcast', (data) => {
-    if (!socket.isAdmin) return;
+    if (!socket.isAdmin && !adminEmails.has(userEmail)) return;
     io.emit('adminBroadcast', { message: data.message });
   });
 
