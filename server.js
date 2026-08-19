@@ -25,7 +25,7 @@ const sessions = new Map();
 
 // ========== ESTADO ==========
 const rooms = new Map();
-const roomLikes = new Map(); // ✅ Estado de curtidas por sala
+const roomLikes = new Map();
 
 function createRoom(slug, name, adminName = null) {
   roomLikes.set(slug, {});
@@ -285,7 +285,7 @@ app.post('/api/admin/delete-user', isAdmin, (req, res) => {
 app.post('/api/admin/clear-all-chats', isAdmin, (req, res) => {
   for (const [slug, room] of rooms) { 
     room.chatHistory = [];
-    roomLikes.set(slug, {}); // ✅ Limpa curtidas também
+    roomLikes.set(slug, {});
     io.to(slug).emit('chatCleared');
   }
   res.json({ success: true });
@@ -296,7 +296,7 @@ app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
     room.queue = [];
     room.currentIndex = 0;
     room.isPlaying = false;
-    roomLikes.set(slug, {}); // ✅ Limpa curtidas também
+    roomLikes.set(slug, {});
     broadcastState(slug);
     io.to(slug).emit('queueEmpty');
   }
@@ -353,7 +353,6 @@ io.on('connection', (socket) => {
 
     if (isGlobalAdmin && !room.admin) room.admin = name;
 
-    // ✅ Envia o estado atual de curtidas
     const likes = getRoomLikes(slug);
     socket.emit('likesState', likes);
 
@@ -465,7 +464,6 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
   });
 
-  // ✅ Evento de curtir mensagem
   socket.on('likeMessage', ({ messageId, room }) => {
     if (!room || !socket.userName) return;
     
@@ -511,7 +509,7 @@ io.on('connection', (socket) => {
     }
     const room = rooms.get(currentRoom);
     room.chatHistory = [];
-    roomLikes.set(currentRoom, {}); // ✅ Limpa curtidas
+    roomLikes.set(currentRoom, {});
     io.to(currentRoom).emit('chatCleared');
     addSystemMsg(currentRoom, '🧹 Chat limpo pelo admin');
   });
