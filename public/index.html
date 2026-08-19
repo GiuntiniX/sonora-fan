@@ -517,7 +517,7 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM - LAYOUT 3 COLUNAS ===== */
+    /* ===== ROOM ===== */
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 1.2fr 1fr;
@@ -699,54 +699,33 @@
     .queue-item.dragging { opacity: 0.5; }
     .queue-item.drag-over { border: 2px dashed var(--accent); }
 
-    /* VOTAÇÃO MELHORADA */
+    /* VOTAÇÃO */
     .queue-votes {
       display: flex;
       align-items: center;
-      gap: 2px;
-      background: var(--bg-elevated);
-      padding: 2px 6px;
-      border-radius: 12px;
+      gap: 4px;
       flex-shrink: 0;
+      margin-left: 4px;
     }
     .vote-btn {
       background: transparent;
       border: none;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       padding: 2px 4px;
       border-radius: 4px;
-      transition: all 0.2s;
-      opacity: 0.6;
-      line-height: 1;
+      transition: all 0.15s;
       font-family: inherit;
+      opacity: 0.5;
     }
-    .vote-btn:hover {
-      opacity: 1;
-      transform: scale(1.1);
-    }
+    .vote-btn:hover { opacity: 1; transform: scale(1.1); }
     .vote-btn.up:hover { color: var(--success); }
     .vote-btn.down:hover { color: var(--danger); }
-    .vote-btn.voted-up {
-      opacity: 1;
-      color: var(--success);
-      background: rgba(34,197,94,0.1);
-    }
-    .vote-btn.voted-down {
-      opacity: 1;
-      color: var(--danger);
-      background: rgba(239,68,68,0.1);
-    }
-    .vote-count {
-      font-size: 12px;
-      font-weight: 700;
-      min-width: 24px;
-      text-align: center;
-      color: var(--text-secondary);
-      cursor: default;
-    }
-    .vote-count.positive { color: var(--success); }
+    .vote-btn.voted-up { opacity: 1; color: var(--success); }
+    .vote-btn.voted-down { opacity: 1; color: var(--danger); }
+    .vote-count { font-size: 10px; font-weight: 700; min-width: 16px; text-align: center; color: var(--text-muted); }
     .vote-count.negative { color: var(--danger); }
+    .vote-count.positive { color: var(--success); }
 
     /* PLAYER */
     #youtube-player {
@@ -1135,6 +1114,7 @@
         <button onclick="adminBroadcast()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📢 Mensagem</button>
       </div>
 
+      <!-- SEÇÃO DE GERENCIAR FILAS (com botão Remover) -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <span style="font-weight:700;font-size:13px;">🎵 Gerenciar Filas</span>
@@ -1145,6 +1125,7 @@
         </div>
       </div>
 
+      <!-- SEÇÃO DE USUÁRIOS -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
           <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
@@ -1217,7 +1198,7 @@
       </div>
 
       <div class="room-layout">
-        <!-- COLUNA ESQUERDA - FILA -->
+        <!-- COLUNA ESQUERDA - FILA (sem botão Remover) -->
         <div class="queue-column">
           <div class="queue-header">
             <span>🎵 Fila</span>
@@ -1354,7 +1335,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO - VERSÃO FINAL
+    //  JAVASCRIPT COMPLETO
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1670,6 +1651,7 @@
       } catch (e) { toast('Erro ao banir', 'error'); }
     }
 
+    // ===== ADMIN - GERENCIAR FILAS (com botão Remover) =====
     async function loadAdminQueues() {
       try {
         const res = await fetch('/api/rooms', { credentials: 'include' });
@@ -2119,16 +2101,11 @@
           </div>
           <span class="dj">${escapeHtml(track.dj || '')}</span>
           <div class="queue-votes">
-            <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')" title="${userVotedUp ? 'Remover voto' : '👍 Manter'}">
-              <span style="font-size:14px;">👍</span>
-            </button>
-            <span class="vote-count ${scoreClass}" title="Total: ${totalVotes} votos (${upCount} 👍, ${downCount} 👎)">
-              ${totalVotes > 0 ? scoreSymbol + score : '0'}
-            </span>
-            <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="${userVotedDown ? 'Remover voto' : '👎 Remover'}">
-              <span style="font-size:14px;">👎</span>
-            </button>
+            <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')" title="👍 Manter">👍</button>
+            <span class="vote-count ${scoreClass}">${totalVotes > 0 ? scoreSymbol + score : '0'}</span>
+            <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="👎 Remover">👎</button>
           </div>
+          <!-- Botão Remover removido da fila principal -->
         `;
         list.appendChild(div);
       });
@@ -2140,7 +2117,7 @@
       socket.emit('voteSong', { index, type, room: currentRoom });
     }
 
-    // ===== ADD SONG (com validação de duração) =====
+    // ===== ADD SONG =====
     function extractYouTubeId(url) {
       if (!url) return '';
       if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
@@ -2176,24 +2153,44 @@
       try {
         const res = await fetch(`/api/video-info?id=${videoId}`);
         const data = await res.json();
-        if (res.ok && data.title && data.duration) {
-          songData = { id: videoId, title: data.title, artist: data.artist || 'Desconhecido', duration: data.duration };
+        if (res.ok && data.title) {
+          songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.artist || 'Desconhecido', duration: data.duration || null };
           showPreview(songData);
           return;
-        } else if (res.status === 404) {
-          toast('Não foi possível obter a duração do vídeo. Tente outro link.', 'error');
-          clearPreview();
+        }
+      } catch (e) {}
+
+      try {
+        const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+        if (res.ok) {
+          const data = await res.json();
+          songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.author_name || 'Desconhecido', duration: null };
+          try {
+            const htmlRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+            const html = await htmlRes.text();
+            const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+            if (m) songData.duration = parseInt(m[1], 10);
+          } catch (e) {}
+          showPreview(songData);
           return;
         }
-      } catch (e) {
-        toast('Erro ao buscar informações do vídeo. Tente novamente.', 'error');
-        clearPreview();
-        return;
-      }
+      } catch (e) {}
 
-      // Se chegou aqui, falhou a requisição
-      toast('Erro ao buscar informações do vídeo. Tente novamente.', 'error');
-      clearPreview();
+      try {
+        const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+        const html = await res.text();
+        const match = html.match(/<title>([^<]+)<\/title>/);
+        if (match) {
+          const title = match[1].replace(/ - YouTube\s*$/, '').trim();
+          const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+          songData = { id: videoId, title: title || 'Música do YouTube', artist: 'Desconhecido', duration: m ? parseInt(m[1], 10) : null };
+          showPreview(songData);
+          return;
+        }
+      } catch (e) {}
+
+      songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: null };
+      showPreview(songData);
     }
 
     function showPreview(data) {
@@ -2205,7 +2202,6 @@
       $('previewTitle').textContent = data.title || 'Música do YouTube';
       $('previewArtist').textContent = data.artist || 'Desconhecido';
       const confirmBtn = document.querySelector('.song-preview-confirm');
-      
       if (data.duration > 0) {
         if (data.duration > MAX_SONG_DURATION) {
           $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > ${MAX_SONG_DURATION/60} min`;
@@ -2224,10 +2220,10 @@
           confirmBtn.textContent = '✓ Adicionar';
         }
       } else {
-        $('previewStatus').textContent = '❌ Não foi possível verificar a duração. Tente outro vídeo.';
-        $('previewStatus').style.color = 'var(--danger)';
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = '⛔ Verificação falhou';
+        $('previewStatus').textContent = '⚠️ Duração não verificada - tente novamente';
+        $('previewStatus').style.color = 'var(--warning)';
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = '✓ Adicionar (sem verificação)';
       }
       $('previewActions').classList.remove('hidden');
     }
@@ -2236,26 +2232,10 @@
 
     function confirmAdd() {
       if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
-      if (!songData.duration || songData.duration <= 0) {
-        toast('Duração não verificada. Tente novamente ou use outro vídeo.', 'error');
-        return;
-      }
-      if (songData.duration > MAX_SONG_DURATION) { 
-        toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); 
-        return; 
-      }
+      if (songData.duration > 0 && songData.duration > MAX_SONG_DURATION) { toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); return; }
       const now = Date.now();
-      if (now - lastAddTime < COOLDOWN) { 
-        const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); 
-        toast(`Aguarde ${wait}s`, 'error'); 
-        return; 
-      }
-      socket.emit('addSong', { 
-        id: songData.id, 
-        title: songData.title || 'Música do YouTube', 
-        artist: songData.artist || 'Desconhecido', 
-        duration: songData.duration 
-      });
+      if (now - lastAddTime < COOLDOWN) { const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); toast(`Aguarde ${wait}s`, 'error'); return; }
+      socket.emit('addSong', { id: songData.id, title: songData.title || 'Música do YouTube', artist: songData.artist || 'Desconhecido', duration: songData.duration || null });
       lastAddTime = Date.now();
       $('songUrl').value = '';
       clearPreview();
@@ -2268,11 +2248,8 @@
       if (!url) { toast('Cole um link do YouTube', 'error'); return; }
       const videoId = extractYouTubeId(url);
       if (!videoId) { toast('Link inválido. Use um link do YouTube', 'error'); return; }
-      if (songData && songData.id === videoId && songData.duration) { 
-        confirmAdd(); 
-      } else { 
-        previewSong(); 
-      }
+      if (songData && songData.id === videoId) { confirmAdd(); }
+      else { previewSong(); toast('Verifique a prévia antes de adicionar', 'success'); }
     }
 
     function startCooldown() {
