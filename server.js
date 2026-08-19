@@ -297,16 +297,11 @@ function fetchUrl(url) {
   });
 }
 
-// ===== VIDEO INFO COM EXTRAÇÃO ROBUSTA DE DURAÇÃO =====
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
-  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
 
   const info = { id, title: null, artist: null, duration: null };
-
-  // Tenta oembed primeiro (para título e artista)
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
@@ -314,91 +309,17 @@ app.get('/api/video-info', async (req, res) => {
     info.artist = data.author_name || null;
   } catch (e) {}
 
-  // Estratégias para extrair duração (em ordem de prioridade)
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
-
-    // 1. Tentar extrair do JSON-LD (dados estruturados)
-    const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
-    if (jsonLdMatch) {
-      try {
-        const jsonLd = JSON.parse(jsonLdMatch[1]);
-        if (jsonLd.duration) {
-          const durStr = jsonLd.duration;
-          const match = durStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-          if (match) {
-            const hours = parseInt(match[1] || 0);
-            const minutes = parseInt(match[2] || 0);
-            const seconds = parseInt(match[3] || 0);
-            info.duration = hours * 3600 + minutes * 60 + seconds;
-          }
-        }
-      } catch (e) {}
-    }
-
-    // 2. Tentar extrair do objeto ytInitialPlayerResponse
-    if (!info.duration) {
-      const playerResponseMatch = html.match(/var ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
-      if (playerResponseMatch) {
-        try {
-          const data = JSON.parse(playerResponseMatch[1]);
-          if (data.videoDetails && data.videoDetails.lengthSeconds) {
-            info.duration = parseInt(data.videoDetails.lengthSeconds, 10);
-          }
-        } catch (e) {}
-      }
-    }
-
-    // 3. Tentar extrair do objeto ytcfg
-    if (!info.duration) {
-      const ytcfgMatch = html.match(/ytcfg\.set\s*\(\s*({[\s\S]*?})\s*\)\s*;/);
-      if (ytcfgMatch) {
-        try {
-          const data = JSON.parse(ytcfgMatch[1]);
-          if (data.DURATION) {
-            info.duration = parseInt(data.DURATION, 10);
-          }
-        } catch (e) {}
-      }
-    }
-
-    // 4. Regex tradicional (fallback)
-    if (!info.duration) {
-      const regexMatch = html.match(/"lengthSeconds":"?(\d+)"?/);
-      if (regexMatch) {
-        info.duration = parseInt(regexMatch[1], 10);
-      }
-    }
-
-    // 5. Tentar capturar do atributo "data-duration"
-    if (!info.duration) {
-      const dataDurMatch = html.match(/data-duration="(\d+)"/);
-      if (dataDurMatch) {
-        info.duration = parseInt(dataDurMatch[1], 10);
-      }
-    }
-
-    // Se ainda não tiver título, extrair do <title>
+    const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+    if (m) info.duration = parseInt(m[1], 10);
     if (!info.title) {
-      const titleMatch = html.match(/<title>([^<]+)<\/title>/);
-      if (titleMatch) {
-        info.title = titleMatch[1].replace(/ - YouTube\s*$/, '').trim();
-      }
+      const t = html.match(/<title>([^<]+)<\/title>/);
+      if (t) info.title = t[1].replace(/ - YouTube\s*$/, '').trim();
     }
   } catch (e) {}
 
-  // Se não encontrou duração, retorna erro para que o frontend bloqueie
-  if (!info.duration) {
-    return res.status(404).json({ 
-      error: 'Não foi possível obter a duração do vídeo. Tente novamente ou use outro link.' 
-    });
-  }
-
-  // Se não tem título, tenta preencher com o ID
-  if (!info.title) {
-    info.title = 'Vídeo do YouTube (ID: ' + id + ')';
-  }
-
+  if (!info.title && !info.duration) return res.status(404).json({ error: 'Vídeo não encontrado' });
   res.json(info);
 });
 
