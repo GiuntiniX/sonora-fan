@@ -357,73 +357,8 @@ app.post('/api/admin/delete-user', isAdmin, (req, res) => {
   if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
   if (email === 'admin@sonora.com') return res.status(400).json({ error: 'Não pode deletar o super admin' });
   if (!users.has(email)) return res.status(404).json({ error: 'Usuário não encontrado' });
-
   users.delete(email);
   adminEmails.delete(email);
-
-  for (const [token, storedEmail] of sessions) {
-    if (storedEmail === email) sessions.delete(token);
-  }
-
-  for (const [socketId, socket] of io.sockets.sockets) {
-    if (socket.userEmail === email) {
-      socket.emit('kicked', 'Sua conta foi removida pelo administrador.');
-      socket.disconnect(true);
-    }
-  }
-
-  // Notificar todos os admins para atualizar a lista
-  io.emit('adminUsersUpdated');
-  res.json({ success: true });
-});
-
-app.post('/api/admin/kick-user', isAdmin, (req, res) => {
-  const { email, roomSlug } = req.body;
-  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
-  const room = rooms.get(roomSlug);
-  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
-
-  let kicked = false;
-  for (const [socketId, socket] of io.sockets.sockets) {
-    if (socket.userEmail === email && socket.currentRoom === roomSlug) {
-      socket.emit('kicked', `Você foi expulso da sala ${room.name} pelo administrador.`);
-      socket.leave(roomSlug);
-      socket.currentRoom = null;
-      kicked = true;
-    }
-  }
-
-  if (kicked) {
-    broadcastUsers(roomSlug);
-    addSystemMsg(roomSlug, `👢 ${email} foi expulso da sala pelo admin.`);
-    io.emit('adminUsersUpdated');
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ error: 'Usuário não encontrado na sala' });
-  }
-});
-
-app.post('/api/admin/ban-user', isAdmin, (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
-  const user = users.get(email);
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-
-  const userName = user.nome;
-  for (const [slug, room] of rooms) {
-    if (!room.bannedUsers.includes(userName)) {
-      room.bannedUsers.push(userName);
-    }
-  }
-
-  for (const [socketId, socket] of io.sockets.sockets) {
-    if (socket.userEmail === email) {
-      socket.emit('banned', 'Você foi banido globalmente pelo administrador.');
-      socket.disconnect(true);
-    }
-  }
-
-  io.emit('adminUsersUpdated');
   res.json({ success: true });
 });
 
@@ -465,6 +400,7 @@ app.get('/api/admin/export-data', isAdmin, (req, res) => {
   res.json(data);
 });
 
+// Nova rota para admin remover música de qualquer sala
 app.post('/api/admin/remove-song', isAdmin, (req, res) => {
   const { roomSlug, index } = req.body;
   if (!roomSlug || index === undefined) {
@@ -526,7 +462,6 @@ io.on('connection', (socket) => {
     const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
     const email = tokenMatch ? sessions.get(tokenMatch[1]) : null;
     userEmail = email;
-    socket.userEmail = email;
     const isGlobalAdmin = adminEmails.has(email);
     const isRoomAdmin = room.admin === name;
     socket.isAdmin = isGlobalAdmin || isRoomAdmin;
@@ -646,6 +581,7 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
   });
 
+  // REMOVER MÚSICA - CORRIGIDO COM VERIFICAÇÃO DE ADMIN GLOBAL
   socket.on('removeFromQueue', (index) => {
     if (!currentRoom) {
       socket.emit('error', 'Você não está em uma sala');
@@ -676,6 +612,7 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
   });
 
+  // REORDER QUEUE
   socket.on('reorderQueue', (newOrder) => {
     if (!currentRoom) {
       socket.emit('error', 'Você não está em uma sala');
@@ -713,6 +650,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // VOTAÇÃO
   socket.on('voteSong', ({ index, type, room }) => {
     if (!room || !socket.userName) return;
     const roomData = rooms.get(room);
