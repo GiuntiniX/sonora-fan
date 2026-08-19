@@ -1,1128 +1,820 @@
-<script>
-// ============================================================
-// JAVASCRIPT COMPLETO (com correções para admin)
-// ============================================================
+const express = require('express');
+const http = require('http');
+const https = require('https');
+const { Server } = require('socket.io');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
 
-const MAX_SONG_DURATION = 600;
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(cookieParser());
+
+// ========== CONFIG ==========
+const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
+const adminEmails = new Set(['admin@sonora.com']);
+const settings = { maxQueue: 20, cooldown: 30, maxDuration: 600 };
 const DISLIKE_THRESHOLD = 10;
-const COOLDOWN = 30000;
 const MAX_SONGS_PER_USER = 3;
 
-const socket = io({ withCredentials: true });
+// ========== AUTENTICAÇÃO ==========
+const users = new Map();
+const sessions = new Map();
+const userFavorites = new Map();
 
-let currentUser = null;
-let myName = '';
-let myAvatar = '🎸';
-let amIAdmin = false;
-let currentRoom = null;
-let currentRoomData = null;
-let player = null;
-let currentTrackId = null;
-let lastAddTime = 0;
-let songData = null;
-let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
-let messageLikesSync = {};
-let queueVotes = {};
-let myFavorites = [];
-let crossfadeInterval = null;
+// ========== ESTADO ==========
+const rooms = new Map();
+const roomLikes = new Map();
+const roomVotes = new Map();
 
-function $(id) { return document.getElementById(id); }
-
-function toast(msg, type) {
-  const el = $('toast');
-  el.textContent = msg;
-  el.className = 'toast' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-function formatTime(d) {
-  const date = new Date(d);
-  return date.getHours().toString().padStart(2,'0') + ':' + date.getMinutes().toString().padStart(2,'0');
-}
-
-function formatDuration(seconds) {
-  if (!seconds || seconds <= 0) return '0:00';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return m + ':' + s.toString().padStart(2,'0');
-}
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById('screen-' + id);
-  if (el) el.classList.add('active');
-}
-
-const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
-
-function censorText(text) {
-  let censored = text;
-  badWords.forEach(word => {
-    const regex = new RegExp('\\b' + word + '\\b', 'gi');
-    censored = censored.replace(regex, '***');
-  });
-  return censored;
-}
-
-// ===== TEMAS =====
-function applyTheme() {
-  const themes = {
-    'dark': { btn: '🌙', bg: '#050508', card: '#0f0f18', hover: '#161620', border: '#1e1e2e', text: '#f0f0f8', textSec: '#9a9ab0', accent: '#ff6b35', accent2: '#7c3aed', bgImage: 'none', overlay: 'transparent' },
-    'light': { btn: '☀️', bg: '#f5f5fa', card: '#ffffff', hover: '#f0f0f5', border: '#e0e0e8', text: '#1a1a2e', textSec: '#666680', accent: '#e65c00', accent2: '#5b2c8e', bgImage: 'none', overlay: 'transparent' },
-    'neon': { btn: '🟢', bg: '#070a12', card: '#111827', hover: '#1a2236', border: '#1f2a4a', text: '#e0f0ff', textSec: '#88aacc', accent: '#22d3ee', accent2: '#10b981', bgImage: 'none', overlay: 'transparent' },
-    'terra-sonora': { btn: '🌄', bg: '#140a05', card: '#2a180e', hover: '#3a2216', border: '#4a2e1e', text: '#fcf3ee', textSec: '#cbaa98', accent: '#e85d3a', accent2: '#d94a20', bgImage: 'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay: 'rgba(0,0,0,0.65)' }
+function createRoom(slug, name, adminName = null) {
+  roomLikes.set(slug, {});
+  roomVotes.set(slug, {});
+  return {
+    slug, name, admin: adminName,
+    queue: [], currentIndex: 0, startedAt: Date.now(),
+    votes: { up: 0, down: 0 }, bannedUsers: [],
+    chatHistory: [], listenerCount: 0,
+    lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0
   };
-  const t = themes[currentTheme] || themes['dark'];
-  document.documentElement.style.setProperty('--bg', t.bg);
-  document.documentElement.style.setProperty('--bg-card', t.card);
-  document.documentElement.style.setProperty('--bg-hover', t.hover);
-  document.documentElement.style.setProperty('--border', t.border);
-  document.documentElement.style.setProperty('--text', t.text);
-  document.documentElement.style.setProperty('--text-secondary', t.textSec);
-  document.documentElement.style.setProperty('--accent', t.accent);
-  document.documentElement.style.setProperty('--accent2', t.accent2);
-  document.documentElement.style.setProperty('--bg-image', t.bgImage);
-  document.documentElement.style.setProperty('--bg-overlay', t.overlay);
-  const btns = document.querySelectorAll('#themeBtn, #themeBtnRoom');
-  btns.forEach(btn => { if (btn) btn.textContent = t.btn; });
-  localStorage.setItem('sonoraTheme', currentTheme);
 }
 
-function toggleTheme() {
-  const keys = ['dark', 'light', 'neon', 'terra-sonora'];
-  const idx = keys.indexOf(currentTheme);
-  currentTheme = keys[(idx + 1) % keys.length];
-  applyTheme();
-  toast('Tema: ' + currentTheme, 'success');
+function getRoomLikes(slug) {
+  if (!roomLikes.has(slug)) roomLikes.set(slug, {});
+  return roomLikes.get(slug);
 }
 
-// ===== AUTENTICAÇÃO =====
-function showLogin() { $('landingScreen').style.display = 'none'; $('loginScreen').classList.add('active'); }
-function hideLogin() { $('loginScreen').classList.remove('active'); }
-function openSignup() { hideLogin(); $('signupModal').classList.add('active'); }
-function closeSignup() { $('signupModal').classList.remove('active'); $('landingScreen').style.display = 'block'; }
-function toggleChip(el) { el.classList.toggle('selected'); }
-
-async function submitSignup() {
-  const nome = $('signupNome').value.trim();
-  const email = $('signupEmail').value.trim();
-  const senha = $('signupPassword').value.trim();
-  const estilos = Array.from(document.querySelectorAll('#signupStyles .chip.selected')).map(c => c.dataset.style);
-  if (nome.length < 2) return toast('Digite seu nome', 'error');
-  if (!email.includes('@')) return toast('E-mail inválido', 'error');
-  if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
-  if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
-  try {
-    const res = await fetch('/api/signup', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, email, senha, estilos })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    const loginRes = await fetch('/api/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha })
-    });
-    const loginData = await loginRes.json();
-    if (!loginRes.ok) throw new Error(loginData.error);
-    currentUser = loginData.user;
-    myName = currentUser.nome;
-    myAvatar = currentUser.avatar || '🎸';
-    closeSignup();
-    hideLogin();
-    $('landingScreen').style.display = 'none';
-    showScreen('lobby');
-    updateUserInfo();
-    loadRooms();
-    checkAdmin();
-    loadFavorites();
-    toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
-  } catch (e) {
-    toast(e.message || 'Erro ao criar conta', 'error');
-  }
+function getRoomVotes(slug) {
+  if (!roomVotes.has(slug)) roomVotes.set(slug, {});
+  return roomVotes.get(slug);
 }
 
-async function doLogin() {
-  const email = $('loginEmail').value.trim();
-  const senha = $('loginPassword').value.trim();
-  const errorEl = $('loginError');
-  if (!email || !senha) { errorEl.textContent = 'Preencha e-mail e senha'; errorEl.classList.add('show'); return; }
-  const btn = $('loginBtn');
-  btn.disabled = true;
-  btn.textContent = 'Entrando...';
-  try {
-    const res = await fetch('/api/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    currentUser = data.user;
-    myName = currentUser.nome;
-    myAvatar = currentUser.avatar || '🎸';
-    hideLogin();
-    $('landingScreen').style.display = 'none';
-    showScreen('lobby');
-    updateUserInfo();
-    loadRooms();
-    checkAdmin();
-    loadFavorites();
-    toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
-  } catch (e) {
-    errorEl.textContent = e.message || 'Erro ao fazer login';
-    errorEl.classList.add('show');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Entrar no palco';
-  }
+rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
+
+function getPosition(room) {
+  const track = room.queue[room.currentIndex];
+  if (!track) return 0;
+  return Math.min((Date.now() - room.startedAt) / 1000, track.duration || 180);
 }
 
-function doLogout() {
-  fetch('/api/logout', { method: 'POST' }).catch(() => {});
-  if (currentRoom) { socket.emit('leaveRoom'); currentRoom = null; }
-  currentUser = null;
-  showScreen('lobby');
-  $('screen-lobby').classList.remove('active');
-  $('landingScreen').style.display = 'block';
-  hideLogin();
-  toast('Você saiu', 'success');
-}
-
-function updateUserInfo() {
-  $('userDisplayName').textContent = myName;
-  $('userAvatar').textContent = myAvatar;
-}
-
-function checkAdmin() {
-  if (currentUser && currentUser.email === 'admin@sonora.com') {
-    amIAdmin = true;
-    $('adminBtn').style.display = 'flex';
-    $('adminBtnRoom').style.display = 'flex';
-    $('adminBadge').classList.remove('hidden');
-  } else {
-    amIAdmin = false;
-    $('adminBtn').style.display = 'none';
-    $('adminBtnRoom').style.display = 'none';
-    $('adminBadge').classList.add('hidden');
-  }
-}
-
-// ===== ADMIN =====
-function toggleAdmin() {
-  if (!amIAdmin) { toast('Apenas administradores', 'error'); return; }
-  const panel = $('adminPanel');
-  panel.classList.toggle('active');
-  if (panel.classList.contains('active')) {
-    loadAdminData();
-    loadAdminUsers();
-    loadAdminQueues();
-  }
-}
-function closeAdmin() { $('adminPanel').classList.remove('active'); }
-
-async function loadAdminData() {
-  try {
-    const res = await fetch('/api/admin/stats', { credentials: 'include' });
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('Erro stats:', err);
-      return;
-    }
-    const data = await res.json();
-    $('adminUsers').textContent = data.totalUsers || 0;
-    $('adminRooms').textContent = data.totalRooms || 0;
-    $('adminOnline').textContent = data.onlineUsers || 0;
-  } catch (e) {
-    console.error('loadAdminData error:', e);
-  }
-}
-
-async function loadAdminUsers() {
-  try {
-    const res = await fetch('/api/admin/users', { credentials: 'include' });
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('Erro users:', err);
-      return;
-    }
-    const users = await res.json();
-    const list = $('adminUserList');
-    const count = $('adminUserCount');
-    if (!users.length) { list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Nenhum usuário</div>'; return; }
-    count.textContent = users.length;
-    list.innerHTML = users.map(u => `
-      <div class="admin-user-item">
-        <div>
-          <span class="name">${escapeHtml(u.nome)}</span>
-          ${u.isAdmin ? '<span class="admin-badge-mini">Admin</span>' : ''}
-          <div class="email">${escapeHtml(u.email)}</div>
-        </div>
-        <div class="actions">
-          ${!u.isAdmin ? `<button class="promote" onclick="adminPromote('${u.email}')">👑</button>` : ''}
-          <button class="delete" onclick="adminDeleteUser('${u.email}')">🗑️</button>
-          <button onclick="adminKickUser('${u.email}')" style="background:#f59e0b;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">👢</button>
-          <button onclick="adminBanUser('${u.email}')" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">⛔</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    console.error('loadAdminUsers error:', e);
-  }
-}
-
-async function adminKickUser(email) {
-  if (!currentRoom) { toast('Você precisa estar em uma sala para expulsar alguém', 'error'); return; }
-  if (!confirm(`Expulsar ${email} da sala atual?`)) return;
-  try {
-    const res = await fetch('/api/admin/kick-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, roomSlug: currentRoom })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      toast('✅ Usuário expulso!', 'success');
-      loadAdminUsers();
-    } else {
-      toast(data.error || 'Erro ao expulsar', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao expulsar', 'error');
-  }
-}
-
-async function adminBanUser(email) {
-  if (!confirm(`Banir ${email} globalmente?`)) return;
-  try {
-    const res = await fetch('/api/admin/ban-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      toast('✅ Usuário banido!', 'success');
-      loadAdminUsers();
-    } else {
-      toast(data.error || 'Erro ao banir', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao banir', 'error');
-  }
-}
-
-async function loadAdminQueues() {
-  try {
-    const res = await fetch('/api/rooms', { credentials: 'include' });
-    if (!res.ok) {
-      console.error('Erro ao carregar salas');
-      return;
-    }
-    const rooms = await res.json();
-    const container = document.getElementById('adminQueueList');
-    if (!rooms.length) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px;">Nenhuma sala ativa</div>';
-      return;
-    }
-    let html = '';
-    for (const room of rooms) {
-      html += `<div style="margin-bottom:12px;background:var(--bg);border-radius:6px;padding:8px;border:1px solid var(--border);">`;
-      html += `<div style="font-weight:600;font-size:13px;color:var(--text);margin-bottom:4px;">${escapeHtml(room.name)} (${room.queueLength} músicas)</div>`;
-      if (room.queueLength === 0) {
-        html += `<div style="color:var(--text-muted);font-size:11px;">Fila vazia</div>`;
-      } else {
-        try {
-          const detailRes = await fetch(`/api/room/${room.slug}/queue`, { credentials: 'include' });
-          if (!detailRes.ok) throw new Error('Erro ao buscar fila');
-          const detail = await detailRes.json();
-          if (detail.queue && detail.queue.length) {
-            detail.queue.forEach((track, idx) => {
-              const isCurrent = idx === detail.currentIndex;
-              html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;">`;
-              html += `<span style="min-width:18px;">${isCurrent ? '▶' : idx+1}</span>`;
-              html += `<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(track.title)}</span>`;
-              if (!isCurrent) {
-                html += `<button onclick="adminRemoveSong('${room.slug}', ${idx})" style="background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);border-radius:4px;padding:0 6px;font-size:10px;cursor:pointer;">Remover</button>`;
-              } else {
-                html += `<span style="color:var(--accent);font-size:10px;">Tocando</span>`;
-              }
-              html += `</div>`;
-            });
-          } else {
-            html += `<div style="color:var(--text-muted);font-size:11px;">Fila vazia</div>`;
-          }
-        } catch (e) {
-          html += `<div style="color:var(--text-muted);font-size:11px;">Erro ao carregar fila</div>`;
-        }
-      }
-      html += `</div>`;
-    }
-    container.innerHTML = html;
-  } catch (e) {
-    console.error('loadAdminQueues error:', e);
-    document.getElementById('adminQueueList').innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px;">Erro ao carregar</div>';
-  }
-}
-
-async function adminRemoveSong(slug, index) {
-  if (!confirm(`Remover a música da sala "${slug}"?`)) return;
-  try {
-    const res = await fetch('/api/admin/remove-song', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ roomSlug: slug, index })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      toast('✅ Música removida!', 'success');
-      loadAdminQueues();
-    } else {
-      toast(data.error || 'Erro ao remover', 'error');
-    }
-  } catch (e) {
-    toast('Erro ao remover', 'error');
-  }
-}
-
-async function adminPromote(email) {
-  if (!confirm(`Promover ${email}?`)) return;
-  try {
-    const res = await fetch('/api/admin/promote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
-    if (res.ok) { toast('✅ Promovido!', 'success'); loadAdminUsers(); }
-  } catch (e) {}
-}
-
-async function adminDeleteUser(email) {
-  if (!confirm(`Deletar ${email}?`)) return;
-  try {
-    const res = await fetch('/api/admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
-    if (res.ok) { toast('✅ Deletado e desconectado!', 'success'); loadAdminUsers(); loadAdminData(); }
-  } catch (e) {}
-}
-
-async function adminClearChats() {
-  if (!confirm('Limpar TODOS os chats?')) return;
-  try { await fetch('/api/admin/clear-all-chats', { method: 'POST', credentials: 'include' }); toast('✅ Chats limpos!', 'success'); } catch (e) {}
-}
-
-async function adminClearRooms() {
-  if (!confirm('LIMPAR TODAS as salas?')) return;
-  try { await fetch('/api/admin/clear-all-rooms', { method: 'POST', credentials: 'include' }); toast('✅ Salas limpas!', 'success'); loadAdminData(); loadRooms(); } catch (e) {}
-}
-
-async function adminExport() {
-  try {
-    const res = await fetch('/api/admin/export-data', { credentials: 'include' });
-    const data = await res.json();
-    if (res.ok) {
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sonora-fan-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast('✅ Exportado!', 'success');
-    }
-  } catch (e) {}
-}
-
-function adminBroadcast() {
-  const msg = prompt('Mensagem para todos:');
-  if (!msg) return;
-  socket.emit('adminBroadcast', { message: msg });
-  toast('📢 Enviado!', 'success');
-}
-
-// ===== FAVORITOS (resumido) =====
-async function loadFavorites() {
-  try {
-    const res = await fetch('/api/favorites', { credentials: 'include' });
-    if (res.ok) { myFavorites = await res.json(); }
-  } catch (e) {}
-}
-function toggleFavorites() { /* ... implementar se necessário */ }
-function closeFavorites() { /* ... */ }
-function renderFavorites() { /* ... */ }
-async function addFavoriteToQueue(videoId) { /* ... */ }
-async function removeFavorite(videoId) { /* ... */ }
-async function favoriteCurrent() { /* ... */ }
-async function favPreview() { /* ... */ }
-async function addFavorite(id, title, artist) { /* ... */ }
-
-// ===== LOBBY =====
-async function loadRooms() {
-  try {
-    const res = await fetch('/api/rooms');
-    const rooms = await res.json();
-    const grid = $('roomGrid');
-    if (rooms.length === 0) { grid.innerHTML = '<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>'; return; }
-    grid.innerHTML = '';
-    rooms.forEach(r => {
-      const card = document.createElement('div');
-      card.className = 'room-card';
-      card.onclick = () => joinRoom(r.slug);
-      const track = r.currentTrack;
-      const thumb = track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>';
-      const live = r.isPlaying ? '<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>' : '';
-      card.innerHTML = `
-        <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div></div>
-        <div class="room-card-body">
-          <h3>${escapeHtml(r.name)}</h3>
-          <div class="meta"><span>👤 ${r.listenerCount || 0} ouvintes</span><span>🎶 ${r.queueLength || 0} na fila</span></div>
-        </div>
-      `;
-      grid.appendChild(card);
-    });
-  } catch (e) {
-    $('roomGrid').innerHTML = '<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar</p></div>';
-  }
-}
-
-function showCreateRoom() { $('createRoomModal').classList.add('active'); }
-function closeCreateRoom() { $('createRoomModal').classList.remove('active'); }
-
-async function createRoom() {
-  const name = $('newRoomName').value.trim();
-  if (!name) return toast('Digite um nome', 'error');
-  try {
-    const res = await fetch('/api/rooms', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, adminName: myName })
-    });
-    const data = await res.json();
-    if (data.slug) { closeCreateRoom(); joinRoom(data.slug); }
-  } catch (e) { toast('Erro ao criar sala', 'error'); }
-}
-
-async function joinRandomRoom() {
-  try {
-    const res = await fetch('/api/rooms/random');
-    const data = await res.json();
-    if (data.slug) joinRoom(data.slug);
-    else toast('Nenhuma sala disponível', 'error');
-  } catch (e) { toast('Erro ao buscar sala', 'error'); }
-}
-
-// ===== ROOM =====
-function joinRoom(slug) {
-  if (!currentUser) { toast('Faça login primeiro', 'error'); return; }
-  currentRoom = slug;
-  socket.emit('joinRoom', { slug, name: myName, avatar: myAvatar });
-  showScreen('room');
-  document.getElementById('chatMessagesInner').innerHTML = '';
-  amIAdmin = false;
-  $('adminBadge').classList.add('hidden');
-  loadYouTubeAPI();
-}
-
-function leaveRoom() {
-  if (currentRoom) socket.emit('leaveRoom');
-  currentRoom = null;
-  currentRoomData = null;
-  if (player && player.stopVideo) player.stopVideo();
-  if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-  showScreen('lobby');
-  loadRooms();
-}
-
-// ===== YOUTUBE =====
-function loadYouTubeAPI() {
-  if (window.YT && window.YT.Player) { initPlayer(); return; }
-  const tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
-}
-function onYouTubeIframeAPIReady() { initPlayer(); }
-
-function initPlayer() {
-  if (player) return;
-  player = new YT.Player('youtube-player', {
-    height: '280', width: '100%',
-    playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, enablejsapi: 1 },
-    events: {
-      onReady: () => { if (currentRoomData) syncPlayer(currentRoomData); },
-      onStateChange: (e) => {
-        if (e.data === YT.PlayerState.PLAYING) {
-          try { const d = player.getDuration(); if (d > 0) socket.emit('videoDuration', { duration: Math.floor(d) }); } catch(e) {}
-          if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-          const vol = parseInt($('volumeSlider').value);
-          fadeVolume(vol, 500);
-        }
-        if (e.data === YT.PlayerState.ENDED) socket.emit('videoEnded');
-      },
-      onError: () => { toast('Erro no vídeo, pulando...', 'error'); setTimeout(() => socket.emit('videoEnded'), 2000); }
-    }
+function broadcastState(slug) {
+  const room = rooms.get(slug);
+  if (!room) return;
+  io.to(slug).emit('roomState', {
+    slug: room.slug, name: room.name,
+    currentIndex: room.currentIndex,
+    position: getPosition(room),
+    votes: room.votes,
+    queue: room.queue,
+    admin: room.admin,
+    isPlaying: room.isPlaying,
   });
 }
 
-function syncPlayer(state) {
-  if (!player || !player.loadVideoById) return;
-  currentRoomData = state;
-  const track = state.queue[state.currentIndex];
-  renderQueue(state.queue, state.currentIndex);
-
-  if (!track) {
-    currentTrackId = null;
-    $('trackTitle').textContent = 'Fila vazia';
-    $('trackArtist').textContent = 'Adicione uma música';
-    $('trackDj').textContent = '';
-    $('trackCover').innerHTML = '🎵';
-    $('progressFill').style.width = '0%';
-    $('currentTime').textContent = '0:00';
-    $('totalTime').textContent = '0:00';
-    try { player.stopVideo(); } catch(e) {}
-    return;
-  }
-
-  $('roomTitle').textContent = state.name;
-
-  if (currentTrackId !== track.id) {
-    currentTrackId = track.id;
-    try {
-      player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
-    } catch(e) {}
-    $('trackTitle').textContent = track.title || 'Música';
-    $('trackArtist').textContent = track.artist || 'Desconhecido';
-    $('trackDj').textContent = '👤 ' + (track.dj || '');
-    $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
-  }
-}
-
-// ===== CROSSFADE =====
-function startCrossfade() {
-  if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-  crossfadeInterval = setInterval(() => {
-    try {
-      if (!player || !player.getCurrentTime) return;
-      const duration = player.getDuration();
-      if (!duration || duration <= 0) return;
-      const current = player.getCurrentTime();
-      const remaining = duration - current;
-      if (remaining <= 3 && remaining > 0) {
-        const vol = parseInt($('volumeSlider').value);
-        const targetVol = 0;
-        const steps = 20;
-        const step = vol / steps;
-        let currentVol = vol;
-        const fadeOut = setInterval(() => {
-          currentVol = Math.max(0, currentVol - step);
-          if (player && player.setVolume) player.setVolume(Math.round(currentVol));
-          if (currentVol <= 0) clearInterval(fadeOut);
-        }, 50);
-        setTimeout(() => clearInterval(fadeOut), 3000);
-      }
-    } catch(e) {}
-  }, 500);
-}
-
-function fadeVolume(target, duration) {
-  const startVol = player.getVolume ? player.getVolume() : parseInt($('volumeSlider').value);
-  const diff = target - startVol;
-  const steps = 20;
-  const step = diff / steps;
-  const interval = duration / steps;
-  let current = startVol;
-  const timer = setInterval(() => {
-    current += step;
-    if ((diff > 0 && current >= target) || (diff < 0 && current <= target)) {
-      current = target;
-      clearInterval(timer);
-    }
-    if (player && player.setVolume) player.setVolume(Math.round(current));
-    $('volumeSlider').value = Math.round(current);
-    $('volumeValue').textContent = Math.round(current) + '%';
-  }, interval);
-}
-
-// ===== RENDER QUEUE =====
-function renderQueue(queue, currentIndex) {
-  const list = $('queueList');
-  const count = $('queueCount');
-  count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
-  list.innerHTML = '';
-
-  if (queue.length === 0) {
-    list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>';
-    return;
-  }
-
-  const isGlobalAdmin = currentUser && currentUser.email === 'admin@sonora.com';
-  const isUserAdmin = amIAdmin || isGlobalAdmin;
-
-  queue.forEach((track, i) => {
-    const div = document.createElement('div');
-    div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
-    if (i !== currentIndex && isUserAdmin) {
-      div.classList.add('clickable');
-      div.draggable = true;
-      div.dataset.index = i;
-      div.dataset.id = track.id;
-      div.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', i);
-        div.classList.add('dragging');
-      });
-      div.addEventListener('dragend', () => div.classList.remove('dragging'));
-      div.addEventListener('dragover', (e) => e.preventDefault());
-      div.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const from = parseInt(e.dataTransfer.getData('text/plain'));
-        if (from === i || from === currentIndex) return;
-        const newOrder = queue.map(t => t.id);
-        const [removed] = newOrder.splice(from, 1);
-        newOrder.splice(i, 0, removed);
-        socket.emit('reorderQueue', newOrder);
-      });
-    }
-    
-    const votes = queueVotes[i] || { up: [], down: [] };
-    const upCount = votes.up.length;
-    const downCount = votes.down.length;
-    const userVotedUp = votes.up.includes(myName);
-    const userVotedDown = votes.down.includes(myName);
-    const totalVotes = upCount + downCount;
-    const score = upCount - downCount;
-    let scoreClass = ''; let scoreSymbol = '⚪';
-    if (score > 0) { scoreClass = 'positive'; scoreSymbol = '👍'; }
-    if (score < 0) { scoreClass = 'negative'; scoreSymbol = '👎'; }
-    
-    div.innerHTML = `
-      <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
-      <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
-      <div class="info">
-        <div class="title">${escapeHtml(track.title || 'Música')}</div>
-        <div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div>
-      </div>
-      <span class="dj">${escapeHtml(track.dj || '')}</span>
-      <div class="queue-votes">
-        <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')" title="👍 Manter">👍</button>
-        <span class="vote-count ${scoreClass}">${totalVotes > 0 ? scoreSymbol + score : '0'}</span>
-        <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')" title="👎 Remover">👎</button>
-      </div>
-      ${i !== currentIndex && isUserAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})" style="opacity:1;background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">Remover</button>` : ''}
-    `;
-    list.appendChild(div);
+function broadcastUsers(slug) {
+  io.in(slug).fetchSockets().then(sockets => {
+    const users = sockets.map(s => ({
+      name: s.userName || 'Anônimo',
+      color: s.userColor || '#888',
+      isAdmin: s.isAdmin || false,
+      avatar: s.userAvatar || '👤',
+    }));
+    io.to(slug).emit('users', users);
   });
 }
 
-function voteSong(index, type) {
-  if (!currentRoom) { toast('Entre em uma sala para votar', 'error'); return; }
-  if (currentRoomData && currentRoomData.currentIndex === index) { toast('Não é possível votar na música atual', 'error'); return; }
-  socket.emit('voteSong', { index, type, room: currentRoom });
+function addSystemMsg(slug, text) {
+  const room = rooms.get(slug);
+  if (!room) return;
+  const msg = {
+    _id: Date.now().toString() + Math.random(),
+    user: 'Sistema', text, color: '#888',
+    isSystem: true, createdAt: new Date()
+  };
+  room.chatHistory.push(msg);
+  if (room.chatHistory.length > 300) room.chatHistory.shift();
+  io.to(slug).emit('chat', msg);
 }
 
-// ===== ADD SONG =====
-function extractYouTubeId(url) {
-  if (!url) return '';
-  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) return u.pathname.split('/').filter(Boolean)[0] || '';
-    if (u.hostname.includes('youtube.com')) {
-      const v = u.searchParams.get('v');
-      if (v) return v;
-      const parts = u.pathname.split('/').filter(Boolean);
-      const markers = ['shorts', 'embed', 'live', 'watch'];
-      const idx = parts.findIndex(p => markers.includes(p));
-      if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
-    }
-  } catch(e) {}
-  const match = url.match(/[a-zA-Z0-9_-]{11}/);
-  return match ? match[0] : '';
+function reorderQueueByVotes(room) {
+  if (!room || room.queue.length <= 1) return;
+  const currentTrack = room.queue[room.currentIndex];
+  if (!currentTrack) return;
+  const rest = room.queue.filter((_, i) => i !== room.currentIndex);
+  const votes = getRoomVotes(room.slug);
+  rest.sort((a, b) => {
+    const aIdx = room.queue.indexOf(a);
+    const bIdx = room.queue.indexOf(b);
+    const aUp = votes[aIdx] ? votes[aIdx].up.length : 0;
+    const bUp = votes[bIdx] ? votes[bIdx].up.length : 0;
+    return bUp - aUp;
+  });
+  room.queue = [currentTrack, ...rest];
+  room.currentIndex = 0;
+  const newVotes = {};
+  room.queue.forEach((track, i) => {
+    const oldIndex = room.queue.indexOf(track);
+    if (votes[oldIndex]) newVotes[i] = votes[oldIndex];
+  });
+  roomVotes.set(room.slug, newVotes);
 }
 
-async function previewSong() {
-  const url = $('songUrl').value.trim();
-  if (!url) { clearPreview(); return; }
-  const videoId = extractYouTubeId(url);
-  if (!videoId) { toast('Link do YouTube inválido', 'error'); clearPreview(); return; }
-  const box = $('songPreview');
-  box.classList.remove('hidden');
-  $('previewThumb').innerHTML = '⏳';
-  $('previewTitle').textContent = 'Buscando...';
-  $('previewArtist').textContent = 'Analisando link';
-  $('previewStatus').textContent = '';
-  $('previewActions').classList.add('hidden');
+function advanceQueue(slug) {
+  const room = rooms.get(slug);
+  if (!room || !room.isPlaying || room.queue.length === 0) return false;
+  if (Date.now() - room.lastAdvanceAt < 10000) return false;
+  room.lastAdvanceAt = Date.now();
 
-  try {
-    const res = await fetch(`/api/video-info?id=${videoId}`);
-    const data = await res.json();
-    if (res.ok && data.title) {
-      songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.artist || 'Desconhecido', duration: data.duration || null };
-      showPreview(songData);
-      return;
-    }
-  } catch (e) {}
+  room.queue.shift();
+  room.currentIndex = 0;
+  room.startedAt = Date.now();
+  room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
+  
+  const votes = getRoomVotes(slug);
+  const newVotes = {};
+  room.queue.forEach((_, i) => {
+    if (votes[i + 1]) newVotes[i] = votes[i + 1];
+  });
+  roomVotes.set(slug, newVotes);
+  
+  reorderQueueByVotes(room);
+  broadcastState(slug);
 
-  try {
-    const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-    if (res.ok) {
-      const data = await res.json();
-      songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.author_name || 'Desconhecido', duration: null };
-      try {
-        const htmlRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
-        const html = await htmlRes.text();
-        const m = html.match(/"lengthSeconds":"?(\d+)"?/);
-        if (m) songData.duration = parseInt(m[1], 10);
-      } catch (e) {}
-      showPreview(songData);
-      return;
-    }
-  } catch (e) {}
-
-  try {
-    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
-    const html = await res.text();
-    const match = html.match(/<title>([^<]+)<\/title>/);
-    if (match) {
-      const title = match[1].replace(/ - YouTube\s*$/, '').trim();
-      const m = html.match(/"lengthSeconds":"?(\d+)"?/);
-      songData = { id: videoId, title: title || 'Música do YouTube', artist: 'Desconhecido', duration: m ? parseInt(m[1], 10) : null };
-      showPreview(songData);
-      return;
-    }
-  } catch (e) {}
-
-  songData = { id: videoId, title: 'Música do YouTube', artist: 'Desconhecido', duration: null };
-  showPreview(songData);
-}
-
-function showPreview(data) {
-  const box = $('songPreview');
-  box.classList.remove('hidden');
-  const thumbHtml = data.id ? `<img src="https://img.youtube.com/vi/${data.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">` : '🎵';
-  const durBadge = data.duration > 0 ? `<span class="song-preview-duration">${formatDuration(data.duration)}</span>` : '';
-  $('previewThumb').innerHTML = thumbHtml + durBadge;
-  $('previewTitle').textContent = data.title || 'Música do YouTube';
-  $('previewArtist').textContent = data.artist || 'Desconhecido';
-  const confirmBtn = document.querySelector('.song-preview-confirm');
-  if (data.duration > 0) {
-    if (data.duration > MAX_SONG_DURATION) {
-      $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > ${MAX_SONG_DURATION/60} min`;
-      $('previewStatus').style.color = 'var(--danger)';
-      confirmBtn.disabled = true;
-      confirmBtn.textContent = '⛔ Muito longo';
-    } else if (data.duration > 300) {
-      $('previewStatus').textContent = `⚠️ ${formatDuration(data.duration)} - música longa (máx ${MAX_SONG_DURATION/60} min)`;
-      $('previewStatus').style.color = 'var(--warning)';
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = '✓ Adicionar';
-    } else {
-      $('previewStatus').textContent = `✅ ${formatDuration(data.duration)} - dentro do limite`;
-      $('previewStatus').style.color = 'var(--success)';
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = '✓ Adicionar';
-    }
+  if (room.queue.length > 0) {
+    const next = room.queue[0];
+    addSystemMsg(slug, `▶ ${next.title} — ${next.artist}`);
   } else {
-    $('previewStatus').textContent = '⚠️ Duração não verificada - tente novamente';
-    $('previewStatus').style.color = 'var(--warning)';
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = '✓ Adicionar (sem verificação)';
+    room.isPlaying = false;
+    broadcastState(slug);
+    addSystemMsg(slug, '🏁 Fila encerrada. Adicione músicas!');
+    io.to(slug).emit('queueEmpty');
   }
-  $('previewActions').classList.remove('hidden');
+  return true;
 }
 
-function clearPreview() { $('songPreview').classList.add('hidden'); songData = null; }
-
-function confirmAdd() {
-  if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
-  if (songData.duration > 0 && songData.duration > MAX_SONG_DURATION) { toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); return; }
-  const now = Date.now();
-  if (now - lastAddTime < COOLDOWN) { const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); toast(`Aguarde ${wait}s`, 'error'); return; }
-  socket.emit('addSong', { id: songData.id, title: songData.title || 'Música do YouTube', artist: songData.artist || 'Desconhecido', duration: songData.duration || null });
-  lastAddTime = Date.now();
-  $('songUrl').value = '';
-  clearPreview();
-  startCooldown();
-  toast('🎵 Música adicionada!', 'success');
-}
-
-function addSong() {
-  const url = $('songUrl').value.trim();
-  if (!url) { toast('Cole um link do YouTube', 'error'); return; }
-  const videoId = extractYouTubeId(url);
-  if (!videoId) { toast('Link inválido. Use um link do YouTube', 'error'); return; }
-  if (songData && songData.id === videoId) { confirmAdd(); }
-  else { previewSong(); toast('Verifique a prévia antes de adicionar', 'success'); }
-}
-
-function startCooldown() {
-  const text = $('cooldownText');
-  let remaining = COOLDOWN / 1000;
-  text.textContent = `Aguarde ${Math.floor(remaining/60)}m${remaining%60}s`;
-  text.classList.remove('hidden');
-  const interval = setInterval(() => {
-    remaining--;
-    if (remaining > 0) { text.textContent = `Aguarde ${Math.floor(remaining/60)}m${remaining%60}s`; }
-    else { clearInterval(interval); text.classList.add('hidden'); }
-  }, 1000);
-}
-
-function copyQueueIds() {
-  if (!currentRoomData || !currentRoomData.queue || currentRoomData.queue.length === 0) { toast('Fila vazia', 'error'); return; }
-  const ids = currentRoomData.queue.map(t => t.id).join(',');
-  navigator.clipboard.writeText(ids).then(() => toast('📋 IDs copiados!', 'success')).catch(() => toast('Erro ao copiar', 'error'));
-}
-
-// ===== CHAT =====
-function renderMessage(msg) {
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  const div = document.createElement('div');
-  div.className = 'msg';
-  const msgId = msg._id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-  div.dataset.msgId = msgId;
-
-  if (msg.isMusic) {
-    div.classList.add('msg-music');
-    div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;width:100%;">
-        <span style="font-size:14px;">🎵</span>
-        <span style="font-weight:700;color:var(--accent);font-size:12px;">${escapeHtml(msg.user)}</span>
-        <span style="color:var(--text-muted);font-size:11px;">adicionou</span>
-        <span class="msg-time" style="opacity:1;margin-left:auto;font-size:10px;color:var(--text-muted);">${formatTime(msg.createdAt)}</span>
-      </div>
-      <div class="music-info" style="color:var(--text);font-weight:600;font-size:13px;">${escapeHtml(msg.musicTitle || 'Música')} — ${escapeHtml(msg.musicArtist || 'Desconhecido')}</div>
-    `;
-  } else if (msg.isSystem) {
-    div.classList.add('msg-system');
-    div.innerHTML = `<span class="msg-text" style="color:var(--text-muted);font-style:italic;font-size:12px;">${escapeHtml(msg.text)}</span>`;
-  } else {
-    const avatar = msg.avatar || '👤';
-    const color = msg.color || '#888';
-    let text = escapeHtml(msg.text);
-    text = text.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
-    const likeData = messageLikesSync[msgId] || { likes: 0, users: [] };
-    const liked = likeData.users.includes(myName);
-    const count = likeData.likes || 0;
-    div.innerHTML = `
-      <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
-        <div class="msg-avatar" style="background:${color}22;color:${color};border-color:${color}40;">${avatar}</div>
-        <div class="msg-content">
-          <div class="msg-header">
-            <span class="msg-user" style="color:${color};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
-            <span class="msg-time">${formatTime(msg.createdAt)}</span>
-          </div>
-          <span class="msg-text">${text}</span>
-          <div class="msg-actions">
-            <button class="msg-like-btn ${liked ? 'liked' : ''}" onclick="likeMessage('${msgId}', this)">
-              ${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  container.appendChild(div);
-  limitChatMessages(container);
-}
-
-function limitChatMessages(container) {
-  const messages = container.querySelectorAll('.msg');
-  const total = messages.length;
-  if (total > 10) {
-    const toRemove = total - 10;
-    for (let i = 0; i < toRemove; i++) {
-      const msg = messages[i];
-      if (msg) { msg.classList.add('removing'); setTimeout(() => { if (msg.parentNode) msg.remove(); }, 400); }
-    }
-  }
-}
-
-function likeMessage(msgId, btn) {
-  if (!currentRoom) { toast('Entre em uma sala para curtir', 'error'); return; }
-  socket.emit('likeMessage', { messageId: msgId, room: currentRoom });
-}
-
-function updateLikeDisplay(msgId) {
-  const likeData = messageLikesSync[msgId];
-  if (!likeData) return;
-  const count = likeData.likes || 0;
-  const liked = likeData.users.includes(myName);
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  const msgElements = container.querySelectorAll('.msg');
-  let targetElement = null;
-  for (const el of msgElements) {
-    if (el.dataset.msgId === msgId) { targetElement = el; break; }
-  }
-  if (!targetElement) return;
-  const likeBtn = targetElement.querySelector('.msg-like-btn');
-  if (!likeBtn) return;
-  likeBtn.innerHTML = `${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>`;
-  if (liked) likeBtn.classList.add('liked');
-  else likeBtn.classList.remove('liked');
-}
-
-function sendMessage() {
-  const input = $('chatInput');
-  const text = input.value.trim();
-  if (!text) return;
-  socket.emit('chat', { text: censorText(text) });
-  input.value = '';
-}
-
-function toggleEmojis() { $('emojiPanel').classList.toggle('show'); }
-function insertEmoji(emoji) { $('chatInput').value += emoji; $('chatInput').focus(); $('emojiPanel').classList.remove('show'); }
-
-function setVolume(val) {
-  $('volumeValue').textContent = val + '%';
-  if (player && player.setVolume) player.setVolume(parseInt(val));
-}
-
-// ===== SOCKET EVENTS =====
-socket.on('roomState', (state) => {
-  const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
-  const next = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
-  if (next !== prev) { currentTrackId = null; if (next) setTimeout(startCrossfade, 1000); }
-  currentRoomData = state;
-  syncPlayer(state);
-});
-
-socket.on('queueEmpty', () => {
-  currentTrackId = null;
-  $('trackTitle').textContent = 'Fila vazia';
-  $('trackArtist').textContent = 'Adicione uma música';
-  $('trackDj').textContent = '';
-  $('trackCover').innerHTML = '🎵';
-  $('progressFill').style.width = '0%';
-  $('currentTime').textContent = '0:00';
-  $('totalTime').textContent = '0:00';
-  try { player.stopVideo(); } catch(e) {}
-  renderQueue([], 0);
-  toast('Fila encerrada! Adicione músicas.', 'success');
-});
-
-socket.on('users', (users) => { $('userCount').textContent = users.length; });
-socket.on('chat', renderMessage);
-
-socket.on('chatHistory', (messages) => {
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  container.innerHTML = '';
-  const start = Math.max(0, messages.length - 10);
-  const recentMessages = messages.slice(start);
-  recentMessages.forEach(m => renderMessage(m));
-});
-
-socket.on('likeUpdate', (data) => {
-  const { messageId, likes, users } = data;
-  messageLikesSync[messageId] = { likes, users };
-  updateLikeDisplay(messageId);
-});
-
-socket.on('likesState', (likesData) => {
-  messageLikesSync = likesData || {};
-  const container = document.getElementById('chatMessagesInner');
-  if (!container) return;
-  const msgElements = container.querySelectorAll('.msg');
-  for (const el of msgElements) {
-    const msgId = el.dataset.msgId;
-    if (msgId && messageLikesSync[msgId]) updateLikeDisplay(msgId);
-  }
-});
-
-socket.on('voteUpdate', (data) => {
-  const { index, up, down } = data;
-  queueVotes[index] = { up, down };
-  if (down.length >= DISLIKE_THRESHOLD) {
-    toast(`👎 Música removida por votação! (${down.length} votos negativos)`, 'error');
-    if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-  } else {
-    if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-  }
-});
-
-socket.on('votesState', (votesData) => {
-  queueVotes = votesData || {};
-  if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-});
-
-socket.on('error', (msg) => toast(msg, 'error'));
-socket.on('isAdmin', (isAdmin) => {
-  amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
-  if (amIAdmin) { $('adminBadge').classList.remove('hidden'); toast('Você é admin desta sala!', 'success'); }
-});
-socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
-socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
-socket.on('chatCleared', () => {
-  const container = document.getElementById('chatMessagesInner');
-  if (container) { container.innerHTML = ''; const div = document.createElement('div'); div.className = 'msg msg-system'; div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>'; container.appendChild(div); }
-  toast('Chat limpo!', 'success');
-});
-socket.on('adminBroadcast', (data) => {
-  toast(`📢 ${data.message}`, 'success');
-  if (currentRoom) { const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() }; renderMessage(msg); }
-});
-socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
-
-// ===== PROGRESS UPDATE =====
 setInterval(() => {
-  if (!player || !player.getCurrentTime) return;
-  try {
-    const current = player.getCurrentTime();
-    const duration = player.getDuration();
-    if (duration > 0) {
-      $('progressFill').style.width = (current / duration * 100) + '%';
-      $('currentTime').textContent = formatDuration(current);
-      $('totalTime').textContent = formatDuration(duration);
-    }
-  } catch(e) {}
-}, 1000);
-
-// ===== INICIALIZAÇÃO =====
-function init() {
-  applyTheme();
-  fetch('/api/me')
-    .then(res => {
-      if (res.ok) return res.json();
-      throw new Error('Não autenticado');
-    })
-    .then(data => {
-      if (data.success && data.user) {
-        currentUser = data.user;
-        myName = currentUser.nome;
-        myAvatar = currentUser.avatar || '🎸';
-        $('landingScreen').style.display = 'none';
-        hideLogin();
-        showScreen('lobby');
-        updateUserInfo();
-        loadRooms();
-        checkAdmin();
-        loadFavorites();
-        toast('Bem-vindo(a) ' + myName + '!', 'success');
-      }
-    })
-    .catch(() => {
-      $('landingScreen').style.display = 'block';
-    });
-
-  const params = new URLSearchParams(window.location.search);
-  const room = params.get('room');
-  if (room) {
-    setTimeout(() => {
-      if (currentUser) joinRoom(room);
-      else toast('Faça login para entrar', 'error');
-    }, 1000);
+  for (const [slug, room] of rooms) {
+    if (!room.isPlaying || room.queue.length === 0) continue;
+    const track = room.queue[room.currentIndex];
+    if (!track) continue;
+    const pos = getPosition(room);
+    const duration = track.duration || 180;
+    if (pos >= duration - 2) advanceQueue(slug);
   }
+}, 2000);
+
+// ========== API ==========
+app.post('/api/signup', (req, res) => {
+  const { nome, email, senha, estilos } = req.body;
+  if (!nome || nome.length < 2) return res.status(400).json({ error: 'Nome inválido' });
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'E-mail inválido' });
+  if (!senha || senha.length < 6) return res.status(400).json({ error: 'Senha deve ter 6+ caracteres' });
+  if (!estilos || estilos.length === 0) return res.status(400).json({ error: 'Escolha um estilo' });
+  if (users.has(email)) return res.status(400).json({ error: 'E-mail já cadastrado' });
+
+  users.set(email, { nome, email, senha, estilos, avatar: '🎸', criadoEm: new Date() });
+  res.json({ success: true, nome, email });
+});
+
+app.post('/api/login', (req, res) => {
+  const { email, senha } = req.body;
+  if (!email || !senha) return res.status(400).json({ error: 'Preencha e-mail e senha' });
+  const user = users.get(email);
+  if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
+  if (user.senha !== senha) return res.status(401).json({ error: 'Senha incorreta' });
+
+  const token = crypto.randomBytes(64).toString('hex');
+  sessions.set(token, email);
+  res.cookie('sessionToken', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'lax', path: '/' });
+  const { senha: _, ...userData } = user;
+  res.json({ success: true, user: userData });
+});
+
+app.post('/api/logout', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (token) sessions.delete(token);
+  res.clearCookie('sessionToken');
+  res.json({ success: true });
+});
+
+app.get('/api/me', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const user = users.get(email);
+  if (!user) { sessions.delete(token); return res.status(401).json({ error: 'Usuário não encontrado' }); }
+  const { senha: _, ...userData } = user;
+  res.json({ success: true, user: userData });
+});
+
+// ===== FAVORITOS =====
+function getUserFavorites(email) {
+  if (!userFavorites.has(email)) userFavorites.set(email, []);
+  return userFavorites.get(email);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  init();
-  setInterval(() => {
-    if (document.getElementById('screen-lobby').classList.contains('active')) {
-      loadRooms();
-    }
-  }, 15000);
+app.get('/api/favorites', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  res.json(getUserFavorites(email));
 });
-</script>
+
+app.post('/api/favorites', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const { videoId, title, artist } = req.body;
+  if (!videoId) return res.status(400).json({ error: 'ID do vídeo obrigatório' });
+  const favs = getUserFavorites(email);
+  if (!favs.find(f => f.id === videoId)) favs.push({ id: videoId, title, artist });
+  res.json({ success: true, favorites: favs });
+});
+
+app.delete('/api/favorites/:videoId', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const videoId = req.params.videoId;
+  const favs = getUserFavorites(email);
+  const idx = favs.findIndex(f => f.id === videoId);
+  if (idx !== -1) favs.splice(idx, 1);
+  res.json({ success: true, favorites: favs });
+});
+
+app.get('/api/rooms', (req, res) => {
+  const list = Array.from(rooms.values()).map(r => ({
+    slug: r.slug, name: r.name, listenerCount: r.listenerCount,
+    queueLength: r.queue.length, isPlaying: r.isPlaying,
+    currentTrack: r.queue[r.currentIndex] || null,
+  }));
+  res.json(list);
+});
+
+app.get('/api/room/:slug/queue', (req, res) => {
+  const room = rooms.get(req.params.slug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  res.json({ queue: room.queue, currentIndex: room.currentIndex });
+});
+
+app.get('/api/rooms/random', (req, res) => {
+  const list = Array.from(rooms.values());
+  if (list.length === 0) return res.json({ slug: null });
+  const sorted = list.sort((a, b) => b.listenerCount - a.listenerCount);
+  res.json({ slug: sorted[0].slug });
+});
+
+app.post('/api/rooms', (req, res) => {
+  const { name, adminName } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
+  rooms.set(slug, createRoom(slug, name, adminName || null));
+  res.json({ slug, name });
+});
+
+function fetchUrl(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      timeout: 8000,
+    }, (res) => {
+      if (res.statusCode !== 200) { res.resume(); return reject(new Error('HTTP ' + res.statusCode)); }
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { data += chunk; if (data.length > 4e6) req.destroy(); });
+      res.on('end', () => resolve(data));
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+  });
+}
+
+app.get('/api/video-info', async (req, res) => {
+  const id = String(req.query.id || '').trim();
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
+
+  const info = { id, title: null, artist: null, duration: null };
+  try {
+    const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+    const data = JSON.parse(raw);
+    info.title = data.title || null;
+    info.artist = data.author_name || null;
+  } catch (e) {}
+
+  try {
+    const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
+    const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+    if (m) info.duration = parseInt(m[1], 10);
+    if (!info.title) {
+      const t = html.match(/<title>([^<]+)<\/title>/);
+      if (t) info.title = t[1].replace(/ - YouTube\s*$/, '').trim();
+    }
+  } catch (e) {}
+
+  if (!info.title && !info.duration) return res.status(404).json({ error: 'Vídeo não encontrado' });
+  res.json(info);
+});
+
+// ========== ADMIN ROTAS ==========
+function isAdmin(req, res, next) {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  if (!adminEmails.has(email)) return res.status(403).json({ error: 'Acesso negado' });
+  req.adminEmail = email;
+  next();
+}
+
+app.get('/api/admin/stats', isAdmin, (req, res) => {
+  let totalSongs = 0;
+  for (const [slug, room] of rooms) totalSongs += room.queue.length;
+  res.json({ totalUsers: users.size, totalRooms: rooms.size, onlineUsers: io.sockets.sockets.size, totalSongs });
+});
+
+app.get('/api/admin/users', isAdmin, (req, res) => {
+  const list = Array.from(users.values()).map(u => ({ ...u, senha: undefined, isAdmin: adminEmails.has(u.email) }));
+  res.json(list);
+});
+
+app.post('/api/admin/promote', isAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email || !users.has(email)) return res.status(404).json({ error: 'Usuário não encontrado' });
+  adminEmails.add(email);
+  res.json({ success: true });
+});
+
+app.post('/api/admin/delete-user', isAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
+  if (email === 'admin@sonora.com') return res.status(400).json({ error: 'Não pode deletar o super admin' });
+  if (!users.has(email)) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+  users.delete(email);
+  adminEmails.delete(email);
+
+  for (const [token, storedEmail] of sessions) {
+    if (storedEmail === email) sessions.delete(token);
+  }
+
+  for (const [socketId, socket] of io.sockets.sockets) {
+    if (socket.userEmail === email) {
+      socket.emit('kicked', 'Sua conta foi removida pelo administrador.');
+      socket.disconnect(true);
+    }
+  }
+
+  res.json({ success: true });
+});
+
+app.post('/api/admin/kick-user', isAdmin, (req, res) => {
+  const { email, roomSlug } = req.body;
+  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
+  const room = rooms.get(roomSlug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+
+  let kicked = false;
+  for (const [socketId, socket] of io.sockets.sockets) {
+    if (socket.userEmail === email && socket.currentRoom === roomSlug) {
+      socket.emit('kicked', `Você foi expulso da sala ${room.name} pelo administrador.`);
+      socket.leave(roomSlug);
+      socket.currentRoom = null;
+      kicked = true;
+    }
+  }
+
+  if (kicked) {
+    broadcastUsers(roomSlug);
+    addSystemMsg(roomSlug, `👢 ${email} foi expulso da sala pelo admin.`);
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: 'Usuário não encontrado na sala' });
+  }
+});
+
+app.post('/api/admin/ban-user', isAdmin, (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
+  const user = users.get(email);
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+  const userName = user.nome;
+  for (const [slug, room] of rooms) {
+    if (!room.bannedUsers.includes(userName)) {
+      room.bannedUsers.push(userName);
+    }
+  }
+
+  for (const [socketId, socket] of io.sockets.sockets) {
+    if (socket.userEmail === email) {
+      socket.emit('banned', 'Você foi banido globalmente pelo administrador.');
+      socket.disconnect(true);
+    }
+  }
+
+  res.json({ success: true });
+});
+
+app.post('/api/admin/clear-all-chats', isAdmin, (req, res) => {
+  for (const [slug, room] of rooms) { 
+    room.chatHistory = [];
+    roomLikes.set(slug, {});
+    roomVotes.set(slug, {});
+    io.to(slug).emit('chatCleared');
+  }
+  res.json({ success: true });
+});
+
+app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
+  for (const [slug, room] of rooms) {
+    room.queue = [];
+    room.currentIndex = 0;
+    room.isPlaying = false;
+    roomLikes.set(slug, {});
+    roomVotes.set(slug, {});
+    broadcastState(slug);
+    io.to(slug).emit('queueEmpty');
+  }
+  res.json({ success: true });
+});
+
+app.get('/api/admin/export-data', isAdmin, (req, res) => {
+  const data = {
+    exportedAt: new Date().toISOString(),
+    users: Array.from(users.values()).map(u => ({ ...u, senha: undefined })),
+    admins: Array.from(adminEmails),
+    rooms: Array.from(rooms.values()).map(r => ({
+      slug: r.slug, name: r.name, admin: r.admin,
+      queue: r.queue, chatHistory: r.chatHistory.slice(-50),
+      listenerCount: r.listenerCount, isPlaying: r.isPlaying
+    })),
+    settings
+  };
+  res.json(data);
+});
+
+app.post('/api/admin/remove-song', isAdmin, (req, res) => {
+  const { roomSlug, index } = req.body;
+  if (!roomSlug || index === undefined) {
+    return res.status(400).json({ error: 'Parâmetros inválidos' });
+  }
+  const room = rooms.get(roomSlug);
+  if (!room) {
+    return res.status(404).json({ error: 'Sala não encontrada' });
+  }
+  if (index < 0 || index >= room.queue.length) {
+    return res.status(400).json({ error: 'Índice inválido' });
+  }
+  if (index === room.currentIndex) {
+    return res.status(400).json({ error: 'Não é possível remover a música atual' });
+  }
+  const track = room.queue[index];
+  room.queue.splice(index, 1);
+  if (index < room.currentIndex) room.currentIndex--;
+  
+  const votes = getRoomVotes(roomSlug);
+  const newVotes = {};
+  room.queue.forEach((_, i) => {
+    if (votes[i + 1]) newVotes[i] = votes[i + 1];
+  });
+  roomVotes.set(roomSlug, newVotes);
+  broadcastState(roomSlug);
+  addSystemMsg(roomSlug, `🗑️ Admin removeu "${track.title}"`);
+  res.json({ success: true });
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ========== SOCKET ==========
+io.on('connection', (socket) => {
+  let currentRoom = null;
+  let userEmail = null;
+
+  socket.on('joinRoom', ({ slug, name, avatar }) => {
+    const room = rooms.get(slug);
+    if (!room) { socket.emit('error', 'Sala não encontrada'); return; }
+    if (room.bannedUsers.includes(name)) { socket.emit('error', 'Você foi banido'); return; }
+
+    if (currentRoom) {
+      socket.leave(currentRoom);
+      const old = rooms.get(currentRoom);
+      if (old) old.listenerCount = Math.max(0, old.listenerCount - 1);
+    }
+
+    currentRoom = slug;
+    socket.join(slug);
+    socket.userName = name;
+    socket.userColor = colors[Math.floor(Math.random() * colors.length)];
+    socket.userAvatar = avatar || '👤';
+    room.listenerCount++;
+
+    const cookie = socket.handshake.headers.cookie || '';
+    const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
+    const email = tokenMatch ? sessions.get(tokenMatch[1]) : null;
+    userEmail = email;
+    socket.userEmail = email;
+    const isGlobalAdmin = adminEmails.has(email);
+    const isRoomAdmin = room.admin === name;
+    socket.isAdmin = isGlobalAdmin || isRoomAdmin;
+
+    if (isGlobalAdmin && !room.admin) room.admin = name;
+
+    const likes = getRoomLikes(slug);
+    socket.emit('likesState', likes);
+    const votes = getRoomVotes(slug);
+    socket.emit('votesState', votes);
+
+    socket.emit('roomState', {
+      slug: room.slug, name: room.name,
+      currentIndex: room.currentIndex,
+      position: getPosition(room),
+      votes: room.votes,
+      queue: room.queue,
+      admin: room.admin,
+      isPlaying: room.isPlaying,
+    });
+    socket.emit('chatHistory', room.chatHistory.slice(-150));
+    socket.emit('isAdmin', socket.isAdmin);
+    broadcastUsers(slug);
+  });
+
+  socket.on('chat', ({ text }) => {
+    if (!currentRoom || !text.trim()) return;
+    const room = rooms.get(currentRoom);
+    const msg = {
+      _id: Date.now().toString() + Math.random(),
+      user: socket.userName, text: text.trim(),
+      color: socket.userColor, isSystem: false,
+      isAdmin: socket.isAdmin || false,
+      avatar: socket.userAvatar || '👤',
+      createdAt: new Date()
+    };
+    room.chatHistory.push(msg);
+    if (room.chatHistory.length > 300) room.chatHistory.shift();
+    io.to(currentRoom).emit('chat', msg);
+  });
+
+  socket.on('addSong', (song) => {
+    if (!currentRoom) return;
+    const room = rooms.get(currentRoom);
+    const now = Date.now();
+    const lastAdd = room.lastAddTime.get(socket.userName) || 0;
+
+    if (now - lastAdd < 30000) {
+      const wait = Math.ceil((30000 - (now - lastAdd)) / 1000);
+      socket.emit('error', `Aguarde ${wait}s`);
+      return;
+    }
+
+    const userSongs = room.queue.filter(t => t.dj === socket.userName).length;
+    if (userSongs >= MAX_SONGS_PER_USER) {
+      socket.emit('error', `Você já tem ${MAX_SONGS_PER_USER} músicas na fila. Aguarde outras serem tocadas.`);
+      return;
+    }
+
+    if (room.queue.length >= settings.maxQueue) {
+      socket.emit('error', `Fila cheia (${settings.maxQueue})`);
+      return;
+    }
+
+    if (song.duration && song.duration > settings.maxDuration) {
+      socket.emit('error', `⛔ Vídeo muito longo! Limite: ${settings.maxDuration/60} min`);
+      return;
+    }
+
+    song.dj = socket.userName;
+    room.queue.push(song);
+    room.lastAddTime.set(socket.userName, now);
+
+    if (!room.isPlaying && room.queue.length === 1) {
+      room.isPlaying = true;
+      room.currentIndex = 0;
+      room.startedAt = Date.now();
+      room.lastAdvanceAt = Date.now();
+      addSystemMsg(currentRoom, `▶ ${song.title} — ${song.artist}`);
+    }
+
+    broadcastState(currentRoom);
+
+    const musicMsg = {
+      _id: Date.now().toString() + Math.random(),
+      user: socket.userName, color: socket.userColor,
+      isSystem: false, isAdmin: socket.isAdmin || false,
+      isMusic: true, musicTitle: song.title,
+      musicArtist: song.artist, createdAt: new Date()
+    };
+    room.chatHistory.push(musicMsg);
+    if (room.chatHistory.length > 300) room.chatHistory.shift();
+    io.to(currentRoom).emit('chat', musicMsg);
+  });
+
+  socket.on('skipTo', (index) => {
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    if (index < 0 || index >= room.queue.length) return;
+    room.lastAdvanceAt = Date.now();
+    if (index > 0) room.queue.splice(0, index);
+    room.currentIndex = 0;
+    room.startedAt = Date.now();
+    room.isPlaying = true;
+    
+    const votes = getRoomVotes(currentRoom);
+    const newVotes = {};
+    room.queue.forEach((_, i) => {
+      if (votes[i]) newVotes[i] = votes[i];
+    });
+    roomVotes.set(currentRoom, newVotes);
+    reorderQueueByVotes(room);
+    broadcastState(currentRoom);
+    addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
+  });
+
+  socket.on('removeFromQueue', (index) => {
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
+      return;
+    }
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    const room = rooms.get(currentRoom);
+    if (!room) return;
+    if (!isGlobalAdmin && !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode remover músicas');
+      return;
+    }
+    const track = room.queue[index];
+    if (!track || index === room.currentIndex) {
+      socket.emit('error', 'Não é possível remover a música atual');
+      return;
+    }
+    room.queue.splice(index, 1);
+    if (index < room.currentIndex) room.currentIndex--;
+    
+    const votes = getRoomVotes(currentRoom);
+    const newVotes = {};
+    room.queue.forEach((_, i) => {
+      if (votes[i + 1]) newVotes[i] = votes[i + 1];
+    });
+    roomVotes.set(currentRoom, newVotes);
+    broadcastState(currentRoom);
+    addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
+  });
+
+  socket.on('reorderQueue', (newOrder) => {
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
+      return;
+    }
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    if (!isGlobalAdmin && !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode reordenar');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    if (!room || room.queue.length === 0) return;
+    
+    const currentTrack = room.queue[room.currentIndex];
+    const currentId = currentTrack ? currentTrack.id : null;
+    
+    const newQueue = [];
+    for (const id of newOrder) {
+      const track = room.queue.find(t => t.id === id);
+      if (track) newQueue.push(track);
+    }
+    if (newQueue.length === room.queue.length) {
+      room.queue = newQueue;
+      const newIndex = room.queue.findIndex(t => t.id === currentId);
+      room.currentIndex = newIndex !== -1 ? newIndex : 0;
+      
+      const votes = getRoomVotes(currentRoom);
+      const newVotes = {};
+      room.queue.forEach((track, i) => {
+        const oldIndex = room.queue.indexOf(track);
+        if (votes[oldIndex]) newVotes[i] = votes[oldIndex];
+      });
+      roomVotes.set(currentRoom, newVotes);
+      broadcastState(currentRoom);
+    }
+  });
+
+  socket.on('voteSong', ({ index, type, room }) => {
+    if (!room || !socket.userName) return;
+    const roomData = rooms.get(room);
+    if (!roomData) return;
+    if (roomData.currentIndex === index) {
+      socket.emit('error', 'Não é possível votar na música atual');
+      return;
+    }
+    if (index >= roomData.queue.length) {
+      socket.emit('error', 'Música não encontrada');
+      return;
+    }
+    
+    const votes = getRoomVotes(room);
+    if (!votes[index]) votes[index] = { up: [], down: [] };
+    const data = votes[index];
+    
+    const upIndex = data.up.indexOf(socket.userName);
+    if (upIndex > -1) data.up.splice(upIndex, 1);
+    const downIndex = data.down.indexOf(socket.userName);
+    if (downIndex > -1) data.down.splice(downIndex, 1);
+    
+    if (type === 'up') data.up.push(socket.userName);
+    else if (type === 'down') data.down.push(socket.userName);
+    
+    if (data.down.length >= DISLIKE_THRESHOLD) {
+      const removed = roomData.queue.splice(index, 1)[0];
+      if (index < roomData.currentIndex) roomData.currentIndex--;
+      delete votes[index];
+      const newVotes = {};
+      roomData.queue.forEach((_, i) => {
+        if (votes[i + 1]) newVotes[i] = votes[i + 1];
+      });
+      roomVotes.set(room, newVotes);
+      broadcastState(room);
+      io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down, removed: true });
+      addSystemMsg(room, `👎 "${removed.title}" foi removida por votação! (${data.down.length} votos negativos)`);
+      return;
+    }
+    
+    if (type === 'up') reorderQueueByVotes(roomData);
+    io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down });
+    broadcastState(room);
+  });
+
+  socket.on('likeMessage', ({ messageId, room }) => {
+    if (!room || !socket.userName) return;
+    const likes = getRoomLikes(room);
+    if (!likes[messageId]) likes[messageId] = { likes: 0, users: [] };
+    const data = likes[messageId];
+    const userIndex = data.users.indexOf(socket.userName);
+    if (userIndex > -1) {
+      data.users.splice(userIndex, 1);
+      data.likes = Math.max(0, data.likes - 1);
+    } else {
+      data.users.push(socket.userName);
+      data.likes++;
+    }
+    io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
+  });
+
+  socket.on('videoDuration', ({ duration }) => {
+    if (!currentRoom || !duration) return;
+    const room = rooms.get(currentRoom);
+    const track = room.queue[room.currentIndex];
+    if (track) track.duration = duration;
+  });
+
+  socket.on('videoEnded', () => {
+    if (currentRoom) advanceQueue(currentRoom);
+  });
+
+  socket.on('clearChat', () => {
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
+      return;
+    }
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    if (!isGlobalAdmin && !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode limpar o chat');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    room.chatHistory = [];
+    roomLikes.set(currentRoom, {});
+    io.to(currentRoom).emit('chatCleared');
+    addSystemMsg(currentRoom, '🧹 Chat limpo pelo admin');
+  });
+
+  socket.on('adminBroadcast', (data) => {
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    if (!isGlobalAdmin && !socket.isAdmin) return;
+    io.emit('adminBroadcast', { message: data.message });
+  });
+
+  socket.on('disconnect', () => {
+    if (currentRoom) {
+      const room = rooms.get(currentRoom);
+      if (room) {
+        room.listenerCount = Math.max(0, room.listenerCount - 1);
+        broadcastState(currentRoom);
+        broadcastUsers(currentRoom);
+      }
+    }
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`🎧 Sonora Fan → http://localhost:${PORT}`));
