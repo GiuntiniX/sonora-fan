@@ -581,7 +581,7 @@
     .volume-control input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
     .volume-control input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); cursor: pointer; }
 
-    /* ===== QUEUE - CORREÇÃO PARA EXIBIR EM 100% ===== */
+    /* ===== QUEUE COM VOTAÇÃO ===== */
     .queue-center {
       flex: 1;
       min-height: 0;
@@ -591,7 +591,6 @@
       border: 1px solid var(--border);
       background: var(--bg-card);
       overflow: hidden;
-      height: 100%;
     }
     .queue-center-header {
       display: flex;
@@ -607,16 +606,7 @@
     .queue-center-header .actions { display: flex; gap: 8px; }
     .queue-center-header .actions button { background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); padding: 2px 8px; font-size: 11px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
     .queue-center-header .actions button:hover { background: var(--bg-hover); border-color: var(--accent2); color: var(--text); }
-    #queueList { 
-      flex: 1; 
-      overflow-y: auto; 
-      padding: 8px 12px 12px; 
-      display: flex; 
-      flex-direction: column; 
-      gap: 4px;
-      min-height: 0;
-      height: 100%;
-    }
+    #queueList { flex: 1; overflow-y: auto; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
 
     .queue-item {
       display: flex;
@@ -628,7 +618,6 @@
       cursor: default;
       border-left: 3px solid transparent;
       flex-wrap: wrap;
-      flex-shrink: 0;
     }
     .queue-item:hover { background: var(--bg-hover); }
     .queue-item.current { background: var(--bg-hover); border-left-color: var(--accent); }
@@ -1006,19 +995,22 @@
     </div>
   </div>
 
-  <!-- SIGNUP -->
+  <!-- SIGNUP (sem gênero e região) -->
   <div class="modal-overlay" id="signupModal">
     <div class="modal">
       <h3>🎵 Criar conta</h3>
       <label class="form-label">Nome <span class="required">*</span></label>
       <input type="text" id="signupNome" placeholder="Seu nome" maxlength="60">
       <div class="form-error" id="signupNomeError">Digite seu nome</div>
+
       <label class="form-label">E-mail <span class="required">*</span></label>
       <input type="email" id="signupEmail" placeholder="voce@email.com" maxlength="120">
       <div class="form-error" id="signupEmailError">Digite um e-mail válido</div>
+
       <label class="form-label">Senha <span class="required">*</span> <span class="hint">(mínimo 6 caracteres)</span></label>
       <input type="password" id="signupPassword" placeholder="Crie uma senha" maxlength="30">
       <div class="form-error" id="signupPasswordError">Mínimo 6 caracteres</div>
+
       <label class="form-label">Estilo musical <span class="required">*</span></label>
       <div class="chip-group" id="signupStyles">
         <div class="chip" data-style="sertanejo" onclick="toggleChip(this)">Sertanejo</div>
@@ -1034,6 +1026,7 @@
         <div class="chip" data-style="indie" onclick="toggleChip(this)">Indie</div>
       </div>
       <div class="form-error" id="signupStylesError">Escolha pelo menos um estilo</div>
+
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeSignup()">Cancelar</button>
         <button class="btn-primary" onclick="submitSignup()">Criar conta 🎶</button>
@@ -1082,13 +1075,12 @@
         </div>
       </div>
 
-      <!-- SEÇÃO DE USUÁRIOS -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
           <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
           <span style="font-size:11px;color:var(--text-muted);" id="adminUserCount">0</span>
         </div>
-        <div id="adminUserList" style="max-height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
+        <div id="adminUserList" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
           <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Carregando...</div>
         </div>
       </div>
@@ -1288,7 +1280,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO - VERSÃO FINAL COM CORREÇÕES
+    //  JAVASCRIPT COMPLETO
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1296,6 +1288,7 @@
     const COOLDOWN = 30000;
     const MAX_SONGS_PER_USER = 3;
 
+    // 🔥 Socket com credentials para enviar cookies
     const socket = io({ withCredentials: true });
 
     let currentUser = null;
@@ -1313,7 +1306,6 @@
     let queueVotes = {};
     let myFavorites = [];
     let crossfadeInterval = null;
-    let pendingRoomAfterLogin = null; // para redirecionamento pós-login
 
     // ===== UTILS =====
     function $(id) { return document.getElementById(id); }
@@ -1361,11 +1353,11 @@
       return censored;
     }
 
-    // ===== TEMAS (LIGHT CORRIGIDO) =====
+    // ===== TEMAS =====
     function applyTheme() {
       const themes = {
         'dark': { btn: '🌙', bg: '#050508', card: '#0f0f18', hover: '#161620', border: '#1e1e2e', text: '#f0f0f8', textSec: '#9a9ab0', accent: '#ff6b35', accent2: '#7c3aed', bgImage: 'none', overlay: 'transparent' },
-        'light': { btn: '☀️', bg: '#ffffff', card: '#f8f9fa', hover: '#e9ecef', border: '#dee2e6', text: '#1a1a2e', textSec: '#2d2d44', accent: '#cc5500', accent2: '#3d1f6e', bgImage: 'none', overlay: 'transparent' },
+        'light': { btn: '☀️', bg: '#f5f5fa', card: '#ffffff', hover: '#f0f0f5', border: '#e0e0e8', text: '#1a1a2e', textSec: '#666680', accent: '#e65c00', accent2: '#5b2c8e', bgImage: 'none', overlay: 'transparent' },
         'neon': { btn: '🟢', bg: '#070a12', card: '#111827', hover: '#1a2236', border: '#1f2a4a', text: '#e0f0ff', textSec: '#88aacc', accent: '#22d3ee', accent2: '#10b981', bgImage: 'none', overlay: 'transparent' },
         'terra-sonora': { btn: '🌄', bg: '#140a05', card: '#2a180e', hover: '#3a2216', border: '#4a2e1e', text: '#fcf3ee', textSec: '#cbaa98', accent: '#e85d3a', accent2: '#d94a20', bgImage: 'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay: 'rgba(0,0,0,0.65)' }
       };
@@ -1434,12 +1426,6 @@
         checkAdmin();
         loadFavorites();
         toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
-        // Redirecionar para sala pendente, se houver
-        if (pendingRoomAfterLogin) {
-          const roomSlug = pendingRoomAfterLogin;
-          pendingRoomAfterLogin = null;
-          setTimeout(() => joinRoom(roomSlug), 1000);
-        }
       } catch (e) {
         toast(e.message || 'Erro ao criar conta', 'error');
       }
@@ -1471,11 +1457,6 @@
         checkAdmin();
         loadFavorites();
         toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
-        if (pendingRoomAfterLogin) {
-          const roomSlug = pendingRoomAfterLogin;
-          pendingRoomAfterLogin = null;
-          setTimeout(() => joinRoom(roomSlug), 1000);
-        }
       } catch (e) {
         errorEl.textContent = e.message || 'Erro ao fazer login';
         errorEl.classList.add('show');
@@ -1531,22 +1512,18 @@
     async function loadAdminData() {
       try {
         const res = await fetch('/api/admin/stats', { credentials: 'include' });
-        if (!res.ok) { console.error('Erro stats:', await res.text()); return; }
         const data = await res.json();
-        $('adminUsers').textContent = data.totalUsers || 0;
-        $('adminRooms').textContent = data.totalRooms || 0;
-        $('adminOnline').textContent = data.onlineUsers || 0;
-      } catch (e) { console.error('loadAdminData error:', e); }
+        if (res.ok) { $('adminUsers').textContent = data.totalUsers || 0; $('adminRooms').textContent = data.totalRooms || 0; $('adminOnline').textContent = data.onlineUsers || 0; }
+      } catch (e) {}
     }
 
     async function loadAdminUsers() {
       try {
         const res = await fetch('/api/admin/users', { credentials: 'include' });
-        if (!res.ok) { console.error('Erro users:', await res.text()); return; }
         const users = await res.json();
         const list = $('adminUserList');
         const count = $('adminUserCount');
-        if (!users.length) { list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Nenhum usuário</div>'; return; }
+        if (!res.ok || !users.length) { list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Nenhum usuário</div>'; return; }
         count.textContent = users.length;
         list.innerHTML = users.map(u => `
           <div class="admin-user-item">
@@ -1558,58 +1535,16 @@
             <div class="actions">
               ${!u.isAdmin ? `<button class="promote" onclick="adminPromote('${u.email}')">👑</button>` : ''}
               <button class="delete" onclick="adminDeleteUser('${u.email}')">🗑️</button>
-              <button onclick="adminKickUser('${u.email}')" style="background:#f59e0b;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">👢</button>
-              <button onclick="adminBanUser('${u.email}')" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">⛔</button>
             </div>
           </div>
         `).join('');
-      } catch (e) { console.error('loadAdminUsers error:', e); }
+      } catch (e) {}
     }
 
-    // ===== ADMIN - KICK E BAN (IMEDIATOS COM SOCKET) =====
-    async function adminKickUser(email) {
-      if (!currentRoom) { toast('Você precisa estar em uma sala para expulsar alguém', 'error'); return; }
-      if (!confirm(`Expulsar ${email} da sala atual?`)) return;
-      try {
-        const res = await fetch('/api/admin/kick-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ email, roomSlug: currentRoom })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          toast('✅ Usuário expulso!', 'success');
-          loadAdminUsers();
-        } else {
-          toast(data.error || 'Erro ao expulsar', 'error');
-        }
-      } catch (e) { toast('Erro ao expulsar', 'error'); }
-    }
-
-    async function adminBanUser(email) {
-      if (!confirm(`Banir ${email} globalmente?`)) return;
-      try {
-        const res = await fetch('/api/admin/ban-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          toast('✅ Usuário banido!', 'success');
-          loadAdminUsers();
-        } else {
-          toast(data.error || 'Erro ao banir', 'error');
-        }
-      } catch (e) { toast('Erro ao banir', 'error'); }
-    }
-
+    // ===== ADMIN - GERENCIAR FILAS =====
     async function loadAdminQueues() {
       try {
         const res = await fetch('/api/rooms', { credentials: 'include' });
-        if (!res.ok) { console.error('Erro ao carregar salas'); return; }
         const rooms = await res.json();
         const container = document.getElementById('adminQueueList');
         if (!rooms.length) {
@@ -1623,9 +1558,9 @@
           if (room.queueLength === 0) {
             html += `<div style="color:var(--text-muted);font-size:11px;">Fila vazia</div>`;
           } else {
+            // Buscar detalhes da fila para esta sala
             try {
               const detailRes = await fetch(`/api/room/${room.slug}/queue`, { credentials: 'include' });
-              if (!detailRes.ok) throw new Error('Erro ao buscar fila');
               const detail = await detailRes.json();
               if (detail.queue && detail.queue.length) {
                 detail.queue.forEach((track, idx) => {
@@ -1651,7 +1586,6 @@
         }
         container.innerHTML = html;
       } catch (e) {
-        console.error('loadAdminQueues error:', e);
         document.getElementById('adminQueueList').innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px;">Erro ao carregar</div>';
       }
     }
@@ -1668,11 +1602,13 @@
         const data = await res.json();
         if (res.ok) {
           toast('✅ Música removida!', 'success');
-          loadAdminQueues();
+          loadAdminQueues(); // recarrega a lista
         } else {
           toast(data.error || 'Erro ao remover', 'error');
         }
-      } catch (e) { toast('Erro ao remover', 'error'); }
+      } catch (e) {
+        toast('Erro ao remover', 'error');
+      }
     }
 
     async function adminPromote(email) {
@@ -1687,11 +1623,7 @@
       if (!confirm(`Deletar ${email}?`)) return;
       try {
         const res = await fetch('/api/admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
-        if (res.ok) {
-          toast('✅ Deletado e desconectado!', 'success');
-          loadAdminUsers();
-          loadAdminData();
-        }
+        if (res.ok) { toast('✅ Deletado!', 'success'); loadAdminUsers(); loadAdminData(); }
       } catch (e) {}
     }
 
@@ -1861,12 +1793,7 @@
 
     // ===== ROOM =====
     function joinRoom(slug) {
-      if (!currentUser) { 
-        pendingRoomAfterLogin = slug;
-        toast('Faça login primeiro para entrar na sala', 'error');
-        showLogin();
-        return; 
-      }
+      if (!currentUser) { toast('Faça login primeiro', 'error'); return; }
       currentRoom = slug;
       socket.emit('joinRoom', { slug, name: myName, avatar: myAvatar });
       showScreen('room');
@@ -1995,7 +1922,7 @@
       }, interval);
     }
 
-    // ===== RENDER QUEUE (VISÍVEL PARA TODOS) =====
+    // ===== RENDER QUEUE COM BOTÃO REMOVER VISÍVEL =====
     function renderQueue(queue, currentIndex) {
       const list = $('queueList');
       const count = $('queueCount');
@@ -2007,6 +1934,7 @@
         return;
       }
 
+      // Verifica se é admin global
       const isGlobalAdmin = currentUser && currentUser.email === 'admin@sonora.com';
       const isUserAdmin = amIAdmin || isGlobalAdmin;
 
@@ -2065,6 +1993,7 @@
       });
     }
 
+    // ===== VOTAÇÃO =====
     function voteSong(index, type) {
       if (!currentRoom) { toast('Entre em uma sala para votar', 'error'); return; }
       if (currentRoomData && currentRoomData.currentIndex === index) { toast('Não é possível votar na música atual', 'error'); return; }
@@ -2331,11 +2260,6 @@
     }
 
     // ===== SOCKET EVENTS =====
-    // Escuta por atualização de usuários admin (para recarregar a lista)
-    socket.on('adminUsersUpdated', () => {
-      if (amIAdmin) loadAdminUsers();
-    });
-
     socket.on('roomState', (state) => {
       const prev = currentRoomData && currentRoomData.queue && currentRoomData.queue[currentRoomData.currentIndex] ? currentRoomData.queue[currentRoomData.currentIndex].id : null;
       const next = state.queue && state.queue[state.currentIndex] ? state.queue[state.currentIndex].id : null;
@@ -2438,11 +2362,6 @@
     // ===== INICIALIZAÇÃO =====
     function init() {
       applyTheme();
-      // Verifica se há parâmetro de sala na URL
-      const params = new URLSearchParams(window.location.search);
-      const room = params.get('room');
-      if (room) pendingRoomAfterLogin = room;
-
       fetch('/api/me')
         .then(res => {
           if (res.ok) return res.json();
@@ -2461,21 +2380,20 @@
             checkAdmin();
             loadFavorites();
             toast('Bem-vindo(a) ' + myName + '!', 'success');
-            // Se havia sala pendente, entrar nela
-            if (pendingRoomAfterLogin) {
-              const slug = pendingRoomAfterLogin;
-              pendingRoomAfterLogin = null;
-              setTimeout(() => joinRoom(slug), 1000);
-            }
           }
         })
         .catch(() => {
           $('landingScreen').style.display = 'block';
-          // Se havia sala pendente e não está logado, mostrar landing com mensagem
-          if (pendingRoomAfterLogin) {
-            toast('Faça login ou cadastre-se para entrar na sala!', 'error');
-          }
         });
+
+      const params = new URLSearchParams(window.location.search);
+      const room = params.get('room');
+      if (room) {
+        setTimeout(() => {
+          if (currentUser) joinRoom(room);
+          else toast('Faça login para entrar', 'error');
+        }, 1000);
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
