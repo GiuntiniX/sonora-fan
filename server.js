@@ -5,12 +5,21 @@ const { Server } = require('socket.io');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
-const db = require('./database');
+
+// Banco de dados
+let db;
+try {
+  db = require('./database');
+} catch (e) {
+  console.error('❌ Erro ao carregar database.js:', e.message);
+  process.exit(1);
+}
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
+// Servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(cookieParser());
@@ -25,12 +34,11 @@ const DISLIKE_THRESHOLD = 10;
 const sessions = new Map();
 
 // ========== ESTADO EM MEMÓRIA ==========
-const rooms = new Map();          // slug -> room object
-const roomVotes = new Map();      // slug -> { queueId: { up: [users], down: [users] } }
-const roomLikes = new Map();      // slug -> { messageId: { likes, users } }
+const rooms = new Map();
+const roomVotes = new Map();
+const roomLikes = new Map();
 
 // ========== FUNÇÕES DE BANCO ==========
-// Carregar salas do banco
 async function loadRoomsFromDB() {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM rooms', (err, rows) => {
@@ -40,7 +48,6 @@ async function loadRoomsFromDB() {
   });
 }
 
-// Carregar fila de uma sala
 async function loadQueueFromDB(slug) {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM queue WHERE roomSlug = ? ORDER BY position ASC', [slug], (err, rows) => {
@@ -50,7 +57,6 @@ async function loadQueueFromDB(slug) {
   });
 }
 
-// Carregar votos de uma sala
 async function loadVotesFromDB(slug) {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM votes WHERE roomSlug = ?', [slug], (err, rows) => {
@@ -65,7 +71,6 @@ async function loadVotesFromDB(slug) {
   });
 }
 
-// Carregar curtidas de uma sala
 async function loadLikesFromDB(slug) {
   return new Promise((resolve, reject) => {
     db.all('SELECT * FROM likes WHERE roomSlug = ?', [slug], (err, rows) => {
@@ -81,42 +86,44 @@ async function loadLikesFromDB(slug) {
   });
 }
 
-// Inicializar estado do servidor a partir do banco
 async function initServerState() {
-  const roomRows = await loadRoomsFromDB();
-  for (const row of roomRows) {
-    const queue = await loadQueueFromDB(row.slug);
-    const votes = await loadVotesFromDB(row.slug);
-    const likes = await loadLikesFromDB(row.slug);
-    
-    roomVotes.set(row.slug, votes);
-    roomLikes.set(row.slug, likes);
-    
-    rooms.set(row.slug, {
-      slug: row.slug,
-      name: row.name,
-      admin: row.admin,
-      queue: queue.map(q => ({
-        id: q.id,
-        videoId: q.videoId,
-        title: q.title,
-        artist: q.artist,
-        duration: q.duration,
-        dj: q.dj,
-      })),
-      currentIndex: row.currentIndex,
-      startedAt: new Date(row.startedAt),
-      isPlaying: row.isPlaying === 1,
-      listenerCount: row.listenerCount || 0,
-      chatHistory: [],
-      lastAddTime: new Map(),
-      lastAdvanceAt: Date.now()
-    });
+  try {
+    const roomRows = await loadRoomsFromDB();
+    for (const row of roomRows) {
+      const queue = await loadQueueFromDB(row.slug);
+      const votes = await loadVotesFromDB(row.slug);
+      const likes = await loadLikesFromDB(row.slug);
+      
+      roomVotes.set(row.slug, votes);
+      roomLikes.set(row.slug, likes);
+      
+      rooms.set(row.slug, {
+        slug: row.slug,
+        name: row.name,
+        admin: row.admin,
+        queue: queue.map(q => ({
+          id: q.id,
+          videoId: q.videoId,
+          title: q.title,
+          artist: q.artist,
+          duration: q.duration,
+          dj: q.dj,
+        })),
+        currentIndex: row.currentIndex,
+        startedAt: new Date(row.startedAt),
+        isPlaying: row.isPlaying === 1,
+        listenerCount: row.listenerCount || 0,
+        chatHistory: [],
+        lastAddTime: new Map(),
+        lastAdvanceAt: Date.now()
+      });
+    }
+    console.log(`✅ ${rooms.size} salas carregadas do banco.`);
+  } catch (e) {
+    console.error('❌ Erro ao inicializar estado do servidor:', e);
   }
-  console.log(`✅ ${rooms.size} salas carregadas do banco.`);
 }
 
-// Salvar sala no banco
 function saveRoomToDB(slug, room) {
   db.run(
     `INSERT OR REPLACE INTO rooms (slug, name, admin, isPlaying, currentIndex, startedAt, listenerCount)
@@ -125,7 +132,6 @@ function saveRoomToDB(slug, room) {
   );
 }
 
-// Salvar fila no banco (substitui a fila atual)
 function saveQueueToDB(slug, queue) {
   db.run('DELETE FROM queue WHERE roomSlug = ?', [slug]);
   const stmt = db.prepare('INSERT INTO queue (roomSlug, videoId, title, artist, duration, dj, position) VALUES (?, ?, ?, ?, ?, ?, ?)');
@@ -135,27 +141,10 @@ function saveQueueToDB(slug, queue) {
   stmt.finalize();
 }
 
-// Salvar voto
 function saveVoteToDB(slug, queueId, userName, type) {
   db.run(
     'INSERT OR REPLACE INTO votes (roomSlug, queueId, userName, type) VALUES (?, ?, ?, ?)',
     [slug, queueId, userName, type]
-  );
-}
-
-// Remover voto
-function deleteVoteFromDB(slug, queueId, userName) {
-  db.run(
-    'DELETE FROM votes WHERE roomSlug = ? AND queueId = ? AND userName = ?',
-    [slug, queueId, userName]
-  );
-}
-
-// Salvar curtida
-function saveLikeToDB(slug, messageId, userName) {
-  db.run(
-    'INSERT OR REPLACE INTO likes (roomSlug, messageId, userName) VALUES (?, ?, ?)',
-    [slug, messageId, userName]
   );
 }
 
@@ -166,22 +155,18 @@ function deleteLikeFromDB(slug, messageId, userName) {
   );
 }
 
-// Registrar histórico
+function saveLikeToDB(slug, messageId, userName) {
+  db.run(
+    'INSERT OR REPLACE INTO likes (roomSlug, messageId, userName) VALUES (?, ?, ?)',
+    [slug, messageId, userName]
+  );
+}
+
 function addHistoryToDB(slug, videoId, title, artist, dj) {
   db.run(
     'INSERT INTO history (roomSlug, videoId, title, artist, dj) VALUES (?, ?, ?, ?, ?)',
     [slug, videoId, title, artist, dj]
   );
-}
-
-// Buscar histórico de uma sala (últimas 50)
-function getHistoryFromDB(slug) {
-  return new Promise((resolve, reject) => {
-    db.all('SELECT * FROM history WHERE roomSlug = ? ORDER BY playedAt DESC LIMIT 50', [slug], (err, rows) => {
-      if (err) return reject(err);
-      resolve(rows);
-    });
-  });
 }
 
 // ========== FUNÇÕES DE NEGÓCIO ==========
@@ -214,7 +199,7 @@ function broadcastUsers(slug) {
       avatar: s.userAvatar || '👤',
     }));
     io.to(slug).emit('users', users);
-  });
+  }).catch(() => {});
 }
 
 function addSystemMsg(slug, text) {
@@ -236,7 +221,6 @@ async function advanceQueue(slug) {
   if (Date.now() - room.lastAdvanceAt < 10000) return false;
   room.lastAdvanceAt = Date.now();
 
-  // Registrar música tocada no histórico
   const played = room.queue[room.currentIndex];
   if (played) {
     addHistoryToDB(slug, played.videoId, played.title, played.artist, played.dj);
@@ -250,13 +234,10 @@ async function advanceQueue(slug) {
   saveRoomToDB(slug, room);
   saveQueueToDB(slug, room.queue);
   
-  // Reindexar votos
   const votes = roomVotes.get(slug) || {};
   const newVotes = {};
   room.queue.forEach((_, i) => {
-    if (votes[i + 1]) {
-      newVotes[i] = votes[i + 1];
-    }
+    if (votes[i + 1]) newVotes[i] = votes[i + 1];
   });
   roomVotes.set(slug, newVotes);
   
@@ -435,14 +416,19 @@ app.post('/api/rooms', async (req, res) => {
 
 app.get('/api/history/:slug', async (req, res) => {
   try {
-    const history = await getHistoryFromDB(req.params.slug);
+    const history = await new Promise((resolve, reject) => {
+      db.all('SELECT * FROM history WHERE roomSlug = ? ORDER BY playedAt DESC LIMIT 50', [req.params.slug], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
     res.json(history);
   } catch (e) {
     res.status(500).json({ error: 'Erro ao buscar histórico' });
   }
 });
 
-// Video info (fallback)
+// Video info
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
   if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
@@ -483,7 +469,7 @@ function fetchUrl(url) {
   });
 }
 
-// ========== ADMIN ROTAS ==========
+// ========== ADMIN ==========
 function isAdmin(req, res, next) {
   const token = req.cookies.sessionToken;
   if (!token) return res.status(401).json({ error: 'Não autenticado' });
@@ -579,6 +565,7 @@ app.get('/api/admin/export-data', isAdmin, (req, res) => {
   res.json({ message: 'Exportar dados - funcionalidade em breve' });
 });
 
+// Fallback para SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -615,7 +602,6 @@ io.on('connection', (socket) => {
 
     if (isGlobalAdmin && !room.admin) room.admin = name;
 
-    // Envia estado
     const likes = roomLikes.get(slug) || {};
     socket.emit('likesState', likes);
     const votes = roomVotes.get(slug) || {};
@@ -794,7 +780,6 @@ io.on('connection', (socket) => {
     // Adicionar novo voto
     if (type === 'up') {
       data.up.push(socket.userName);
-      // Atualizar estatísticas
       const cookie = socket.handshake.headers.cookie || '';
       const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
       if (tokenMatch) {
@@ -815,7 +800,6 @@ io.on('connection', (socket) => {
       }
     }
     
-    // Salvar voto no banco (associado ao queueId)
     const queueId = roomData.queue[index].id;
     if (queueId) {
       saveVoteToDB(room, queueId, socket.userName, type);
