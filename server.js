@@ -24,7 +24,7 @@ const MAX_SONGS_PER_USER = 3;
 // ========== AUTENTICAÇÃO ==========
 const users = new Map();
 const sessions = new Map();
-const userFavorites = new Map(); // email -> [{ id, title, artist }]
+const userFavorites = new Map();
 
 // ========== ESTADO ==========
 const rooms = new Map();
@@ -156,7 +156,6 @@ function advanceQueue(slug) {
   return true;
 }
 
-// Auto-advance
 setInterval(() => {
   for (const [slug, room] of rooms) {
     if (!room.isPlaying || room.queue.length === 0) continue;
@@ -260,6 +259,12 @@ app.get('/api/rooms', (req, res) => {
   res.json(list);
 });
 
+app.get('/api/room/:slug/queue', (req, res) => {
+  const room = rooms.get(req.params.slug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  res.json({ queue: room.queue, currentIndex: room.currentIndex });
+});
+
 app.get('/api/rooms/random', (req, res) => {
   const list = Array.from(rooms.values());
   if (list.length === 0) return res.json({ slug: null });
@@ -275,7 +280,6 @@ app.post('/api/rooms', (req, res) => {
   res.json({ slug, name });
 });
 
-// Video info
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
@@ -394,6 +398,37 @@ app.get('/api/admin/export-data', isAdmin, (req, res) => {
     settings
   };
   res.json(data);
+});
+
+// Nova rota para admin remover música de qualquer sala
+app.post('/api/admin/remove-song', isAdmin, (req, res) => {
+  const { roomSlug, index } = req.body;
+  if (!roomSlug || index === undefined) {
+    return res.status(400).json({ error: 'Parâmetros inválidos' });
+  }
+  const room = rooms.get(roomSlug);
+  if (!room) {
+    return res.status(404).json({ error: 'Sala não encontrada' });
+  }
+  if (index < 0 || index >= room.queue.length) {
+    return res.status(400).json({ error: 'Índice inválido' });
+  }
+  if (index === room.currentIndex) {
+    return res.status(400).json({ error: 'Não é possível remover a música atual' });
+  }
+  const track = room.queue[index];
+  room.queue.splice(index, 1);
+  if (index < room.currentIndex) room.currentIndex--;
+  
+  const votes = getRoomVotes(roomSlug);
+  const newVotes = {};
+  room.queue.forEach((_, i) => {
+    if (votes[i + 1]) newVotes[i] = votes[i + 1];
+  });
+  roomVotes.set(roomSlug, newVotes);
+  broadcastState(roomSlug);
+  addSystemMsg(roomSlug, `🗑️ Admin removeu "${track.title}"`);
+  res.json({ success: true });
 });
 
 app.get('*', (req, res) => {
@@ -546,19 +581,19 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
   });
 
+  // REMOVER MÚSICA - CORRIGIDO COM VERIFICAÇÃO DE ADMIN GLOBAL
   socket.on('removeFromQueue', (index) => {
     if (!currentRoom) {
       socket.emit('error', 'Você não está em uma sala');
       return;
     }
-    // Verifica se o usuário é admin global OU admin da sala
-    const isGlobalAdmin = adminEmails.has(userEmail);
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
     const room = rooms.get(currentRoom);
-    if (!socket.isAdmin && !isGlobalAdmin) {
+    if (!room) return;
+    if (!isGlobalAdmin && !socket.isAdmin) {
       socket.emit('error', 'Apenas admin pode remover músicas');
       return;
     }
-    if (!room) return;
     const track = room.queue[index];
     if (!track || index === room.currentIndex) {
       socket.emit('error', 'Não é possível remover a música atual');
@@ -577,14 +612,14 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
   });
 
-  // ===== REORDER QUEUE (drag-and-drop) =====
+  // REORDER QUEUE
   socket.on('reorderQueue', (newOrder) => {
     if (!currentRoom) {
       socket.emit('error', 'Você não está em uma sala');
       return;
     }
-    const isGlobalAdmin = adminEmails.has(userEmail);
-    if (!socket.isAdmin && !isGlobalAdmin) {
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    if (!isGlobalAdmin && !socket.isAdmin) {
       socket.emit('error', 'Apenas admin pode reordenar');
       return;
     }
@@ -615,7 +650,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ===== VOTAÇÃO =====
+  // VOTAÇÃO
   socket.on('voteSong', ({ index, type, room }) => {
     if (!room || !socket.userName) return;
     const roomData = rooms.get(room);
@@ -693,8 +728,8 @@ io.on('connection', (socket) => {
       socket.emit('error', 'Você não está em uma sala');
       return;
     }
-    const isGlobalAdmin = adminEmails.has(userEmail);
-    if (!socket.isAdmin && !isGlobalAdmin) {
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    if (!isGlobalAdmin && !socket.isAdmin) {
       socket.emit('error', 'Apenas admin pode limpar o chat');
       return;
     }
@@ -706,7 +741,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('adminBroadcast', (data) => {
-    if (!socket.isAdmin && !adminEmails.has(userEmail)) return;
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    if (!isGlobalAdmin && !socket.isAdmin) return;
     io.emit('adminBroadcast', { message: data.message });
   });
 
