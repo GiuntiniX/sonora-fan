@@ -693,7 +693,7 @@
     .users-panel .user-count { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 14px; font-weight: 600; }
     .users-panel .user-count .icon { font-size: 18px; }
 
-    /* ===== CHAT FIXO - LIMITE DE 10 MENSAGENS ===== */
+    /* ===== CHAT ===== */
     .chat-panel {
       flex: 1;
       display: flex;
@@ -729,7 +729,6 @@
       max-height: 100%;
     }
 
-    /* Esconde a barra de rolagem */
     .chat-messages-inner::-webkit-scrollbar {
       width: 0px;
       background: transparent;
@@ -739,7 +738,6 @@
       -ms-overflow-style: none;
     }
 
-    /* Mensagens */
     .msg {
       display: flex;
       gap: 8px;
@@ -755,13 +753,11 @@
       background: rgba(255,255,255,0.02);
     }
 
-    /* Mensagens não vistas têm destaque sutil */
     .msg:not(.seen) {
       border-left: 2px solid var(--accent);
       padding-left: 6px;
     }
 
-    /* Mensagens removidas */
     .msg.removing {
       opacity: 0;
       transform: translateY(-10px) scale(0.95);
@@ -799,7 +795,6 @@
     .msg-like-btn.liked { color: var(--accent); background: rgba(255,107,53,0.1); }
     .msg-like-count { font-size: 10px; font-weight: 600; }
 
-    /* ===== PILL DE NOVAS MENSAGENS ===== */
     .new-messages-pill {
       position: absolute;
       bottom: 70px;
@@ -820,21 +815,14 @@
       animation: bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .new-messages-pill.hidden {
-      display: none;
-    }
-
-    .new-messages-pill:hover {
-      transform: translateX(-50%) scale(1.05);
-      box-shadow: 0 6px 30px rgba(124,58,237,0.5);
-    }
+    .new-messages-pill.hidden { display: none; }
+    .new-messages-pill:hover { transform: translateX(-50%) scale(1.05); box-shadow: 0 6px 30px rgba(124,58,237,0.5); }
 
     @keyframes bounceIn {
       0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
       100% { opacity: 1; transform: translateX(-50%) scale(1); }
     }
 
-    /* ===== INPUT DO CHAT ===== */
     .chat-input-bar {
       padding: 8px 12px;
       border-top: 1px solid var(--border);
@@ -856,10 +844,6 @@
     .emoji-panel.show { display: flex; }
     .emoji-item { font-size: 20px; cursor: pointer; padding: 3px 5px; border-radius: 4px; transition: background 0.15s; line-height: 1; }
     .emoji-item:hover { background: var(--bg-hover); }
-
-    .eq-bar { width: 4px; border-radius: 2px; background: linear-gradient(to top, var(--accent), var(--accent2)); transition: height 0.3s; }
-    @keyframes equalizer { 0%, 100% { height: 4px; } 50% { height: 18px; } }
-    @keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg) scale(0.3); opacity: 0; } }
 
     .footer {
       text-align: center;
@@ -1265,11 +1249,13 @@ let player = null;
 let currentTrackId = null;
 let lastAddTime = 0;
 let songData = null;
-let messageLikes = {};
 let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
 
+// ✅ Estado de curtidas sincronizado com o servidor
+let messageLikesSync = {}; // { messageId: { likes: number, users: [name1, name2] } }
+
 // ===== CONSTANTES =====
-const MAX_CHAT_MESSAGES = 10; // Mantém apenas as últimas 10 mensagens
+const MAX_CHAT_MESSAGES = 10;
 
 // ===== UTILS =====
 function $(id) { return document.getElementById(id); }
@@ -2089,13 +2075,15 @@ function startCooldown() {
   }, 1000);
 }
 
-// ===== CHAT FIXO - LIMITE DE 10 MENSAGENS =====
+// ===== CHAT =====
 function renderMessage(msg) {
   const container = document.getElementById('chatMessagesInner');
   if (!container) return;
   
   const div = document.createElement('div');
   div.className = 'msg';
+  const msgId = msg._id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+  div.dataset.msgId = msgId;
 
   if (msg.isMusic) {
     div.classList.add('msg-music');
@@ -2117,10 +2105,9 @@ function renderMessage(msg) {
     let text = escapeHtml(msg.text);
     text = text.replace(/@(\w+)/g, '<span style="color:var(--accent);font-weight:700;">@$1</span>');
     
-    const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-    if (!messageLikes[msgId]) messageLikes[msgId] = { likes: 0, users: [] };
-    const liked = messageLikes[msgId].users.includes(myName);
-    const count = messageLikes[msgId].likes;
+    const likeData = messageLikesSync[msgId] || { likes: 0, users: [] };
+    const liked = likeData.users.includes(myName);
+    const count = likeData.likes || 0;
 
     div.innerHTML = `
       <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
@@ -2164,20 +2151,51 @@ function limitChatMessages(container) {
   }
 }
 
+// ✅ Função de curtir - envia para o servidor
 function likeMessage(msgId, btn) {
-  if (!messageLikes[msgId]) messageLikes[msgId] = { likes: 0, users: [] };
-  const data = messageLikes[msgId];
-  const idx = data.users.indexOf(myName);
-  if (idx > -1) {
-    data.users.splice(idx, 1);
-    data.likes--;
-    btn.classList.remove('liked');
-    btn.innerHTML = `🤍 <span class="msg-like-count">${data.likes}</span>`;
+  if (!currentRoom) {
+    toast('Entre em uma sala para curtir', 'error');
+    return;
+  }
+  
+  socket.emit('likeMessage', { 
+    messageId: msgId,
+    room: currentRoom
+  });
+}
+
+// ✅ Atualiza a UI de curtidas baseado no estado do servidor
+function updateLikeDisplay(msgId) {
+  const likeData = messageLikesSync[msgId];
+  if (!likeData) return;
+  
+  const count = likeData.likes || 0;
+  const liked = likeData.users.includes(myName);
+  
+  const container = document.getElementById('chatMessagesInner');
+  if (!container) return;
+  
+  const msgElements = container.querySelectorAll('.msg');
+  let targetElement = null;
+  
+  for (const el of msgElements) {
+    if (el.dataset.msgId === msgId) {
+      targetElement = el;
+      break;
+    }
+  }
+  
+  if (!targetElement) return;
+  
+  const likeBtn = targetElement.querySelector('.msg-like-btn');
+  if (!likeBtn) return;
+  
+  likeBtn.innerHTML = `${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>`;
+  
+  if (liked) {
+    likeBtn.classList.add('liked');
   } else {
-    data.users.push(myName);
-    data.likes++;
-    btn.classList.add('liked');
-    btn.innerHTML = `❤️ <span class="msg-like-count">${data.likes}</span>`;
+    likeBtn.classList.remove('liked');
   }
 }
 
@@ -2271,6 +2289,30 @@ socket.on('chatHistory', (messages) => {
   
   recentMessages.forEach(m => renderMessage(m));
   setTimeout(markMessagesAsSeen, 100);
+});
+
+// ✅ Evento de curtidas - atualiza o estado e a UI
+socket.on('likeUpdate', (data) => {
+  const { messageId, likes, users } = data;
+  
+  messageLikesSync[messageId] = { likes, users };
+  updateLikeDisplay(messageId);
+});
+
+// ✅ Estado inicial de curtidas ao entrar na sala
+socket.on('likesState', (likesData) => {
+  messageLikesSync = likesData || {};
+  
+  const container = document.getElementById('chatMessagesInner');
+  if (!container) return;
+  
+  const msgElements = container.querySelectorAll('.msg');
+  for (const el of msgElements) {
+    const msgId = el.dataset.msgId;
+    if (msgId && messageLikesSync[msgId]) {
+      updateLikeDisplay(msgId);
+    }
+  }
 });
 
 socket.on('error', (msg) => toast(msg, 'error'));
