@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
+const db = require('./database');
 
 const app = express();
 const server = http.createServer(app);
@@ -20,43 +21,124 @@ const adminEmails = new Set(['admin@sonora.com']);
 const settings = { maxQueue: 20, cooldown: 180, maxDuration: 600 };
 const DISLIKE_THRESHOLD = 10;
 
-// ========== AUTENTICAÇÃO ==========
-const users = new Map();
+// ========== AUTENTICAÇÃO (em memória para sessões) ==========
 const sessions = new Map();
 
-// ========== ESTADO ==========
+// ========== ESTADO EM MEMÓRIA ==========
 const rooms = new Map();
-const roomLikes = new Map();
 const roomVotes = new Map();
+const roomLikes = new Map();
 
-function createRoom(slug, name, adminName = null) {
-  roomLikes.set(slug, {});
-  roomVotes.set(slug, {});
-  return {
-    slug, name, admin: adminName,
-    queue: [], currentIndex: 0, startedAt: Date.now(),
-    votes: { up: 0, down: 0 }, bannedUsers: [],
-    chatHistory: [], listenerCount: 0,
-    lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0
-  };
+// ========== FUNÇÕES DE BANCO ==========
+async function loadRoomsFromDB() {
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM rooms', (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
 }
 
-function getRoomLikes(slug) {
-  if (!roomLikes.has(slug)) {
-    roomLikes.set(slug, {});
+async function loadQueueFromDB(slug) {
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM queue WHERE roomSlug = ? ORDER BY position ASC', [slug], (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+}
+
+async function loadVotesFromDB(slug) {
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM votes WHERE roomSlug = ?', [slug], (err, rows) => {
+      if (err) return reject(err);
+      const votesMap = {};
+      rows.forEach(v => {
+        if (!votesMap[v.queueId]) votesMap[v.queueId] = { up: [], down: [] };
+        votesMap[v.queueId][v.type].push(v.userName);
+      });
+      resolve(votesMap);
+    });
+  });
+}
+
+async function loadLikesFromDB(slug) {
+  return new Promise((resolve, reject) => {
+    db.all('SELECT * FROM likes WHERE roomSlug = ?', [slug], (err, rows) => {
+      if (err) return reject(err);
+      const likesMap = {};
+      rows.forEach(l => {
+        if (!likesMap[l.messageId]) likesMap[l.messageId] = { likes: 0, users: [] };
+        likesMap[l.messageId].users.push(l.userName);
+        likesMap[l.messageId].likes++;
+      });
+      resolve(likesMap);
+    });
+  });
+}
+
+async function initServerState() {
+  const roomRows = await loadRoomsFromDB();
+  for (const row of roomRows) {
+    const queue = await loadQueueFromDB(row.slug);
+    const votes = await loadVotesFromDB(row.slug);
+    const likes = await loadLikesFromDB(row.slug);
+    
+    roomVotes.set(row.slug, votes);
+    roomLikes.set(row.slug, likes);
+    
+    rooms.set(row.slug, {
+      slug: row.slug,
+      name: row.name,
+      admin: row.admin,
+      queue: queue.map(q => ({
+        id: q.id,
+        videoId: q.videoId,
+        title: q.title,
+        artist: q.artist,
+        duration: q.duration,
+        dj: q.dj,
+        // para compatibilidade com frontend
+        videoId: q.videoId,
+        ...q
+      })),
+      currentIndex: row.currentIndex,
+      startedAt: new Date(row.startedAt),
+      isPlaying: row.isPlaying === 1,
+      listenerCount: row.listenerCount || 0,
+      chatHistory: [],
+      lastAddTime: new Map(),
+      lastAdvanceAt: Date.now()
+    });
   }
-  return roomLikes.get(slug);
+  console.log(`✅ ${rooms.size} salas carregadas do banco.`);
 }
 
-function getRoomVotes(slug) {
-  if (!roomVotes.has(slug)) {
-    roomVotes.set(slug, {});
-  }
-  return roomVotes.get(slug);
+function saveRoomToDB(slug, room) {
+  db.run(
+    `INSERT OR REPLACE INTO rooms (slug, name, admin, isPlaying, currentIndex, startedAt, listenerCount)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [slug, room.name, room.admin, room.isPlaying ? 1 : 0, room.currentIndex, room.startedAt.toISOString(), room.listenerCount]
+  );
 }
 
-rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
+function saveQueueToDB(slug, queue) {
+  db.run('DELETE FROM queue WHERE roomSlug = ?', [slug]);
+  const stmt = db.prepare('INSERT INTO queue (roomSlug, videoId, title, artist, duration, dj, position) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  queue.forEach((item, index) => {
+    stmt.run(slug, item.videoId, item.title, item.artist, item.duration || 0, item.dj, index);
+  });
+  stmt.finalize();
+}
 
+function addHistoryToDB(slug, videoId, title, artist, dj) {
+  db.run(
+    'INSERT INTO history (roomSlug, videoId, title, artist, dj) VALUES (?, ?, ?, ?, ?)',
+    [slug, videoId, title, artist, dj]
+  );
+}
+
+// ========== FUNÇÕES DE NEGÓCIO ==========
 function getPosition(room) {
   const track = room.queue[room.currentIndex];
   if (!track) return 0;
@@ -102,19 +184,26 @@ function addSystemMsg(slug, text) {
   io.to(slug).emit('chat', msg);
 }
 
-function advanceQueue(slug) {
+async function advanceQueue(slug) {
   const room = rooms.get(slug);
   if (!room || !room.isPlaying || room.queue.length === 0) return false;
   if (Date.now() - room.lastAdvanceAt < 10000) return false;
   room.lastAdvanceAt = Date.now();
+
+  const played = room.queue[room.currentIndex];
+  if (played) {
+    addHistoryToDB(slug, played.videoId, played.title, played.artist, played.dj);
+  }
 
   room.queue.shift();
   room.currentIndex = 0;
   room.startedAt = Date.now();
   room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
   
-  // Reindexa os votos após remover a música
-  const votes = getRoomVotes(slug);
+  saveRoomToDB(slug, room);
+  saveQueueToDB(slug, room.queue);
+  
+  const votes = roomVotes.get(slug) || {};
   const newVotes = {};
   room.queue.forEach((_, i) => {
     if (votes[i + 1]) {
@@ -130,6 +219,7 @@ function advanceQueue(slug) {
     addSystemMsg(slug, `▶ ${next.title} — ${next.artist}`);
   } else {
     room.isPlaying = false;
+    saveRoomToDB(slug, room);
     broadcastState(slug);
     addSystemMsg(slug, '🏁 Fila encerrada. Adicione músicas!');
     io.to(slug).emit('queueEmpty');
@@ -137,20 +227,8 @@ function advanceQueue(slug) {
   return true;
 }
 
-// Auto-advance
-setInterval(() => {
-  for (const [slug, room] of rooms) {
-    if (!room.isPlaying || room.queue.length === 0) continue;
-    const track = room.queue[room.currentIndex];
-    if (!track) continue;
-    const pos = getPosition(room);
-    const duration = track.duration || 180;
-    if (pos >= duration - 2) advanceQueue(slug);
-  }
-}, 2000);
-
 // ========== API ==========
-app.post('/api/signup', (req, res) => {
+app.post('/api/signup', async (req, res) => {
   const { nome, email, senha, genero, regiao, estilos } = req.body;
   if (!nome || nome.length < 2) return res.status(400).json({ error: 'Nome inválido' });
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'E-mail inválido' });
@@ -158,24 +236,51 @@ app.post('/api/signup', (req, res) => {
   if (!genero) return res.status(400).json({ error: 'Selecione um gênero' });
   if (!regiao) return res.status(400).json({ error: 'Selecione uma região' });
   if (!estilos || estilos.length === 0) return res.status(400).json({ error: 'Escolha um estilo' });
-  if (users.has(email)) return res.status(400).json({ error: 'E-mail já cadastrado' });
-
-  users.set(email, { nome, email, senha, genero, regiao, estilos, avatar: '🎸', criadoEm: new Date() });
-  res.json({ success: true, nome, email });
+  
+  try {
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT email FROM users WHERE email = ?', [email], (err, row) => {
+        if (err) return reject(err);
+        resolve(row);
+      });
+    });
+    if (user) return res.status(400).json({ error: 'E-mail já cadastrado' });
+    
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT INTO users (email, nome, senha, genero, regiao, estilos, avatar) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [email, nome, senha, genero, regiao, JSON.stringify(estilos), '🎸'],
+        (err) => err ? reject(err) : resolve()
+      );
+    });
+    res.json({ success: true, nome, email });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) return res.status(400).json({ error: 'Preencha e-mail e senha' });
-  const user = users.get(email);
-  if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
-  if (user.senha !== senha) return res.status(401).json({ error: 'Senha incorreta' });
+  
+  try {
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
+        if (err) return reject(err);
+        resolve(row);
+      });
+    });
+    if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
+    if (user.senha !== senha) return res.status(401).json({ error: 'Senha incorreta' });
 
-  const token = crypto.randomBytes(64).toString('hex');
-  sessions.set(token, email);
-  res.cookie('sessionToken', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'lax', path: '/' });
-  const { senha: _, ...userData } = user;
-  res.json({ success: true, user: userData });
+    const token = crypto.randomBytes(64).toString('hex');
+    sessions.set(token, email);
+    res.cookie('sessionToken', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'lax', path: '/' });
+    const { senha: _, ...userData } = user;
+    res.json({ success: true, user: userData });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
 });
 
 app.post('/api/logout', (req, res) => {
@@ -185,42 +290,125 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/me', (req, res) => {
+app.get('/api/me', async (req, res) => {
   const token = req.cookies.sessionToken;
   if (!token) return res.status(401).json({ error: 'Não autenticado' });
   const email = sessions.get(token);
   if (!email) return res.status(401).json({ error: 'Sessão inválida' });
-  const user = users.get(email);
-  if (!user) { sessions.delete(token); return res.status(401).json({ error: 'Usuário não encontrado' }); }
-  const { senha: _, ...userData } = user;
-  res.json({ success: true, user: userData });
+  
+  try {
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
+        if (err) return reject(err);
+        resolve(row);
+      });
+    });
+    if (!user) { sessions.delete(token); return res.status(401).json({ error: 'Usuário não encontrado' }); }
+    const { senha: _, ...userData } = user;
+    res.json({ success: true, user: userData });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
 });
 
-app.get('/api/rooms', (req, res) => {
-  const list = Array.from(rooms.values()).map(r => ({
-    slug: r.slug, name: r.name, listenerCount: r.listenerCount,
-    queueLength: r.queue.length, isPlaying: r.isPlaying,
-    currentTrack: r.queue[r.currentIndex] || null,
-  }));
-  res.json(list);
+app.get('/api/rooms', async (req, res) => {
+  try {
+    const list = await new Promise((resolve, reject) => {
+      db.all('SELECT * FROM rooms', (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+    const enriched = list.map(r => {
+      const room = rooms.get(r.slug);
+      return {
+        slug: r.slug,
+        name: r.name,
+        listenerCount: room ? room.listenerCount : 0,
+        queueLength: room ? room.queue.length : 0,
+        isPlaying: room ? room.isPlaying : false,
+        currentTrack: room && room.queue[room.currentIndex] ? room.queue[room.currentIndex] : null,
+      };
+    });
+    res.json(enriched);
+  } catch (e) {
+    res.status(500).json({ error: 'Erro ao listar salas' });
+  }
 });
 
-app.get('/api/rooms/random', (req, res) => {
-  const list = Array.from(rooms.values());
-  if (list.length === 0) return res.json({ slug: null });
-  const sorted = list.sort((a, b) => b.listenerCount - a.listenerCount);
-  res.json({ slug: sorted[0].slug });
+app.get('/api/rooms/random', async (req, res) => {
+  try {
+    const list = await new Promise((resolve, reject) => {
+      db.all('SELECT slug FROM rooms', (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+    if (list.length === 0) return res.json({ slug: null });
+    const sorted = list.sort((a, b) => {
+      const roomA = rooms.get(a.slug);
+      const roomB = rooms.get(b.slug);
+      return (roomB ? roomB.listenerCount : 0) - (roomA ? roomA.listenerCount : 0);
+    });
+    res.json({ slug: sorted[0].slug });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro' });
+  }
 });
 
-app.post('/api/rooms', (req, res) => {
+app.post('/api/rooms', async (req, res) => {
   const { name, adminName } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
-  rooms.set(slug, createRoom(slug, name, adminName || null));
-  res.json({ slug, name });
+  
+  try {
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT INTO rooms (slug, name, admin) VALUES (?, ?, ?)',
+        [slug, name, adminName || null],
+        (err) => err ? reject(err) : resolve()
+      );
+    });
+    const room = {
+      slug, name, admin: adminName || null,
+      queue: [], currentIndex: 0, startedAt: new Date(),
+      votes: { up: 0, down: 0 }, bannedUsers: [],
+      chatHistory: [], listenerCount: 0,
+      lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0
+    };
+    rooms.set(slug, room);
+    roomVotes.set(slug, {});
+    roomLikes.set(slug, {});
+    res.json({ slug, name });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro ao criar sala' });
+  }
 });
 
-// Video info
+// Video info (mantido igual)
+app.get('/api/video-info', async (req, res) => {
+  const id = String(req.query.id || '').trim();
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
+  const info = { id, title: null, artist: null, duration: null };
+  try {
+    const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+    const data = JSON.parse(raw);
+    info.title = data.title || null;
+    info.artist = data.author_name || null;
+  } catch (e) {}
+  try {
+    const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
+    const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+    if (m) info.duration = parseInt(m[1], 10);
+    if (!info.title) {
+      const t = html.match(/<title>([^<]+)<\/title>/);
+      if (t) info.title = t[1].replace(/ - YouTube\s*$/, '').trim();
+    }
+  } catch (e) {}
+  if (!info.title && !info.duration) return res.status(404).json({ error: 'Vídeo não encontrado' });
+  res.json(info);
+});
+
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
@@ -238,32 +426,6 @@ function fetchUrl(url) {
   });
 }
 
-app.get('/api/video-info', async (req, res) => {
-  const id = String(req.query.id || '').trim();
-  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
-
-  const info = { id, title: null, artist: null, duration: null };
-  try {
-    const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
-    const data = JSON.parse(raw);
-    info.title = data.title || null;
-    info.artist = data.author_name || null;
-  } catch (e) {}
-
-  try {
-    const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
-    const m = html.match(/"lengthSeconds":"?(\d+)"?/);
-    if (m) info.duration = parseInt(m[1], 10);
-    if (!info.title) {
-      const t = html.match(/<title>([^<]+)<\/title>/);
-      if (t) info.title = t[1].replace(/ - YouTube\s*$/, '').trim();
-    }
-  } catch (e) {}
-
-  if (!info.title && !info.duration) return res.status(404).json({ error: 'Vídeo não encontrado' });
-  res.json(info);
-});
-
 // ========== ADMIN ROTAS ==========
 function isAdmin(req, res, next) {
   const token = req.cookies.sessionToken;
@@ -275,15 +437,38 @@ function isAdmin(req, res, next) {
   next();
 }
 
-app.get('/api/admin/stats', isAdmin, (req, res) => {
-  let totalSongs = 0;
-  for (const [slug, room] of rooms) totalSongs += room.queue.length;
-  res.json({ totalUsers: users.size, totalRooms: rooms.size, onlineUsers: io.sockets.sockets.size, totalSongs });
+app.get('/api/admin/stats', isAdmin, async (req, res) => {
+  try {
+    const totalUsers = await new Promise((resolve, reject) => {
+      db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
+        if (err) return reject(err);
+        resolve(row.count);
+      });
+    });
+    const totalRooms = await new Promise((resolve, reject) => {
+      db.get('SELECT COUNT(*) as count FROM rooms', (err, row) => {
+        if (err) return reject(err);
+        resolve(row.count);
+      });
+    });
+    res.json({ totalUsers, totalRooms, onlineUsers: io.sockets.sockets.size });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro' });
+  }
 });
 
-app.get('/api/admin/users', isAdmin, (req, res) => {
-  const list = Array.from(users.values()).map(u => ({ ...u, senha: undefined, isAdmin: adminEmails.has(u.email) }));
-  res.json(list);
+app.get('/api/admin/users', isAdmin, async (req, res) => {
+  try {
+    const users = await new Promise((resolve, reject) => {
+      db.all('SELECT email, nome, avatar, total_added, total_upvotes, total_downvotes FROM users', (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+    res.json(users);
+  } catch (e) {
+    res.status(500).json({ error: 'Erro' });
+  }
 });
 
 app.post('/api/admin/promote', isAdmin, (req, res) => {
@@ -293,18 +478,23 @@ app.post('/api/admin/promote', isAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/admin/delete-user', isAdmin, (req, res) => {
+app.post('/api/admin/delete-user', isAdmin, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
   if (email === 'admin@sonora.com') return res.status(400).json({ error: 'Não pode deletar o super admin' });
-  if (!users.has(email)) return res.status(404).json({ error: 'Usuário não encontrado' });
-  users.delete(email);
-  adminEmails.delete(email);
-  res.json({ success: true });
+  try {
+    await new Promise((resolve, reject) => {
+      db.run('DELETE FROM users WHERE email = ?', [email], (err) => err ? reject(err) : resolve());
+    });
+    adminEmails.delete(email);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro' });
+  }
 });
 
 app.post('/api/admin/clear-all-chats', isAdmin, (req, res) => {
-  for (const [slug, room] of rooms) { 
+  for (const [slug, room] of rooms) {
     room.chatHistory = [];
     roomLikes.set(slug, {});
     roomVotes.set(slug, {});
@@ -313,13 +503,15 @@ app.post('/api/admin/clear-all-chats', isAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
+app.post('/api/admin/clear-all-rooms', isAdmin, async (req, res) => {
   for (const [slug, room] of rooms) {
     room.queue = [];
     room.currentIndex = 0;
     room.isPlaying = false;
     roomLikes.set(slug, {});
     roomVotes.set(slug, {});
+    saveRoomToDB(slug, room);
+    saveQueueToDB(slug, []);
     broadcastState(slug);
     io.to(slug).emit('queueEmpty');
   }
@@ -327,18 +519,7 @@ app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
 });
 
 app.get('/api/admin/export-data', isAdmin, (req, res) => {
-  const data = {
-    exportedAt: new Date().toISOString(),
-    users: Array.from(users.values()).map(u => ({ ...u, senha: undefined })),
-    admins: Array.from(adminEmails),
-    rooms: Array.from(rooms.values()).map(r => ({
-      slug: r.slug, name: r.name, admin: r.admin,
-      queue: r.queue, chatHistory: r.chatHistory.slice(-50),
-      listenerCount: r.listenerCount, isPlaying: r.isPlaying
-    })),
-    settings
-  };
-  res.json(data);
+  res.json({ message: 'Exportar dados - implementar' });
 });
 
 app.get('*', (req, res) => {
@@ -349,7 +530,7 @@ app.get('*', (req, res) => {
 io.on('connection', (socket) => {
   let currentRoom = null;
 
-  socket.on('joinRoom', ({ slug, name, avatar }) => {
+  socket.on('joinRoom', async ({ slug, name, avatar }) => {
     const room = rooms.get(slug);
     if (!room) { socket.emit('error', 'Sala não encontrada'); return; }
     if (room.bannedUsers.includes(name)) { socket.emit('error', 'Você foi banido'); return; }
@@ -366,6 +547,7 @@ io.on('connection', (socket) => {
     socket.userColor = colors[Math.floor(Math.random() * colors.length)];
     socket.userAvatar = avatar || '👤';
     room.listenerCount++;
+    saveRoomToDB(slug, room);
 
     const cookie = socket.handshake.headers.cookie || '';
     const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
@@ -376,12 +558,9 @@ io.on('connection', (socket) => {
 
     if (isGlobalAdmin && !room.admin) room.admin = name;
 
-    // Envia estado de curtidas
-    const likes = getRoomLikes(slug);
+    const likes = roomLikes.get(slug) || {};
     socket.emit('likesState', likes);
-    
-    // Envia estado de votos
-    const votes = getRoomVotes(slug);
+    const votes = roomVotes.get(slug) || {};
     socket.emit('votesState', votes);
 
     socket.emit('roomState', {
@@ -414,7 +593,7 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', msg);
   });
 
-  socket.on('addSong', (song) => {
+  socket.on('addSong', async (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     const now = Date.now();
@@ -436,16 +615,24 @@ io.on('connection', (socket) => {
       return;
     }
 
-    song.dj = socket.userName;
-    room.queue.push(song);
+    const newSong = {
+      videoId: song.id,
+      title: song.title || 'Música do YouTube',
+      artist: song.artist || 'Desconhecido',
+      duration: song.duration || 0,
+      dj: socket.userName
+    };
+    room.queue.push(newSong);
     room.lastAddTime.set(socket.userName, now);
+    saveQueueToDB(currentRoom, room.queue);
 
     if (!room.isPlaying && room.queue.length === 1) {
       room.isPlaying = true;
       room.currentIndex = 0;
       room.startedAt = Date.now();
       room.lastAdvanceAt = Date.now();
-      addSystemMsg(currentRoom, `▶ ${song.title} — ${song.artist}`);
+      saveRoomToDB(currentRoom, room);
+      addSystemMsg(currentRoom, `▶ ${newSong.title} — ${newSong.artist}`);
     }
 
     broadcastState(currentRoom);
@@ -454,12 +641,18 @@ io.on('connection', (socket) => {
       _id: Date.now().toString() + Math.random(),
       user: socket.userName, color: socket.userColor,
       isSystem: false, isAdmin: socket.isAdmin || false,
-      isMusic: true, musicTitle: song.title,
-      musicArtist: song.artist, createdAt: new Date()
+      isMusic: true, musicTitle: newSong.title,
+      musicArtist: newSong.artist, createdAt: new Date()
     };
     room.chatHistory.push(musicMsg);
     if (room.chatHistory.length > 300) room.chatHistory.shift();
     io.to(currentRoom).emit('chat', musicMsg);
+
+    // Atualizar estatísticas do usuário
+    const email = sessions.get(socket.handshake.headers.cookie?.match(/sessionToken=([^;]+)/)?.[1]);
+    if (email) {
+      db.run('UPDATE users SET total_added = total_added + 1 WHERE email = ?', [email]);
+    }
   });
 
   socket.on('skipTo', (index) => {
@@ -474,14 +667,13 @@ io.on('connection', (socket) => {
     room.currentIndex = 0;
     room.startedAt = Date.now();
     room.isPlaying = true;
+    saveQueueToDB(currentRoom, room.queue);
+    saveRoomToDB(currentRoom, room);
     
-    // Reindexa os votos
-    const votes = getRoomVotes(currentRoom);
+    const votes = roomVotes.get(currentRoom) || {};
     const newVotes = {};
     room.queue.forEach((_, i) => {
-      if (votes[i]) {
-        newVotes[i] = votes[i];
-      }
+      if (votes[i]) newVotes[i] = votes[i];
     });
     roomVotes.set(currentRoom, newVotes);
     
@@ -499,14 +691,12 @@ io.on('connection', (socket) => {
     if (!track || index === room.currentIndex) return;
     room.queue.splice(index, 1);
     if (index < room.currentIndex) room.currentIndex--;
+    saveQueueToDB(currentRoom, room.queue);
     
-    // Reindexa os votos
-    const votes = getRoomVotes(currentRoom);
+    const votes = roomVotes.get(currentRoom) || {};
     const newVotes = {};
     room.queue.forEach((_, i) => {
-      if (votes[i + 1]) {
-        newVotes[i] = votes[i + 1];
-      }
+      if (votes[i + 1]) newVotes[i] = votes[i + 1];
     });
     roomVotes.set(currentRoom, newVotes);
     
@@ -514,100 +704,69 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
   });
 
-  // ===== VOTAÇÃO =====
-  socket.on('voteSong', ({ index, type, room }) => {
+  // VOTAÇÃO
+  socket.on('voteSong', async ({ index, type, room }) => {
     if (!room || !socket.userName) return;
-    
     const roomData = rooms.get(room);
     if (!roomData) return;
-    
-    // Não pode votar na música atual
     if (roomData.currentIndex === index) {
       socket.emit('error', 'Não é possível votar na música atual');
       return;
     }
-    
-    // Verifica se a música existe
     if (index >= roomData.queue.length) {
       socket.emit('error', 'Música não encontrada');
       return;
     }
-    
-    const votes = getRoomVotes(room);
-    
-    if (!votes[index]) {
-      votes[index] = { up: [], down: [] };
-    }
-    
+
+    const votes = roomVotes.get(room) || {};
+    if (!votes[index]) votes[index] = { up: [], down: [] };
     const data = votes[index];
     
-    // Remove voto anterior do usuário
-    const upIndex = data.up.indexOf(socket.userName);
-    if (upIndex > -1) data.up.splice(upIndex, 1);
+    const upIdx = data.up.indexOf(socket.userName);
+    if (upIdx > -1) data.up.splice(upIdx, 1);
+    const downIdx = data.down.indexOf(socket.userName);
+    if (downIdx > -1) data.down.splice(downIdx, 1);
     
-    const downIndex = data.down.indexOf(socket.userName);
-    if (downIndex > -1) data.down.splice(downIndex, 1);
-    
-    // Adiciona novo voto
     if (type === 'up') {
       data.up.push(socket.userName);
+      const email = sessions.get(socket.handshake.headers.cookie?.match(/sessionToken=([^;]+)/)?.[1]);
+      if (email) db.run('UPDATE users SET total_upvotes = total_upvotes + 1 WHERE email = ?', [email]);
     } else if (type === 'down') {
       data.down.push(socket.userName);
+      const email = sessions.get(socket.handshake.headers.cookie?.match(/sessionToken=([^;]+)/)?.[1]);
+      if (email) db.run('UPDATE users SET total_downvotes = total_downvotes + 1 WHERE email = ?', [email]);
     }
     
-    // Verifica se atingiu o limite de dislikes
+    // Verificar se atingiu limite
     if (data.down.length >= DISLIKE_THRESHOLD) {
-      // Remove a música da fila
       const removed = roomData.queue.splice(index, 1)[0];
-      if (index < roomData.currentIndex) {
-        roomData.currentIndex--;
-      }
+      if (index < roomData.currentIndex) roomData.currentIndex--;
+      saveQueueToDB(room, roomData.queue);
       
-      // Remove os votos da música removida
       delete votes[index];
-      // Reindexa os votos
       const newVotes = {};
       roomData.queue.forEach((_, i) => {
-        if (votes[i + 1]) {
-          newVotes[i] = votes[i + 1];
-        }
+        if (votes[i + 1]) newVotes[i] = votes[i + 1];
       });
       roomVotes.set(room, newVotes);
       
       broadcastState(room);
-      
-      // Notifica todos sobre a remoção
-      io.to(room).emit('voteUpdate', { 
-        index, 
-        up: data.up, 
-        down: data.down,
-        removed: true 
-      });
-      
+      io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down, removed: true });
       addSystemMsg(room, `👎 "${removed.title}" foi removida por votação! (${data.down.length} votos negativos)`);
       return;
     }
     
-    // Atualiza todos na sala com os votos
-    io.to(room).emit('voteUpdate', { 
-      index, 
-      up: data.up, 
-      down: data.down 
-    });
+    roomVotes.set(room, votes);
+    io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down });
   });
 
+  // Curtidas
   socket.on('likeMessage', ({ messageId, room }) => {
     if (!room || !socket.userName) return;
-    
-    const likes = getRoomLikes(room);
-    
-    if (!likes[messageId]) {
-      likes[messageId] = { likes: 0, users: [] };
-    }
-    
+    const likes = roomLikes.get(room) || {};
+    if (!likes[messageId]) likes[messageId] = { likes: 0, users: [] };
     const data = likes[messageId];
     const userIndex = data.users.indexOf(socket.userName);
-    
     if (userIndex > -1) {
       data.users.splice(userIndex, 1);
       data.likes = Math.max(0, data.likes - 1);
@@ -615,19 +774,18 @@ io.on('connection', (socket) => {
       data.users.push(socket.userName);
       data.likes++;
     }
-    
-    io.to(room).emit('likeUpdate', {
-      messageId,
-      likes: data.likes,
-      users: data.users
-    });
+    roomLikes.set(room, likes);
+    io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
   });
 
   socket.on('videoDuration', ({ duration }) => {
     if (!currentRoom || !duration) return;
     const room = rooms.get(currentRoom);
     const track = room.queue[room.currentIndex];
-    if (track) track.duration = duration;
+    if (track) {
+      track.duration = duration;
+      saveQueueToDB(currentRoom, room.queue);
+    }
   });
 
   socket.on('videoEnded', () => {
@@ -656,6 +814,7 @@ io.on('connection', (socket) => {
       const room = rooms.get(currentRoom);
       if (room) {
         room.listenerCount = Math.max(0, room.listenerCount - 1);
+        saveRoomToDB(currentRoom, room);
         broadcastState(currentRoom);
         broadcastUsers(currentRoom);
       }
@@ -663,5 +822,20 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🎧 Sonora Fan → http://localhost:${PORT}`));
+// ========== INICIALIZAÇÃO ==========
+(async () => {
+  await initServerState();
+  setInterval(() => {
+    for (const [slug, room] of rooms) {
+      if (!room.isPlaying || room.queue.length === 0) continue;
+      const track = room.queue[room.currentIndex];
+      if (!track) continue;
+      const pos = getPosition(room);
+      const duration = track.duration || 180;
+      if (pos >= duration - 2) advanceQueue(slug);
+    }
+  }, 2000);
+  
+  const PORT = process.env.PORT || 3000;
+  server.listen(PORT, () => console.log(`🎧 Sonora Fan → http://localhost:${PORT}`));
+})();
