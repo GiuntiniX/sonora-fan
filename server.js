@@ -297,16 +297,11 @@ function fetchUrl(url) {
   });
 }
 
-// ===== VIDEO INFO (com extração robusta e bloqueio se falhar) =====
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
-  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
-    return res.status(400).json({ error: 'ID inválido' });
-  }
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
 
   const info = { id, title: null, artist: null, duration: null };
-
-  // Tenta oembed (título e artista)
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
@@ -314,98 +309,17 @@ app.get('/api/video-info', async (req, res) => {
     info.artist = data.author_name || null;
   } catch (e) {}
 
-  // Tenta extrair duração com várias estratégias
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
-
-    // 1. JSON-LD
-    const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
-    if (jsonLdMatch) {
-      try {
-        const jsonLd = JSON.parse(jsonLdMatch[1]);
-        if (jsonLd.duration) {
-          const durStr = jsonLd.duration;
-          const match = durStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-          if (match) {
-            const hours = parseInt(match[1] || 0);
-            const minutes = parseInt(match[2] || 0);
-            const seconds = parseInt(match[3] || 0);
-            info.duration = hours * 3600 + minutes * 60 + seconds;
-          }
-        }
-      } catch (e) {}
-    }
-
-    // 2. ytInitialPlayerResponse
-    if (!info.duration) {
-      const playerResponseMatch = html.match(/var ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
-      if (playerResponseMatch) {
-        try {
-          const data = JSON.parse(playerResponseMatch[1]);
-          if (data.videoDetails && data.videoDetails.lengthSeconds) {
-            info.duration = parseInt(data.videoDetails.lengthSeconds, 10);
-          }
-        } catch (e) {}
-      }
-    }
-
-    // 3. ytcfg
-    if (!info.duration) {
-      const ytcfgMatch = html.match(/ytcfg\.set\s*\(\s*({[\s\S]*?})\s*\)\s*;/);
-      if (ytcfgMatch) {
-        try {
-          const data = JSON.parse(ytcfgMatch[1]);
-          if (data.DURATION) {
-            info.duration = parseInt(data.DURATION, 10);
-          }
-        } catch (e) {}
-      }
-    }
-
-    // 4. Regex fallback
-    if (!info.duration) {
-      const regexMatch = html.match(/"lengthSeconds":"?(\d+)"?/);
-      if (regexMatch) {
-        info.duration = parseInt(regexMatch[1], 10);
-      }
-    }
-
-    // 5. data-duration
-    if (!info.duration) {
-      const dataDurMatch = html.match(/data-duration="(\d+)"/);
-      if (dataDurMatch) {
-        info.duration = parseInt(dataDurMatch[1], 10);
-      }
-    }
-
+    const m = html.match(/"lengthSeconds":"?(\d+)"?/);
+    if (m) info.duration = parseInt(m[1], 10);
     if (!info.title) {
-      const titleMatch = html.match(/<title>([^<]+)<\/title>/);
-      if (titleMatch) {
-        info.title = titleMatch[1].replace(/ - YouTube\s*$/, '').trim();
-      }
+      const t = html.match(/<title>([^<]+)<\/title>/);
+      if (t) info.title = t[1].replace(/ - YouTube\s*$/, '').trim();
     }
   } catch (e) {}
 
-  // Se não tiver título, preenche com o ID
-  if (!info.title) {
-    info.title = 'Vídeo do YouTube (ID: ' + id + ')';
-  }
-
-  // 🔥 BLOQUEIA se a duração não foi encontrada
-  if (!info.duration) {
-    return res.status(404).json({
-      error: 'Não foi possível obter a duração do vídeo. Tente novamente ou use outro link.'
-    });
-  }
-
-  // 🔥 BLOQUEIA se a duração for maior que o limite (10 min)
-  if (info.duration > settings.maxDuration) {
-    return res.status(400).json({
-      error: `Vídeo muito longo! Duração: ${Math.floor(info.duration / 60)} minutos. Limite: ${settings.maxDuration / 60} minutos.`,
-      duration: info.duration
-    });
-  }
-
+  if (!info.title && !info.duration) return res.status(404).json({ error: 'Vídeo não encontrado' });
   res.json(info);
 });
 
@@ -653,21 +567,18 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', msg);
   });
 
-  // 🔥 VALIDAÇÃO DE DURAÇÃO NO BACKEND
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     const now = Date.now();
     const lastAdd = room.lastAddTime.get(socket.userName) || 0;
 
-    // Cooldown
     if (now - lastAdd < 30000) {
       const wait = Math.ceil((30000 - (now - lastAdd)) / 1000);
       socket.emit('error', `Aguarde ${wait}s`);
       return;
     }
 
-    // Limite de músicas por usuário
     const userSongs = room.queue.filter(t => t.dj === socket.userName).length;
     if (userSongs >= MAX_SONGS_PER_USER) {
       socket.emit('error', `Você já tem ${MAX_SONGS_PER_USER} músicas na fila. Aguarde outras serem tocadas.`);
@@ -679,14 +590,8 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // 🔥 BLOQUEIA se a duração for nula ou maior que o limite
-    if (!song.duration || song.duration <= 0) {
-      socket.emit('error', '❌ Duração do vídeo não verificada. Não é possível adicionar.');
-      return;
-    }
-
-    if (song.duration > settings.maxDuration) {
-      socket.emit('error', `⛔ Vídeo muito longo! Duração: ${Math.floor(song.duration / 60)} min. Limite: ${settings.maxDuration / 60} min.`);
+    if (song.duration && song.duration > settings.maxDuration) {
+      socket.emit('error', `⛔ Vídeo muito longo! Limite: ${settings.maxDuration/60} min`);
       return;
     }
 
