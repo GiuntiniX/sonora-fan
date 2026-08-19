@@ -1002,12 +1002,15 @@
       <label class="form-label">Nome <span class="required">*</span></label>
       <input type="text" id="signupNome" placeholder="Seu nome" maxlength="60">
       <div class="form-error" id="signupNomeError">Digite seu nome</div>
+
       <label class="form-label">E-mail <span class="required">*</span></label>
       <input type="email" id="signupEmail" placeholder="voce@email.com" maxlength="120">
       <div class="form-error" id="signupEmailError">Digite um e-mail válido</div>
+
       <label class="form-label">Senha <span class="required">*</span> <span class="hint">(mínimo 6 caracteres)</span></label>
       <input type="password" id="signupPassword" placeholder="Crie uma senha" maxlength="30">
       <div class="form-error" id="signupPasswordError">Mínimo 6 caracteres</div>
+
       <label class="form-label">Estilo musical <span class="required">*</span></label>
       <div class="chip-group" id="signupStyles">
         <div class="chip" data-style="sertanejo" onclick="toggleChip(this)">Sertanejo</div>
@@ -1023,6 +1026,7 @@
         <div class="chip" data-style="indie" onclick="toggleChip(this)">Indie</div>
       </div>
       <div class="form-error" id="signupStylesError">Escolha pelo menos um estilo</div>
+
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeSignup()">Cancelar</button>
         <button class="btn-primary" onclick="submitSignup()">Criar conta 🎶</button>
@@ -1071,13 +1075,12 @@
         </div>
       </div>
 
-      <!-- SEÇÃO DE USUÁRIOS -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
           <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
           <span style="font-size:11px;color:var(--text-muted);" id="adminUserCount">0</span>
         </div>
-        <div id="adminUserList" style="max-height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
+        <div id="adminUserList" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
           <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Carregando...</div>
         </div>
       </div>
@@ -1277,7 +1280,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO - VERSÃO FINAL COM ADMIN FUNCIONAL
+    //  JAVASCRIPT COMPLETO
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1285,7 +1288,7 @@
     const COOLDOWN = 30000;
     const MAX_SONGS_PER_USER = 3;
 
-    // Socket com credentials para enviar cookies
+    // 🔥 Socket com credentials para enviar cookies
     const socket = io({ withCredentials: true });
 
     let currentUser = null;
@@ -1509,30 +1512,18 @@
     async function loadAdminData() {
       try {
         const res = await fetch('/api/admin/stats', { credentials: 'include' });
-        if (!res.ok) {
-          console.error('Erro stats:', await res.text());
-          return;
-        }
         const data = await res.json();
-        $('adminUsers').textContent = data.totalUsers || 0;
-        $('adminRooms').textContent = data.totalRooms || 0;
-        $('adminOnline').textContent = data.onlineUsers || 0;
-      } catch (e) {
-        console.error('loadAdminData error:', e);
-      }
+        if (res.ok) { $('adminUsers').textContent = data.totalUsers || 0; $('adminRooms').textContent = data.totalRooms || 0; $('adminOnline').textContent = data.onlineUsers || 0; }
+      } catch (e) {}
     }
 
     async function loadAdminUsers() {
       try {
         const res = await fetch('/api/admin/users', { credentials: 'include' });
-        if (!res.ok) {
-          console.error('Erro users:', await res.text());
-          return;
-        }
         const users = await res.json();
         const list = $('adminUserList');
         const count = $('adminUserCount');
-        if (!users.length) { list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Nenhum usuário</div>'; return; }
+        if (!res.ok || !users.length) { list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Nenhum usuário</div>'; return; }
         count.textContent = users.length;
         list.innerHTML = users.map(u => `
           <div class="admin-user-item">
@@ -1544,67 +1535,16 @@
             <div class="actions">
               ${!u.isAdmin ? `<button class="promote" onclick="adminPromote('${u.email}')">👑</button>` : ''}
               <button class="delete" onclick="adminDeleteUser('${u.email}')">🗑️</button>
-              <button onclick="adminKickUser('${u.email}')" style="background:#f59e0b;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">👢</button>
-              <button onclick="adminBanUser('${u.email}')" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">⛔</button>
             </div>
           </div>
         `).join('');
-      } catch (e) {
-        console.error('loadAdminUsers error:', e);
-      }
+      } catch (e) {}
     }
 
-    // ===== ADMIN - KICK E BAN =====
-    async function adminKickUser(email) {
-      if (!currentRoom) { toast('Você precisa estar em uma sala para expulsar alguém', 'error'); return; }
-      if (!confirm(`Expulsar ${email} da sala atual?`)) return;
-      try {
-        const res = await fetch('/api/admin/kick-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ email, roomSlug: currentRoom })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          toast('✅ Usuário expulso!', 'success');
-          loadAdminUsers();
-        } else {
-          toast(data.error || 'Erro ao expulsar', 'error');
-        }
-      } catch (e) {
-        toast('Erro ao expulsar', 'error');
-      }
-    }
-
-    async function adminBanUser(email) {
-      if (!confirm(`Banir ${email} globalmente?`)) return;
-      try {
-        const res = await fetch('/api/admin/ban-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          toast('✅ Usuário banido!', 'success');
-          loadAdminUsers();
-        } else {
-          toast(data.error || 'Erro ao banir', 'error');
-        }
-      } catch (e) {
-        toast('Erro ao banir', 'error');
-      }
-    }
-
+    // ===== ADMIN - GERENCIAR FILAS =====
     async function loadAdminQueues() {
       try {
         const res = await fetch('/api/rooms', { credentials: 'include' });
-        if (!res.ok) {
-          console.error('Erro ao carregar salas');
-          return;
-        }
         const rooms = await res.json();
         const container = document.getElementById('adminQueueList');
         if (!rooms.length) {
@@ -1618,9 +1558,9 @@
           if (room.queueLength === 0) {
             html += `<div style="color:var(--text-muted);font-size:11px;">Fila vazia</div>`;
           } else {
+            // Buscar detalhes da fila para esta sala
             try {
               const detailRes = await fetch(`/api/room/${room.slug}/queue`, { credentials: 'include' });
-              if (!detailRes.ok) throw new Error('Erro ao buscar fila');
               const detail = await detailRes.json();
               if (detail.queue && detail.queue.length) {
                 detail.queue.forEach((track, idx) => {
@@ -1646,7 +1586,6 @@
         }
         container.innerHTML = html;
       } catch (e) {
-        console.error('loadAdminQueues error:', e);
         document.getElementById('adminQueueList').innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px;">Erro ao carregar</div>';
       }
     }
@@ -1663,7 +1602,7 @@
         const data = await res.json();
         if (res.ok) {
           toast('✅ Música removida!', 'success');
-          loadAdminQueues();
+          loadAdminQueues(); // recarrega a lista
         } else {
           toast(data.error || 'Erro ao remover', 'error');
         }
@@ -1684,7 +1623,7 @@
       if (!confirm(`Deletar ${email}?`)) return;
       try {
         const res = await fetch('/api/admin/delete-user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ email }) });
-        if (res.ok) { toast('✅ Deletado e desconectado!', 'success'); loadAdminUsers(); loadAdminData(); }
+        if (res.ok) { toast('✅ Deletado!', 'success'); loadAdminUsers(); loadAdminData(); }
       } catch (e) {}
     }
 
@@ -1995,6 +1934,7 @@
         return;
       }
 
+      // Verifica se é admin global
       const isGlobalAdmin = currentUser && currentUser.email === 'admin@sonora.com';
       const isUserAdmin = amIAdmin || isGlobalAdmin;
 
@@ -2053,6 +1993,7 @@
       });
     }
 
+    // ===== VOTAÇÃO =====
     function voteSong(index, type) {
       if (!currentRoom) { toast('Entre em uma sala para votar', 'error'); return; }
       if (currentRoomData && currentRoomData.currentIndex === index) { toast('Não é possível votar na música atual', 'error'); return; }
