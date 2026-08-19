@@ -17,12 +17,14 @@ app.use(cookieParser());
 // ========== CONFIG ==========
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
 const adminEmails = new Set(['admin@sonora.com']);
-const settings = { maxQueue: 20, cooldown: 180, maxDuration: 600 };
+const settings = { maxQueue: 20, cooldown: 30, maxDuration: 600 }; // cooldown agora 30s
 const DISLIKE_THRESHOLD = 10;
+const MAX_SONGS_PER_USER = 3; // DJ Rotation
 
 // ========== AUTENTICAÇÃO ==========
 const users = new Map();
 const sessions = new Map();
+const userFavorites = new Map(); // email -> [{ id, title, artist }]
 
 // ========== ESTADO ==========
 const rooms = new Map();
@@ -113,7 +115,7 @@ function advanceQueue(slug) {
   room.startedAt = Date.now();
   room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
   
-  // Reindexa os votos após remover a música
+  // Reindexa os votos
   const votes = getRoomVotes(slug);
   const newVotes = {};
   room.queue.forEach((_, i) => {
@@ -122,6 +124,9 @@ function advanceQueue(slug) {
     }
   });
   roomVotes.set(slug, newVotes);
+  
+  // Reordena a fila após avançar (para manter ordem por upvotes)
+  reorderQueueByVotes(room);
   
   broadcastState(slug);
 
@@ -135,6 +140,41 @@ function advanceQueue(slug) {
     io.to(slug).emit('queueEmpty');
   }
   return true;
+}
+
+// ===== REORDENAÇÃO POR UPVOTES =====
+function reorderQueueByVotes(room) {
+  if (!room || room.queue.length <= 1) return;
+  
+  const currentTrack = room.queue[room.currentIndex];
+  if (!currentTrack) return;
+  
+  // Separa a música atual do restante
+  const rest = room.queue.filter((_, i) => i !== room.currentIndex);
+  const votes = getRoomVotes(room.slug);
+  
+  // Ordena o restante por número de upvotes (decrescente)
+  rest.sort((a, b) => {
+    const aIdx = room.queue.indexOf(a);
+    const bIdx = room.queue.indexOf(b);
+    const aUp = votes[aIdx] ? votes[aIdx].up.length : 0;
+    const bUp = votes[bIdx] ? votes[bIdx].up.length : 0;
+    return bUp - aUp;
+  });
+  
+  // Nova fila: [música atual, ...restante ordenado]
+  room.queue = [currentTrack, ...rest];
+  room.currentIndex = 0;
+  
+  // Reindexa os votos (mantém a referência por índice)
+  const newVotes = {};
+  room.queue.forEach((track, i) => {
+    const oldIndex = room.queue.indexOf(track);
+    if (votes[oldIndex]) {
+      newVotes[i] = votes[oldIndex];
+    }
+  });
+  roomVotes.set(room.slug, newVotes);
 }
 
 // Auto-advance
@@ -194,6 +234,48 @@ app.get('/api/me', (req, res) => {
   if (!user) { sessions.delete(token); return res.status(401).json({ error: 'Usuário não encontrado' }); }
   const { senha: _, ...userData } = user;
   res.json({ success: true, user: userData });
+});
+
+// ===== FAVORITOS =====
+function getUserFavorites(email) {
+  if (!userFavorites.has(email)) {
+    userFavorites.set(email, []);
+  }
+  return userFavorites.get(email);
+}
+
+app.get('/api/favorites', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  res.json(getUserFavorites(email));
+});
+
+app.post('/api/favorites', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const { videoId, title, artist } = req.body;
+  if (!videoId) return res.status(400).json({ error: 'ID do vídeo obrigatório' });
+  const favs = getUserFavorites(email);
+  if (!favs.find(f => f.id === videoId)) {
+    favs.push({ id: videoId, title, artist });
+  }
+  res.json({ success: true, favorites: favs });
+});
+
+app.delete('/api/favorites/:videoId', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const videoId = req.params.videoId;
+  const favs = getUserFavorites(email);
+  const idx = favs.findIndex(f => f.id === videoId);
+  if (idx !== -1) favs.splice(idx, 1);
+  res.json({ success: true, favorites: favs });
 });
 
 app.get('/api/rooms', (req, res) => {
@@ -348,6 +430,7 @@ app.get('*', (req, res) => {
 // ========== SOCKET ==========
 io.on('connection', (socket) => {
   let currentRoom = null;
+  let userEmail = null;
 
   socket.on('joinRoom', ({ slug, name, avatar }) => {
     const room = rooms.get(slug);
@@ -370,6 +453,7 @@ io.on('connection', (socket) => {
     const cookie = socket.handshake.headers.cookie || '';
     const tokenMatch = cookie.match(/sessionToken=([^;]+)/);
     const email = tokenMatch ? sessions.get(tokenMatch[1]) : null;
+    userEmail = email;
     const isGlobalAdmin = adminEmails.has(email);
     const isRoomAdmin = room.admin === name;
     socket.isAdmin = isGlobalAdmin || isRoomAdmin;
@@ -420,9 +504,17 @@ io.on('connection', (socket) => {
     const now = Date.now();
     const lastAdd = room.lastAddTime.get(socket.userName) || 0;
 
-    if (now - lastAdd < 10000) {
-      const wait = Math.ceil((10000 - (now - lastAdd)) / 1000);
+    // Cooldown de 30 segundos
+    if (now - lastAdd < 30000) {
+      const wait = Math.ceil((30000 - (now - lastAdd)) / 1000);
       socket.emit('error', `Aguarde ${wait}s`);
+      return;
+    }
+
+    // Limite de músicas por usuário na fila (DJ Rotation)
+    const userSongs = room.queue.filter(t => t.dj === socket.userName).length;
+    if (userSongs >= MAX_SONGS_PER_USER) {
+      socket.emit('error', `Você já tem ${MAX_SONGS_PER_USER} músicas na fila. Aguarde outras serem tocadas.`);
       return;
     }
 
@@ -485,6 +577,9 @@ io.on('connection', (socket) => {
     });
     roomVotes.set(currentRoom, newVotes);
     
+    // Reordena por upvotes
+    reorderQueueByVotes(room);
+    
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
   });
@@ -512,6 +607,47 @@ io.on('connection', (socket) => {
     
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
+  });
+
+  // ===== REORDER QUEUE (drag-and-drop) =====
+  socket.on('reorderQueue', (newOrder) => {
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode reordenar');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    if (!room || room.queue.length === 0) return;
+    
+    // newOrder é um array de IDs ou de objetos (vamos receber array de IDs)
+    const currentTrack = room.queue[room.currentIndex];
+    const currentId = currentTrack ? currentTrack.id : null;
+    
+    // Reconstroi a fila na nova ordem
+    const newQueue = [];
+    for (const id of newOrder) {
+      const track = room.queue.find(t => t.id === id);
+      if (track) newQueue.push(track);
+    }
+    // Mantém apenas os que foram encontrados
+    if (newQueue.length === room.queue.length) {
+      room.queue = newQueue;
+      // Ajusta currentIndex para a posição da música que estava tocando
+      const newIndex = room.queue.findIndex(t => t.id === currentId);
+      room.currentIndex = newIndex !== -1 ? newIndex : 0;
+      
+      // Reindexa os votos
+      const votes = getRoomVotes(currentRoom);
+      const newVotes = {};
+      room.queue.forEach((track, i) => {
+        const oldIndex = room.queue.indexOf(track); // na verdade, já está na nova ordem
+        if (votes[oldIndex]) {
+          newVotes[i] = votes[oldIndex];
+        }
+      });
+      roomVotes.set(currentRoom, newVotes);
+      
+      broadcastState(currentRoom);
+    }
   });
 
   // ===== VOTAÇÃO =====
@@ -588,12 +724,20 @@ io.on('connection', (socket) => {
       return;
     }
     
+    // Se for upvote, reordena a fila por upvotes
+    if (type === 'up') {
+      reorderQueueByVotes(roomData);
+    }
+    
     // Atualiza todos na sala com os votos
     io.to(room).emit('voteUpdate', { 
       index, 
       up: data.up, 
       down: data.down 
     });
+    
+    // Broadcast do novo estado (já reordenado)
+    broadcastState(room);
   });
 
   socket.on('likeMessage', ({ messageId, room }) => {
