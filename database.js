@@ -31,7 +31,7 @@ db.serialize(() => {
     listenerCount INTEGER DEFAULT 0
   )`);
 
-  // Fila (músicas)
+  // Fila
   db.run(`CREATE TABLE IF NOT EXISTS queue (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     roomSlug TEXT,
