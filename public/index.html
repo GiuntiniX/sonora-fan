@@ -1250,9 +1250,7 @@ let currentTrackId = null;
 let lastAddTime = 0;
 let songData = null;
 let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
-
-// ✅ Estado de curtidas sincronizado com o servidor
-let messageLikesSync = {}; // { messageId: { likes: number, users: [name1, name2] } }
+let messageLikesSync = {};
 
 // ===== CONSTANTES =====
 const MAX_CHAT_MESSAGES = 10;
@@ -1825,6 +1823,7 @@ function syncPlayer(state) {
   }
 }
 
+// ===== RENDER QUEUE - CORRIGIDA =====
 function renderQueue(queue, currentIndex) {
   const list = $('queueList');
   const count = $('queueCount');
@@ -1837,13 +1836,18 @@ function renderQueue(queue, currentIndex) {
     return;
   }
 
+  // ✅ VERIFICA SE O USUÁRIO É ADMIN (GLOBAL OU DA SALA)
+  const isUserAdmin = amIAdmin || currentUser?.email === 'admin@sonora.com';
+
   queue.forEach((track, i) => {
     const div = document.createElement('div');
     div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
-    if (i !== currentIndex && amIAdmin) {
+    
+    if (i !== currentIndex && isUserAdmin) {
       div.classList.add('clickable');
       div.onclick = () => socket.emit('skipTo', i);
     }
+    
     div.innerHTML = `
       <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
       <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
@@ -1852,7 +1856,7 @@ function renderQueue(queue, currentIndex) {
         <div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div>
       </div>
       <span class="dj">${escapeHtml(track.dj || '')}</span>
-      ${i !== currentIndex && amIAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})">✕</button>` : ''}
+      ${i !== currentIndex && isUserAdmin ? `<button class="remove-btn" onclick="event.stopPropagation();socket.emit('removeFromQueue', ${i})">✕</button>` : ''}
     `;
     list.appendChild(div);
   });
@@ -2151,7 +2155,6 @@ function limitChatMessages(container) {
   }
 }
 
-// ✅ Função de curtir - envia para o servidor
 function likeMessage(msgId, btn) {
   if (!currentRoom) {
     toast('Entre em uma sala para curtir', 'error');
@@ -2164,7 +2167,6 @@ function likeMessage(msgId, btn) {
   });
 }
 
-// ✅ Atualiza a UI de curtidas baseado no estado do servidor
 function updateLikeDisplay(msgId) {
   const likeData = messageLikesSync[msgId];
   if (!likeData) return;
@@ -2291,7 +2293,6 @@ socket.on('chatHistory', (messages) => {
   setTimeout(markMessagesAsSeen, 100);
 });
 
-// ✅ Evento de curtidas - atualiza o estado e a UI
 socket.on('likeUpdate', (data) => {
   const { messageId, likes, users } = data;
   
@@ -2299,7 +2300,6 @@ socket.on('likeUpdate', (data) => {
   updateLikeDisplay(messageId);
 });
 
-// ✅ Estado inicial de curtidas ao entrar na sala
 socket.on('likesState', (likesData) => {
   messageLikesSync = likesData || {};
   
@@ -2318,6 +2318,7 @@ socket.on('likesState', (likesData) => {
 socket.on('error', (msg) => toast(msg, 'error'));
 
 socket.on('isAdmin', (isAdmin) => {
+  // ✅ Verifica se é admin global OU admin da sala
   amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
   if (amIAdmin) {
     $('adminBadge').classList.remove('hidden');
