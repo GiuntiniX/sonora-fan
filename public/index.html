@@ -517,7 +517,7 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM - LAYOUT 3 COLUNAS ===== */
+    /* ===== ROOM - NOVO LAYOUT 3 COLUNAS ===== */
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 1.2fr 1fr;
@@ -834,7 +834,7 @@
     .cooldown-text { font-size: 12px; color: var(--accent); text-align: center; padding: 6px; border-radius: 8px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2); flex-shrink: 0; }
     .cooldown-text.hidden { display: none; }
 
-    /* CHAT */
+    /* CHAT (mesmo estilo anterior) */
     .chat-messages {
       flex: 1;
       overflow: hidden;
@@ -1133,7 +1133,6 @@
         <button onclick="adminBroadcast()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📢 Mensagem</button>
       </div>
 
-      <!-- SEÇÃO DE GERENCIAR FILAS (sem botão Remover) -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <span style="font-weight:700;font-size:13px;">🎵 Gerenciar Filas</span>
@@ -1144,7 +1143,6 @@
         </div>
       </div>
 
-      <!-- SEÇÃO DE USUÁRIOS -->
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
           <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
@@ -1200,7 +1198,7 @@
     </div>
   </div>
 
-  <!-- ROOM -->
+  <!-- ROOM - NOVO LAYOUT 3 COLUNAS -->
   <div class="screen" id="screen-room">
     <div class="app">
       <div class="header">
@@ -1354,7 +1352,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO
+    //  JAVASCRIPT COMPLETO (mesmo da versão anterior, adaptado)
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1670,7 +1668,6 @@
       } catch (e) { toast('Erro ao banir', 'error'); }
     }
 
-    // ===== FUNÇÃO CORRIGIDA (sem botão Remover) =====
     async function loadAdminQueues() {
       try {
         const res = await fetch('/api/rooms', { credentials: 'include' });
@@ -1698,7 +1695,9 @@
                   html += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;">`;
                   html += `<span style="min-width:18px;">${isCurrent ? '▶' : idx+1}</span>`;
                   html += `<span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(track.title)}</span>`;
-                  if (isCurrent) {
+                  if (!isCurrent) {
+                    html += `<button onclick="adminRemoveSong('${room.slug}', ${idx})" style="background:rgba(239,68,68,0.15);border:1px solid var(--danger);color:var(--danger);border-radius:4px;padding:0 6px;font-size:10px;cursor:pointer;">Remover</button>`;
+                  } else {
                     html += `<span style="color:var(--accent);font-size:10px;">Tocando</span>`;
                   }
                   html += `</div>`;
