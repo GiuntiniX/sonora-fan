@@ -25,6 +25,13 @@ const MAX_SONGS_PER_USER = 3;
 const users = new Map();
 const sessions = new Map();
 const userFavorites = new Map();
+const userScores = new Map(); // email -> { points, level, badges }
+
+// ========== PLAYLISTS ==========
+const playlists = new Map(); // roomSlug -> [{ id, name, songs: [{ id, title, artist, duration }] }]
+
+// ========== REAÇÕES EM MENSAGENS ==========
+const messageReactions = new Map(); // messageId -> { emoji: [userNames] }
 
 // ========== ESTADO ==========
 const rooms = new Map();
@@ -34,6 +41,7 @@ const roomVotes = new Map();
 function createRoom(slug, name, adminName = null) {
   roomLikes.set(slug, {});
   roomVotes.set(slug, {});
+  playlists.set(slug, []);
   return {
     slug, name, admin: adminName,
     queue: [], currentIndex: 0, startedAt: Date.now(),
@@ -51,6 +59,37 @@ function getRoomLikes(slug) {
 function getRoomVotes(slug) {
   if (!roomVotes.has(slug)) roomVotes.set(slug, {});
   return roomVotes.get(slug);
+}
+
+// ===== SISTEMA DE PONTUAÇÃO =====
+function getScore(email) {
+  if (!userScores.has(email)) {
+    userScores.set(email, { points: 0, level: 1, badges: [] });
+  }
+  return userScores.get(email);
+}
+
+function addPoints(email, points) {
+  const score = getScore(email);
+  score.points += points;
+  // A cada 100 pontos sobe de nível
+  const newLevel = Math.floor(score.points / 100) + 1;
+  if (newLevel > score.level) {
+    score.level = newLevel;
+    // Conquista: "DJ Level X" a cada nível
+    if (!score.badges.includes(`🎚️ Nível ${score.level}`)) {
+      score.badges.push(`🎚️ Nível ${score.level}`);
+    }
+    // Conquistas especiais
+    if (score.points >= 500 && !score.badges.includes('🎖️ Mestre do Som')) {
+      score.badges.push('🎖️ Mestre do Som');
+    }
+    if (score.points >= 1000 && !score.badges.includes('🏆 Lenda Musical')) {
+      score.badges.push('🏆 Lenda Musical');
+    }
+  }
+  userScores.set(email, score);
+  return score;
 }
 
 rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
@@ -82,6 +121,7 @@ function broadcastUsers(slug) {
       color: s.userColor || '#888',
       isAdmin: s.isAdmin || false,
       avatar: s.userAvatar || '👤',
+      score: s.userEmail ? getScore(s.userEmail) : { points: 0, level: 1 }
     }));
     io.to(slug).emit('users', users);
   });
@@ -209,7 +249,17 @@ app.get('/api/me', (req, res) => {
   const user = users.get(email);
   if (!user) { sessions.delete(token); return res.status(401).json({ error: 'Usuário não encontrado' }); }
   const { senha: _, ...userData } = user;
-  res.json({ success: true, user: userData });
+  const score = getScore(email);
+  res.json({ success: true, user: { ...userData, score } });
+});
+
+// ===== SCORE =====
+app.get('/api/score', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  res.json(getScore(email));
 });
 
 // ===== FAVORITOS =====
@@ -250,34 +300,91 @@ app.delete('/api/favorites/:videoId', (req, res) => {
   res.json({ success: true, favorites: favs });
 });
 
-app.get('/api/rooms', (req, res) => {
-  const list = Array.from(rooms.values()).map(r => ({
-    slug: r.slug, name: r.name, listenerCount: r.listenerCount,
-    queueLength: r.queue.length, isPlaying: r.isPlaying,
-    currentTrack: r.queue[r.currentIndex] || null,
-  }));
-  res.json(list);
+// ===== PLAYLISTS =====
+app.get('/api/playlists/:roomSlug', (req, res) => {
+  const roomSlug = req.params.roomSlug;
+  if (!playlists.has(roomSlug)) playlists.set(roomSlug, []);
+  res.json(playlists.get(roomSlug));
 });
 
-app.get('/api/room/:slug/queue', (req, res) => {
-  const room = rooms.get(req.params.slug);
-  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
-  res.json({ queue: room.queue, currentIndex: room.currentIndex });
+app.post('/api/playlists/:roomSlug', (req, res) => {
+  const roomSlug = req.params.roomSlug;
+  const { name, songs } = req.body;
+  if (!name) return res.status(400).json({ error: 'Nome da playlist é obrigatório' });
+  if (!playlists.has(roomSlug)) playlists.set(roomSlug, []);
+  const list = playlists.get(roomSlug);
+  const newPlaylist = {
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+    name,
+    songs: songs || []
+  };
+  list.push(newPlaylist);
+  res.json(newPlaylist);
 });
 
-app.get('/api/rooms/random', (req, res) => {
-  const list = Array.from(rooms.values());
-  if (list.length === 0) return res.json({ slug: null });
-  const sorted = list.sort((a, b) => b.listenerCount - a.listenerCount);
-  res.json({ slug: sorted[0].slug });
+app.post('/api/playlists/:roomSlug/:playlistId/add', (req, res) => {
+  const { roomSlug, playlistId } = req.params;
+  const { song } = req.body;
+  if (!song || !song.id) return res.status(400).json({ error: 'Música inválida' });
+  if (!playlists.has(roomSlug)) return res.status(404).json({ error: 'Playlist não encontrada' });
+  const list = playlists.get(roomSlug);
+  const playlist = list.find(p => p.id === playlistId);
+  if (!playlist) return res.status(404).json({ error: 'Playlist não encontrada' });
+  playlist.songs.push(song);
+  res.json(playlist);
 });
 
-app.post('/api/rooms', (req, res) => {
-  const { name, adminName } = req.body;
-  if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
-  rooms.set(slug, createRoom(slug, name, adminName || null));
-  res.json({ slug, name });
+app.delete('/api/playlists/:roomSlug/:playlistId', (req, res) => {
+  const { roomSlug, playlistId } = req.params;
+  if (!playlists.has(roomSlug)) return res.status(404).json({ error: 'Playlist não encontrada' });
+  const list = playlists.get(roomSlug);
+  const idx = list.findIndex(p => p.id === playlistId);
+  if (idx === -1) return res.status(404).json({ error: 'Playlist não encontrada' });
+  list.splice(idx, 1);
+  res.json({ success: true });
+});
+
+// ===== BUSCA DE VÍDEOS (YouTube) =====
+app.get('/api/search-youtube', async (req, res) => {
+  const query = String(req.query.q || '').trim();
+  if (!query) return res.status(400).json({ error: 'Digite uma busca' });
+  
+  // Usa a API pública de busca do YouTube (sem chave) - fallback para scraping
+  try {
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    const html = await fetchUrl(searchUrl);
+    
+    // Extrai os vídeos do HTML (regex simplificada)
+    const videoRegex = /"videoId":"([a-zA-Z0-9_-]{11})"/g;
+    const titleRegex = /"title":{"runs":\[{"text":"([^"]+)"}\]}/g;
+    const results = [];
+    let match;
+    const ids = [];
+    const titles = [];
+    
+    while ((match = videoRegex.exec(html)) !== null) {
+      ids.push(match[1]);
+    }
+    while ((match = titleRegex.exec(html)) !== null) {
+      titles.push(match[1]);
+    }
+    
+    // Junta IDs e títulos (limitado a 10)
+    const limit = Math.min(ids.length, titles.length, 10);
+    for (let i = 0; i < limit; i++) {
+      results.push({
+        id: ids[i],
+        title: titles[i] || 'Vídeo do YouTube',
+        artist: 'Desconhecido'
+      });
+    }
+    
+    // Se não encontrou via regex, tenta via oembed para cada ID? (muito lento)
+    // Por enquanto, retorna o que encontrou
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: 'Erro ao buscar vídeos' });
+  }
 });
 
 function fetchUrl(url) {
@@ -297,7 +404,7 @@ function fetchUrl(url) {
   });
 }
 
-// ===== VIDEO INFO (tenta extrair duração, mas sempre retorna 200) =====
+// ===== VIDEO INFO =====
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
   if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
@@ -306,7 +413,6 @@ app.get('/api/video-info', async (req, res) => {
 
   const info = { id, title: null, artist: null, duration: null };
 
-  // Tenta oembed (título e artista)
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
@@ -314,7 +420,6 @@ app.get('/api/video-info', async (req, res) => {
     info.artist = data.author_name || null;
   } catch (e) {}
 
-  // Tenta extrair duração com várias estratégias
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
 
@@ -385,7 +490,6 @@ app.get('/api/video-info', async (req, res) => {
     info.title = 'Vídeo do YouTube (ID: ' + id + ')';
   }
 
-  // Sempre retorna 200, mesmo se duration for null
   res.json(info);
 });
 
@@ -407,7 +511,12 @@ app.get('/api/admin/stats', isAdmin, (req, res) => {
 });
 
 app.get('/api/admin/users', isAdmin, (req, res) => {
-  const list = Array.from(users.values()).map(u => ({ ...u, senha: undefined, isAdmin: adminEmails.has(u.email) }));
+  const list = Array.from(users.values()).map(u => ({ 
+    ...u, 
+    senha: undefined, 
+    isAdmin: adminEmails.has(u.email),
+    score: getScore(u.email)
+  }));
   res.json(list);
 });
 
@@ -426,6 +535,8 @@ app.post('/api/admin/delete-user', isAdmin, (req, res) => {
 
   users.delete(email);
   adminEmails.delete(email);
+  userScores.delete(email);
+  userFavorites.delete(email);
 
   for (const [token, storedEmail] of sessions) {
     if (storedEmail === email) sessions.delete(token);
@@ -518,7 +629,7 @@ app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
 app.get('/api/admin/export-data', isAdmin, (req, res) => {
   const data = {
     exportedAt: new Date().toISOString(),
-    users: Array.from(users.values()).map(u => ({ ...u, senha: undefined })),
+    users: Array.from(users.values()).map(u => ({ ...u, senha: undefined, score: getScore(u.email) })),
     admins: Array.from(adminEmails),
     rooms: Array.from(rooms.values()).map(r => ({
       slug: r.slug, name: r.name, admin: r.admin,
@@ -603,6 +714,11 @@ io.on('connection', (socket) => {
     const votes = getRoomVotes(slug);
     socket.emit('votesState', votes);
 
+    // Envia playlists
+    if (playlists.has(slug)) {
+      socket.emit('playlists', playlists.get(slug));
+    }
+
     socket.emit('roomState', {
       slug: room.slug, name: room.name,
       currentIndex: room.currentIndex,
@@ -614,6 +730,7 @@ io.on('connection', (socket) => {
     });
     socket.emit('chatHistory', room.chatHistory.slice(-150));
     socket.emit('isAdmin', socket.isAdmin);
+    socket.emit('score', userEmail ? getScore(userEmail) : { points: 0, level: 1 });
     broadcastUsers(slug);
   });
 
@@ -633,7 +750,24 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', msg);
   });
 
-  // 🔥 ADD SONG COM VALIDAÇÃO FLEXÍVEL
+  // ===== REAÇÕES EM MENSAGENS =====
+  socket.on('reactMessage', ({ messageId, emoji }) => {
+    if (!currentRoom || !messageId || !emoji) return;
+    if (!messageReactions.has(messageId)) {
+      messageReactions.set(messageId, {});
+    }
+    const reactions = messageReactions.get(messageId);
+    if (!reactions[emoji]) reactions[emoji] = [];
+    const idx = reactions[emoji].indexOf(socket.userName);
+    if (idx > -1) {
+      reactions[emoji].splice(idx, 1);
+      if (reactions[emoji].length === 0) delete reactions[emoji];
+    } else {
+      reactions[emoji].push(socket.userName);
+    }
+    io.to(currentRoom).emit('messageReactions', { messageId, reactions });
+  });
+
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -657,16 +791,20 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Se a duração foi fornecida e é maior que o limite, bloqueia
     if (song.duration && song.duration > settings.maxDuration) {
       socket.emit('error', `⛔ Vídeo muito longo! Duração: ${Math.floor(song.duration / 60)} min. Limite: ${settings.maxDuration / 60} min.`);
       return;
     }
 
-    // Permite adição mesmo com duration: null, mas marca como não verificado
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
+
+    // Pontuação: +5 pontos por adicionar música
+    if (userEmail) {
+      addPoints(userEmail, 5);
+      socket.emit('score', getScore(userEmail));
+    }
 
     if (!room.isPlaying && room.queue.length === 1) {
       room.isPlaying = true;
@@ -690,25 +828,20 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', musicMsg);
   });
 
-  // 🔥 RECEBE DURAÇÃO REAL DO PLAYER E VALIDA
   socket.on('videoDuration', ({ duration }) => {
     if (!currentRoom || !duration) return;
     const room = rooms.get(currentRoom);
     const track = room.queue[room.currentIndex];
     if (!track) return;
-
-    // Atualiza a duração no track
     track.duration = duration;
 
-    // Se a duração for maior que o limite, remove a música
     if (duration > settings.maxDuration) {
-      room.queue.shift(); // remove a música atual
+      room.queue.shift();
       room.currentIndex = 0;
       room.isPlaying = false;
       room.startedAt = Date.now();
       addSystemMsg(currentRoom, `⛔ A música "${track.title}" foi removida automaticamente por ser muito longa (${Math.floor(duration / 60)} min). Limite: ${settings.maxDuration / 60} min.`);
       
-      // Reindexa votos
       const votes = getRoomVotes(currentRoom);
       const newVotes = {};
       room.queue.forEach((_, i) => {
@@ -720,8 +853,6 @@ io.on('connection', (socket) => {
       io.to(currentRoom).emit('queueEmpty');
       return;
     }
-
-    // Se a duração foi atualizada e está OK, apenas broadcast do estado
     broadcastState(currentRoom);
   });
 
@@ -838,8 +969,21 @@ io.on('connection', (socket) => {
     const downIndex = data.down.indexOf(socket.userName);
     if (downIndex > -1) data.down.splice(downIndex, 1);
     
-    if (type === 'up') data.up.push(socket.userName);
-    else if (type === 'down') data.down.push(socket.userName);
+    if (type === 'up') {
+      data.up.push(socket.userName);
+      // Pontuação: +2 por upvote
+      if (userEmail) {
+        addPoints(userEmail, 2);
+        socket.emit('score', getScore(userEmail));
+      }
+    } else if (type === 'down') {
+      data.down.push(socket.userName);
+      // Pontuação: +1 por downvote (menos)
+      if (userEmail) {
+        addPoints(userEmail, 1);
+        socket.emit('score', getScore(userEmail));
+      }
+    }
     
     if (data.down.length >= DISLIKE_THRESHOLD) {
       const removed = roomData.queue.splice(index, 1)[0];
@@ -873,6 +1017,10 @@ io.on('connection', (socket) => {
     } else {
       data.users.push(socket.userName);
       data.likes++;
+      if (userEmail) {
+        addPoints(userEmail, 1);
+        socket.emit('score', getScore(userEmail));
+      }
     }
     io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
   });
