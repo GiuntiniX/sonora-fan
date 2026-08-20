@@ -944,6 +944,120 @@
     .emoji-item { font-size: 20px; cursor: pointer; padding: 3px 5px; border-radius: 4px; transition: background 0.15s; line-height: 1; }
     .emoji-item:hover { background: var(--bg-hover); }
 
+    /* ===== JOGO STOP ESTILOS ===== */
+    .game-modal {
+      max-width: 600px !important;
+      width: 95% !important;
+    }
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .game-letter {
+      font-size: 48px;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .game-timer {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--warning);
+    }
+    .game-categories {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+      margin: 16px 0;
+    }
+    .game-category {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .game-category label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .game-category input {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+    .game-category input:focus {
+      border-color: var(--accent2);
+    }
+    .game-scores {
+      margin-top: 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .game-scores .score-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+      font-size: 13px;
+    }
+    .game-scores .score-item .name { font-weight: 600; }
+    .game-scores .score-item .pts { color: var(--accent); font-weight: 700; }
+    .game-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .game-actions button {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .game-actions .start-btn {
+      background: linear-gradient(135deg, var(--success), var(--accent2));
+      color: #fff;
+    }
+    .game-actions .submit-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+    .game-actions .end-btn {
+      background: var(--danger);
+      color: #fff;
+    }
+    .game-actions .close-btn {
+      background: var(--bg);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .game-actions .close-btn:hover { background: var(--bg-hover); }
+    .game-status {
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
     .footer {
       text-align: center;
       padding: 12px;
@@ -991,6 +1105,7 @@
       .queue-item .thumb { width: 32px; height: 24px; }
       .queue-item .info .title { font-size: 11px; }
       .queue-votes { margin-left: 0; }
+      .game-categories { grid-template-columns: 1fr; }
     }
     @media (max-width: 480px) {
       .player-column { padding: 10px 12px; }
@@ -1170,6 +1285,37 @@
     </div>
   </div>
 
+  <!-- JOGO STOP MODAL -->
+  <div class="modal-overlay" id="gameModal">
+    <div class="modal game-modal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <h3 style="font-size:18px;font-weight:800;">🎮 Jogo Stop</h3>
+        <button onclick="closeGame()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div id="gameStatus" class="game-status">Clique em "Iniciar" para começar!</div>
+      <div class="game-header">
+        <div class="game-letter" id="gameLetter">?</div>
+        <div class="game-timer" id="gameTimer">0s</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);margin-bottom:8px;">
+        <span>Rodada <span id="gameRound">0</span>/<span id="gameMaxRounds">3</span></span>
+        <span>Iniciado por: <span id="gameStartedBy">—</span></span>
+      </div>
+      <div class="game-categories" id="gameCategories">
+        <!-- gerado via JS -->
+      </div>
+      <div class="game-scores" id="gameScores">
+        <div style="color:var(--text-muted);font-size:13px;text-align:center;">Aguardando jogo...</div>
+      </div>
+      <div class="game-actions">
+        <button class="start-btn" id="gameStartBtn" onclick="startStopGame()">🎲 Iniciar</button>
+        <button class="submit-btn" id="gameSubmitBtn" onclick="submitStopAnswers()" disabled>✉️ Enviar respostas</button>
+        <button class="end-btn" id="gameEndBtn" onclick="endStopGame()" style="display:none;">⏹️ Encerrar</button>
+        <button class="close-btn" onclick="closeGame()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LOBBY -->
   <div class="screen" id="screen-lobby">
     <div class="app">
@@ -1212,6 +1358,7 @@
           <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom" style="display:none;">🎛️</button>
           <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtnRoom">🌙</button>
           <button class="admin-toggle-btn" onclick="toggleFavorites()" title="Favoritos" style="border-color:var(--accent2);">⭐</button>
+          <button class="admin-toggle-btn" onclick="toggleGame()" title="Jogo Stop" style="border-color:var(--success);">🎮</button>
           <span id="adminBadge" class="admin-badge hidden">Admin</span>
         </div>
       </div>
@@ -1354,7 +1501,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO - COM FALLBACK DE DURAÇÃO
+    //  JAVASCRIPT COMPLETO - COM JOGO STOP
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1380,6 +1527,18 @@
     let myFavorites = [];
     let crossfadeInterval = null;
     let pendingRoomAfterLogin = null;
+
+    // ===== JOGO STOP =====
+    let gameActive = false;
+    let gameRound = 0;
+    let gameLetter = '';
+    let gameTimeLeft = 0;
+    let gameScores = {};
+    let gameCategories = [];
+    let gameStartedBy = '';
+    let gameMaxRounds = 3;
+    let gameRoundInProgress = false;
+    let gameTimerInterval = null;
 
     // ===== UTILS =====
     function $(id) { return document.getElementById(id); }
@@ -1938,6 +2097,8 @@
       amIAdmin = false;
       $('adminBadge').classList.add('hidden');
       loadYouTubeAPI();
+      // Fecha jogo se estiver aberto
+      if ($('gameModal').classList.contains('active')) closeGame();
     }
 
     function leaveRoom() {
@@ -1980,17 +2141,12 @@
       });
     }
 
-function syncPlayer(state) {
-  // 👇 ATUALIZA O TÍTULO PRIMEIRO
-  document.getElementById('roomTitle').textContent = state.name;
-
-  // Depois verifica o player
-  if (!player || !player.loadVideoById) return;
-
-  currentRoomData = state;
-  const track = state.queue[state.currentIndex];
-  renderQueue(state.queue, state.currentIndex);
-
+    function syncPlayer(state) {
+      document.getElementById('roomTitle').textContent = state.name;
+      if (!player || !player.loadVideoById) return;
+      currentRoomData = state;
+      const track = state.queue[state.currentIndex];
+      renderQueue(state.queue, state.currentIndex);
       if (!track) {
         currentTrackId = null;
         $('trackTitle').textContent = 'Fila vazia';
@@ -2003,9 +2159,7 @@ function syncPlayer(state) {
         try { player.stopVideo(); } catch(e) {}
         return;
       }
-
       $('roomTitle').textContent = state.name;
-
       if (currentTrackId !== track.id) {
         currentTrackId = track.id;
         try {
@@ -2064,21 +2218,18 @@ function syncPlayer(state) {
       }, interval);
     }
 
-    // ===== RENDER QUEUE (SEM BOTÃO REMOVER) =====
+    // ===== RENDER QUEUE =====
     function renderQueue(queue, currentIndex) {
       const list = $('queueList');
       const count = $('queueCount');
       count.textContent = queue.length + ' música' + (queue.length !== 1 ? 's' : '');
       list.innerHTML = '';
-
       if (queue.length === 0) {
         list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>';
         return;
       }
-
       const isGlobalAdmin = currentUser && currentUser.email === 'admin@sonora.com';
       const isUserAdmin = amIAdmin || isGlobalAdmin;
-
       queue.forEach((track, i) => {
         const div = document.createElement('div');
         div.className = 'queue-item' + (i === currentIndex ? ' current' : '');
@@ -2103,7 +2254,6 @@ function syncPlayer(state) {
             socket.emit('reorderQueue', newOrder);
           });
         }
-        
         const votes = queueVotes[i] || { up: [], down: [] };
         const upCount = votes.up.length;
         const downCount = votes.down.length;
@@ -2114,7 +2264,6 @@ function syncPlayer(state) {
         let scoreClass = ''; let scoreSymbol = '⚪';
         if (score > 0) { scoreClass = 'positive'; scoreSymbol = '👍'; }
         if (score < 0) { scoreClass = 'negative'; scoreSymbol = '👎'; }
-        
         div.innerHTML = `
           <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
           <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
@@ -2145,7 +2294,7 @@ function syncPlayer(state) {
       socket.emit('voteSong', { index, type, room: currentRoom });
     }
 
-    // ===== ADD SONG (COM FALLBACK) =====
+    // ===== ADD SONG =====
     function extractYouTubeId(url) {
       if (!url) return '';
       if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
@@ -2177,7 +2326,6 @@ function syncPlayer(state) {
       $('previewArtist').textContent = 'Analisando link';
       $('previewStatus').textContent = '';
       $('previewActions').classList.add('hidden');
-
       try {
         const res = await fetch(`/api/video-info?id=${videoId}`);
         const data = await res.json();
@@ -2187,7 +2335,6 @@ function syncPlayer(state) {
           return;
         }
       } catch (e) {
-        // Se falhar, tenta pelo menos obter título do oembed diretamente
         try {
           const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
           if (oembedRes.ok) {
@@ -2212,7 +2359,6 @@ function syncPlayer(state) {
       $('previewTitle').textContent = data.title || 'Música do YouTube';
       $('previewArtist').textContent = data.artist || 'Desconhecido';
       const confirmBtn = document.querySelector('.song-preview-confirm');
-
       if (data.duration > 0) {
         if (data.duration > MAX_SONG_DURATION) {
           $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > ${MAX_SONG_DURATION/60} min`;
@@ -2231,7 +2377,6 @@ function syncPlayer(state) {
           confirmBtn.textContent = '✓ Adicionar';
         }
       } else {
-        // Duração não verificada: permite adicionar com aviso
         $('previewStatus').textContent = '⚠️ Duração não verificada. O vídeo será verificado ao carregar.';
         $('previewStatus').style.color = 'var(--warning)';
         confirmBtn.disabled = false;
@@ -2244,27 +2389,22 @@ function syncPlayer(state) {
 
     function confirmAdd() {
       if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
-      // Se a duração foi fornecida e é maior que o limite, bloqueia
       if (songData.duration && songData.duration > MAX_SONG_DURATION) { 
         toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); 
         return; 
       }
-
       const now = Date.now();
       if (now - lastAddTime < COOLDOWN) { 
         const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); 
         toast(`Aguarde ${wait}s`, 'error'); 
         return; 
       }
-
-      // Envia a música com duração (pode ser null)
       socket.emit('addSong', { 
         id: songData.id, 
         title: songData.title || 'Música do YouTube', 
         artist: songData.artist || 'Desconhecido', 
         duration: songData.duration || null 
       });
-
       lastAddTime = Date.now();
       $('songUrl').value = '';
       clearPreview();
@@ -2310,7 +2450,6 @@ function syncPlayer(state) {
       div.className = 'msg';
       const msgId = msg._id || 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
       div.dataset.msgId = msgId;
-
       if (msg.isMusic) {
         div.classList.add('msg-music');
         div.innerHTML = `
@@ -2408,6 +2547,120 @@ function syncPlayer(state) {
       if (player && player.setVolume) player.setVolume(parseInt(val));
     }
 
+    // ===== JOGO STOP - FUNÇÕES =====
+    function toggleGame() {
+      const modal = $('gameModal');
+      modal.classList.toggle('active');
+      if (modal.classList.contains('active')) {
+        // Se já houver jogo ativo, atualiza a UI
+        if (gameActive) {
+          updateGameUI();
+        } else {
+          $('gameStatus').textContent = 'Clique em "Iniciar" para começar!';
+          $('gameLetter').textContent = '?';
+          $('gameTimer').textContent = '0s';
+          $('gameRound').textContent = '0';
+          $('gameMaxRounds').textContent = '3';
+          $('gameStartedBy').textContent = '—';
+          $('gameCategories').innerHTML = '';
+          $('gameScores').innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;">Aguardando jogo...</div>';
+          $('gameStartBtn').style.display = 'inline-block';
+          $('gameSubmitBtn').disabled = true;
+          $('gameEndBtn').style.display = 'none';
+        }
+      }
+    }
+
+    function closeGame() { $('gameModal').classList.remove('active'); }
+
+    function updateGameUI() {
+      $('gameStatus').textContent = gameActive ? 'Jogo em andamento' : 'Jogo encerrado';
+      $('gameLetter').textContent = gameLetter || '?';
+      $('gameTimer').textContent = gameTimeLeft + 's';
+      $('gameRound').textContent = gameRound;
+      $('gameMaxRounds').textContent = gameMaxRounds;
+      $('gameStartedBy').textContent = gameStartedBy || '—';
+
+      // Categorias
+      const catContainer = $('gameCategories');
+      catContainer.innerHTML = '';
+      if (gameCategories.length) {
+        gameCategories.forEach(cat => {
+          const div = document.createElement('div');
+          div.className = 'game-category';
+          div.innerHTML = `
+            <label for="stop-${cat}">${cat}</label>
+            <input type="text" id="stop-${cat}" placeholder="Palavra com ${gameLetter || '?'}" ${!gameRoundInProgress ? 'disabled' : ''}>
+          `;
+          catContainer.appendChild(div);
+        });
+      } else {
+        catContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;">Nenhuma categoria definida</div>';
+      }
+
+      // Placar
+      const scoreContainer = $('gameScores');
+      if (Object.keys(gameScores).length === 0) {
+        scoreContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;">Nenhuma pontuação ainda</div>';
+      } else {
+        const sorted = Object.entries(gameScores).sort((a, b) => b[1] - a[1]);
+        scoreContainer.innerHTML = sorted.map(([name, pts]) => `
+          <div class="score-item">
+            <span class="name">${escapeHtml(name)}</span>
+            <span class="pts">${pts} pts</span>
+          </div>
+        `).join('');
+      }
+
+      // Botões
+      if (gameActive) {
+        $('gameStartBtn').style.display = 'none';
+        $('gameSubmitBtn').disabled = !gameRoundInProgress;
+        $('gameEndBtn').style.display = 'inline-block';
+      } else {
+        $('gameStartBtn').style.display = 'inline-block';
+        $('gameSubmitBtn').disabled = true;
+        $('gameEndBtn').style.display = 'none';
+      }
+
+      // Atualiza status
+      if (gameActive && gameRoundInProgress) {
+        $('gameStatus').textContent = `Rodada ${gameRound} - Letra ${gameLetter}`;
+      } else if (gameActive && !gameRoundInProgress) {
+        $('gameStatus').textContent = `Aguardando próxima rodada...`;
+      }
+    }
+
+    function startStopGame() {
+      if (!currentRoom) { toast('Entre em uma sala primeiro', 'error'); return; }
+      socket.emit('startStopGame', { roomSlug: currentRoom });
+    }
+
+    function submitStopAnswers() {
+      if (!gameRoundInProgress) { toast('A rodada não está ativa', 'error'); return; }
+      const answers = {};
+      const inputs = document.querySelectorAll('#gameCategories input');
+      let filled = true;
+      inputs.forEach(input => {
+        const cat = input.id.replace('stop-', '');
+        const val = input.value.trim();
+        if (!val) filled = false;
+        answers[cat] = val;
+      });
+      if (!filled) { toast('Preencha todas as categorias', 'error'); return; }
+      socket.emit('submitStopAnswer', { roomSlug: currentRoom, answers });
+      toast('Respostas enviadas!', 'success');
+      // Desabilita inputs para evitar reenvio
+      inputs.forEach(inp => inp.disabled = true);
+      $('gameSubmitBtn').disabled = true;
+    }
+
+    function endStopGame() {
+      if (!currentRoom) { toast('Entre em uma sala primeiro', 'error'); return; }
+      if (!confirm('Encerrar o jogo Stop?')) return;
+      socket.emit('endStopGame', { roomSlug: currentRoom });
+    }
+
     // ===== SOCKET EVENTS =====
     socket.on('adminUsersUpdated', () => {
       if (amIAdmin) loadAdminUsers();
@@ -2497,6 +2750,72 @@ function syncPlayer(state) {
       if (currentRoom) { const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() }; renderMessage(msg); }
     });
     socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
+
+    // ===== JOGO STOP - SOCKET EVENTS =====
+    socket.on('gameState', (state) => {
+      gameActive = state.active;
+      gameRound = state.round || 0;
+      gameLetter = state.currentLetter || '';
+      gameTimeLeft = state.timeLeft || 0;
+      gameCategories = state.categories || [];
+      gameScores = state.scores || {};
+      gameStartedBy = state.startedBy || '';
+      gameMaxRounds = state.maxRounds || 3;
+      gameRoundInProgress = state.roundInProgress || false;
+
+      // Se o modal estiver aberto, atualiza a UI
+      if ($('gameModal').classList.contains('active')) {
+        updateGameUI();
+      }
+      // Sempre atualiza o status global
+    });
+
+    socket.on('gameTimer', (timeLeft) => {
+      gameTimeLeft = timeLeft;
+      if ($('gameModal').classList.contains('active')) {
+        $('gameTimer').textContent = timeLeft + 's';
+        if (timeLeft <= 5) $('gameTimer').style.color = 'var(--danger)';
+        else $('gameTimer').style.color = 'var(--warning)';
+      }
+    });
+
+    socket.on('roundResult', (data) => {
+      const { roundScores, scores, round, letter } = data;
+      gameScores = scores;
+      gameRound = round || gameRound;
+      gameLetter = letter || gameLetter;
+      // Mostra resultado no chat automaticamente
+      if (currentRoom) {
+        const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+        let ranking = sorted.map(([name, pts], i) => `${i+1}º ${name}: ${pts} pts`).join(' | ');
+        // Não precisa adicionar sistema porque o servidor já envia
+      }
+      // Atualiza UI se modal aberto
+      if ($('gameModal').classList.contains('active')) {
+        updateGameUI();
+        // Destaca os pontos da rodada
+        toast(`🏆 Pontuação da rodada atualizada!`, 'success');
+      }
+    });
+
+    socket.on('gameEnd', (data) => {
+      const { scores, ranking } = data;
+      gameActive = false;
+      gameScores = scores;
+      gameRoundInProgress = false;
+      if ($('gameModal').classList.contains('active')) {
+        updateGameUI();
+        $('gameStatus').textContent = '🏁 Jogo encerrado!';
+        $('gameStartBtn').style.display = 'inline-block';
+        $('gameSubmitBtn').disabled = true;
+        $('gameEndBtn').style.display = 'none';
+      }
+      toast(`🏁 Jogo Stop encerrado! Ranking: ${ranking}`, 'success');
+    });
+
+    socket.on('gameError', (msg) => {
+      toast(msg, 'error');
+    });
 
     // ===== PROGRESS UPDATE =====
     setInterval(() => {
