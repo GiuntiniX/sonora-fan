@@ -699,7 +699,7 @@
     .queue-item.dragging { opacity: 0.5; }
     .queue-item.drag-over { border: 2px dashed var(--accent); }
 
-    /* VOTAÇÃO MELHORADA */
+    /* VOTAÇÃO */
     .queue-votes {
       display: flex;
       align-items: center;
@@ -794,17 +794,46 @@
     /* ADD SONG */
     .add-song {
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      gap: 8px;
       padding: 14px 16px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
       background: var(--bg-card);
       flex-shrink: 0;
     }
-    .add-song input { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: all 0.2s; font-family: inherit; }
-    .add-song input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
-    .add-song button { padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
-    .add-song button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
+    .add-song .row {
+      display: flex;
+      gap: 10px;
+    }
+    .add-song .row input { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: all 0.2s; font-family: inherit; }
+    .add-song .row input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+    .add-song .row button { padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; font-family: inherit; white-space: nowrap; }
+    .add-song .row button:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(124,58,237,0.3); }
+    .add-song .search-results {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 150px;
+      overflow-y: auto;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .add-song .search-results .result-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 13px;
+    }
+    .add-song .search-results .result-item:hover { background: var(--bg-hover); }
+    .add-song .search-results .result-item .thumb { width: 40px; height: 30px; border-radius: 4px; overflow: hidden; background: var(--bg); flex-shrink: 0; }
+    .add-song .search-results .result-item .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .add-song .search-results .result-item .info { flex: 1; min-width: 0; }
+    .add-song .search-results .result-item .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
 
     .song-preview {
       display: flex;
@@ -836,7 +865,7 @@
     .cooldown-text { font-size: 12px; color: var(--accent); text-align: center; padding: 6px; border-radius: 8px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2); flex-shrink: 0; }
     .cooldown-text.hidden { display: none; }
 
-    /* CHAT */
+    /* ===== CHAT COM REAÇÕES ===== */
     .chat-messages {
       flex: 1;
       overflow: hidden;
@@ -910,17 +939,40 @@
     .msg-content { flex: 1; min-width: 0; }
     .msg-header { display: flex; align-items: center; gap: 6px; margin-bottom: 1px; }
     .msg-user { font-weight: 700; font-size: 12px; cursor: pointer; }
+    .msg-user .level-badge { font-size: 9px; background: var(--accent2); color: #fff; padding: 0 6px; border-radius: 10px; margin-left: 4px; }
     .msg-time { font-size: 10px; color: var(--text-muted); opacity: 0.5; }
     .msg-text { color: var(--text-secondary); word-break: break-word; font-size: 13px; }
     .msg-system .msg-text { color: var(--text-muted); font-style: italic; font-size: 12px; }
     .msg-music { background: rgba(124,58,237,0.05); border-radius: 8px; padding: 6px 10px; }
     .msg-music .music-info { color: var(--text); font-weight: 600; font-size: 13px; margin-top: 2px; }
 
-    .msg-actions { display: flex; align-items: center; gap: 4px; margin-top: 2px; margin-left: 30px; }
+    .msg-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 2px; margin-left: 30px; }
     .msg-like-btn { background: transparent; border: none; cursor: pointer; font-size: 12px; padding: 2px 4px; border-radius: 8px; color: var(--text-muted); transition: all 0.15s; display: flex; align-items: center; gap: 2px; font-family: inherit; }
     .msg-like-btn:hover { background: var(--bg-hover); color: var(--text-secondary); }
     .msg-like-btn.liked { color: var(--accent); background: rgba(255,107,53,0.1); }
     .msg-like-count { font-size: 10px; font-weight: 600; }
+
+    .msg-reactions {
+      display: flex;
+      gap: 4px;
+      margin-top: 2px;
+      margin-left: 30px;
+    }
+    .msg-reaction {
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0 6px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .msg-reaction:hover { background: var(--bg-card); border-color: var(--accent2); }
+    .msg-reaction .count { font-size: 10px; color: var(--text-muted); }
 
     .chat-input-bar {
       padding: 8px 12px;
@@ -981,6 +1033,38 @@
     .favorite-item .actions .remove { background: var(--danger); color: #fff; }
     .favorite-item .actions .remove:hover { opacity: 0.8; }
 
+    /* ===== PLAYLISTS ===== */
+    .playlist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      margin-bottom: 6px;
+    }
+    .playlist-item .info { flex: 1; min-width: 0; }
+    .playlist-item .name { font-weight: 600; font-size: 13px; color: var(--text); }
+    .playlist-item .songs-count { font-size: 11px; color: var(--text-muted); }
+    .playlist-item .actions { display: flex; gap: 6px; }
+    .playlist-item .actions button { padding: 3px 8px; border-radius: 4px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .playlist-item .actions .load { background: var(--accent2); color: #fff; }
+    .playlist-item .actions .delete { background: var(--danger); color: #fff; }
+
+    /* ===== SCORE ===== */
+    .score-display {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .score-display .level { font-size: 24px; font-weight: 800; color: var(--accent); }
+    .score-display .points { font-size: 16px; color: var(--text-secondary); }
+    .score-display .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .score-display .badge { background: var(--bg-hover); border: 1px solid var(--border); border-radius: 12px; padding: 2px 10px; font-size: 12px; }
+
     @media (max-width: 768px) {
       .header { padding: 10px 14px; flex-wrap: wrap; gap: 6px; }
       .header h1 { font-size: 15px; }
@@ -991,12 +1075,12 @@
       .queue-item .thumb { width: 32px; height: 24px; }
       .queue-item .info .title { font-size: 11px; }
       .queue-votes { margin-left: 0; }
+      .add-song .row { flex-direction: column; }
+      .add-song .row button { width: 100%; }
     }
     @media (max-width: 480px) {
       .player-column { padding: 10px 12px; }
       #youtube-player { aspect-ratio: 16 / 9; }
-      .add-song { flex-direction: column; }
-      .add-song button { width: 100%; }
       .song-preview { flex-wrap: wrap; }
       .song-preview-actions { width: 100%; justify-content: flex-end; }
     }
@@ -1170,6 +1254,49 @@
     </div>
   </div>
 
+  <!-- PLAYLISTS MODAL -->
+  <div class="modal-overlay" id="playlistsModal">
+    <div class="modal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid var(--border);">
+        <h3 style="font-size:20px;font-weight:800;">📋 Playlists da Sala</h3>
+        <button onclick="closePlaylists()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" id="newPlaylistName" placeholder="Nome da playlist" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;">
+        <button onclick="createPlaylist()" style="padding:8px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:700;cursor:pointer;">+ Criar</button>
+      </div>
+      <div id="playlistsList">
+        <div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;">Nenhuma playlist criada.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCORE MODAL -->
+  <div class="modal-overlay" id="scoreModal">
+    <div class="modal">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid var(--border);">
+        <h3 style="font-size:20px;font-weight:800;">🏆 Sua Pontuação</h3>
+        <button onclick="closeScore()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div class="score-display" id="scoreDisplay">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Nível <span class="level" id="scoreLevel">1</span></span>
+          <span class="points" id="scorePoints">0 pontos</span>
+        </div>
+        <div class="badges" id="scoreBadges"></div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);">
+        <p><strong>Como ganhar pontos:</strong></p>
+        <ul style="list-style:none;padding:0;margin-top:6px;">
+          <li>🎵 Adicionar música: +5 pts</li>
+          <li>👍 Dar upvote: +2 pts</li>
+          <li>👎 Dar downvote: +1 pt</li>
+          <li>❤️ Curtir mensagem: +1 pt</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <!-- LOBBY -->
   <div class="screen" id="screen-lobby">
     <div class="app">
@@ -1179,6 +1306,7 @@
           <div class="user-info" id="userInfo">
             <span id="userAvatar">🎸</span>
             <span id="userDisplayName">Usuário</span>
+            <span id="userLevel" style="font-size:11px;color:var(--accent);"></span>
           </div>
           <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtn" style="display:none;">🎛️</button>
           <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtn">🌙</button>
@@ -1212,6 +1340,8 @@
           <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom" style="display:none;">🎛️</button>
           <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtnRoom">🌙</button>
           <button class="admin-toggle-btn" onclick="toggleFavorites()" title="Favoritos" style="border-color:var(--accent2);">⭐</button>
+          <button class="admin-toggle-btn" onclick="togglePlaylists()" title="Playlists" style="border-color:var(--accent);">📋</button>
+          <button class="admin-toggle-btn" onclick="toggleScore()" title="Pontuação" style="border-color:var(--accent2);">🏆</button>
           <span id="adminBadge" class="admin-badge hidden">Admin</span>
         </div>
       </div>
@@ -1249,6 +1379,7 @@
                 <div class="track-dj" id="trackDj"></div>
                 <div class="track-actions">
                   <button onclick="favoriteCurrent()" id="favCurrentBtn">⭐ Favoritar</button>
+                  <button onclick="addCurrentToPlaylist()" id="playlistCurrentBtn">📋 + Playlist</button>
                 </div>
               </div>
             </div>
@@ -1268,8 +1399,11 @@
 
           <div class="add-song-area">
             <div class="add-song">
-              <input type="text" id="songUrl" placeholder="Cole um link do YouTube..." oninput="previewSong()">
-              <button id="addBtn" onclick="addSong()">Adicionar</button>
+              <div class="row">
+                <input type="text" id="songUrl" placeholder="Link do YouTube ou busque pelo nome..." oninput="onSearchInput()">
+                <button id="addBtn" onclick="addSong()">Adicionar</button>
+              </div>
+              <div class="search-results" id="searchResults"></div>
             </div>
             <div class="song-preview hidden" id="songPreview">
               <div class="song-preview-thumb" id="previewThumb">🎵</div>
@@ -1354,7 +1488,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO - COM FALLBACK DE DURAÇÃO
+    //  JAVASCRIPT COMPLETO
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1380,6 +1514,8 @@
     let myFavorites = [];
     let crossfadeInterval = null;
     let pendingRoomAfterLogin = null;
+    let userScore = { points: 0, level: 1, badges: [] };
+    let messageReactions = {};
 
     // ===== UTILS =====
     function $(id) { return document.getElementById(id); }
@@ -1499,6 +1635,7 @@
         loadRooms();
         checkAdmin();
         loadFavorites();
+        loadScore();
         toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
         if (pendingRoomAfterLogin) {
           const roomSlug = pendingRoomAfterLogin;
@@ -1535,6 +1672,7 @@
         loadRooms();
         checkAdmin();
         loadFavorites();
+        loadScore();
         toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
         if (pendingRoomAfterLogin) {
           const roomSlug = pendingRoomAfterLogin;
@@ -1564,6 +1702,9 @@
     function updateUserInfo() {
       $('userDisplayName').textContent = myName;
       $('userAvatar').textContent = myAvatar;
+      if (userScore.level) {
+        $('userLevel').textContent = `🎚️ ${userScore.level}`;
+      }
     }
 
     function checkAdmin() {
@@ -1579,6 +1720,36 @@
         $('adminBadge').classList.add('hidden');
       }
     }
+
+    // ===== SCORE =====
+    async function loadScore() {
+      try {
+        const res = await fetch('/api/score', { credentials: 'include' });
+        if (res.ok) {
+          userScore = await res.json();
+          updateUserInfo();
+          if (document.getElementById('scoreDisplay')) {
+            renderScore();
+          }
+        }
+      } catch (e) {}
+    }
+
+    function renderScore() {
+      $('scoreLevel').textContent = userScore.level || 1;
+      $('scorePoints').textContent = (userScore.points || 0) + ' pontos';
+      const badges = $('scoreBadges');
+      badges.innerHTML = (userScore.badges || []).map(b => `<span class="badge">${b}</span>`).join('');
+    }
+
+    function toggleScore() {
+      const modal = $('scoreModal');
+      modal.classList.toggle('active');
+      if (modal.classList.contains('active')) {
+        renderScore();
+      }
+    }
+    function closeScore() { $('scoreModal').classList.remove('active'); }
 
     // ===== ADMIN =====
     function toggleAdmin() {
@@ -1619,6 +1790,7 @@
               <span class="name">${escapeHtml(u.nome)}</span>
               ${u.isAdmin ? '<span class="admin-badge-mini">Admin</span>' : ''}
               <div class="email">${escapeHtml(u.email)}</div>
+              <span style="font-size:10px;color:var(--text-muted);">🎚️ ${u.score?.level || 1}</span>
             </div>
             <div class="actions">
               ${!u.isAdmin ? `<button class="promote" onclick="adminPromote('${u.email}')">👑</button>` : ''}
@@ -1869,58 +2041,165 @@
       } catch (e) {}
     }
 
-    // ===== LOBBY =====
-    async function loadRooms() {
+    // ===== PLAYLISTS =====
+    function togglePlaylists() {
+      const modal = $('playlistsModal');
+      modal.classList.toggle('active');
+      if (modal.classList.contains('active')) loadPlaylists();
+    }
+    function closePlaylists() { $('playlistsModal').classList.remove('active'); }
+
+    async function loadPlaylists() {
+      if (!currentRoom) return;
       try {
-        const res = await fetch('/api/rooms');
-        const rooms = await res.json();
-        const grid = $('roomGrid');
-        if (rooms.length === 0) { grid.innerHTML = '<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>'; return; }
-        grid.innerHTML = '';
-        rooms.forEach(r => {
-          const card = document.createElement('div');
-          card.className = 'room-card';
-          card.onclick = () => joinRoom(r.slug);
-          const track = r.currentTrack;
-          const thumb = track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>';
-          const live = r.isPlaying ? '<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>' : '';
-          card.innerHTML = `
-            <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div></div>
-            <div class="room-card-body">
-              <h3>${escapeHtml(r.name)}</h3>
-              <div class="meta"><span>👤 ${r.listenerCount || 0} ouvintes</span><span>🎶 ${r.queueLength || 0} na fila</span></div>
-            </div>
-          `;
-          grid.appendChild(card);
-        });
-      } catch (e) {
-        $('roomGrid').innerHTML = '<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar</p></div>';
+        const res = await fetch(`/api/playlists/${currentRoom}`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          renderPlaylists(data);
+        }
+      } catch (e) {}
+    }
+
+    function renderPlaylists(playlists) {
+      const container = $('playlistsList');
+      if (!playlists || playlists.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;">Nenhuma playlist criada.</div>';
+        return;
       }
+      container.innerHTML = playlists.map(p => `
+        <div class="playlist-item">
+          <div class="info">
+            <div class="name">${escapeHtml(p.name)}</div>
+            <div class="songs-count">${p.songs?.length || 0} músicas</div>
+          </div>
+          <div class="actions">
+            <button class="load" onclick="loadPlaylistToQueue('${p.id}')">📥 Carregar</button>
+            <button class="delete" onclick="deletePlaylist('${p.id}')">🗑️</button>
+          </div>
+        </div>
+      `).join('');
     }
 
-    function showCreateRoom() { $('createRoomModal').classList.add('active'); }
-    function closeCreateRoom() { $('createRoomModal').classList.remove('active'); }
-
-    async function createRoom() {
-      const name = $('newRoomName').value.trim();
-      if (!name) return toast('Digite um nome', 'error');
+    async function createPlaylist() {
+      const name = $('newPlaylistName').value.trim();
+      if (!name) return toast('Digite um nome para a playlist', 'error');
+      if (!currentRoom) return toast('Entre em uma sala primeiro', 'error');
       try {
-        const res = await fetch('/api/rooms', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, adminName: myName })
+        const res = await fetch(`/api/playlists/${currentRoom}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ name, songs: [] })
         });
-        const data = await res.json();
-        if (data.slug) { closeCreateRoom(); joinRoom(data.slug); }
-      } catch (e) { toast('Erro ao criar sala', 'error'); }
+        if (res.ok) {
+          toast('✅ Playlist criada!', 'success');
+          $('newPlaylistName').value = '';
+          loadPlaylists();
+        }
+      } catch (e) {}
     }
 
-    async function joinRandomRoom() {
+    async function addCurrentToPlaylist() {
+      if (!currentRoomData || !currentRoomData.queue || !currentRoomData.queue.length) return toast('Nenhuma música tocando', 'error');
+      const track = currentRoomData.queue[currentRoomData.currentIndex];
+      if (!track) return toast('Nenhuma música tocando', 'error');
+      // Abre o modal de playlists e permite adicionar à playlist selecionada
+      const playlistsRes = await fetch(`/api/playlists/${currentRoom}`, { credentials: 'include' });
+      if (!playlistsRes.ok) return toast('Erro ao carregar playlists', 'error');
+      const playlists = await playlistsRes.json();
+      if (!playlists || playlists.length === 0) {
+        toast('Crie uma playlist primeiro em 📋 Playlists', 'error');
+        return;
+      }
+      const names = playlists.map((p, i) => `${i+1}. ${p.name} (${p.songs?.length || 0} músicas)`).join('\n');
+      const choice = prompt(`Selecione uma playlist pelo número:\n${names}`);
+      if (!choice) return;
+      const idx = parseInt(choice) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= playlists.length) return toast('Número inválido', 'error');
+      const playlistId = playlists[idx].id;
       try {
-        const res = await fetch('/api/rooms/random');
-        const data = await res.json();
-        if (data.slug) joinRoom(data.slug);
-        else toast('Nenhuma sala disponível', 'error');
-      } catch (e) { toast('Erro ao buscar sala', 'error'); }
+        const res = await fetch(`/api/playlists/${currentRoom}/${playlistId}/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ song: track })
+        });
+        if (res.ok) {
+          toast('✅ Música adicionada à playlist!', 'success');
+          loadPlaylists();
+        }
+      } catch (e) {}
+    }
+
+    async function loadPlaylistToQueue(playlistId) {
+      if (!currentRoom) return;
+      try {
+        const res = await fetch(`/api/playlists/${currentRoom}`, { credentials: 'include' });
+        const playlists = await res.json();
+        const playlist = playlists.find(p => p.id === playlistId);
+        if (!playlist || !playlist.songs || playlist.songs.length === 0) {
+          toast('Playlist vazia', 'error');
+          return;
+        }
+        if (!confirm(`Carregar ${playlist.songs.length} músicas da playlist "${playlist.name}" na fila?`)) return;
+        for (const song of playlist.songs) {
+          socket.emit('addSong', song);
+          // Aguarda um pouco para não sobrecarregar
+          await new Promise(r => setTimeout(r, 300));
+        }
+        toast(`✅ ${playlist.songs.length} músicas adicionadas!`, 'success');
+      } catch (e) {}
+    }
+
+    async function deletePlaylist(playlistId) {
+      if (!confirm('Deletar esta playlist?')) return;
+      try {
+        const res = await fetch(`/api/playlists/${currentRoom}/${playlistId}`, { method: 'DELETE', credentials: 'include' });
+        if (res.ok) {
+          toast('✅ Playlist deletada!', 'success');
+          loadPlaylists();
+        }
+      } catch (e) {}
+    }
+
+    // ===== BUSCA DE MÚSICAS =====
+    let searchTimeout = null;
+
+    async function onSearchInput() {
+      const query = $('songUrl').value.trim();
+      const resultsEl = $('searchResults');
+      if (!query) { resultsEl.innerHTML = ''; return; }
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/search-youtube?q=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          if (data.error) {
+            resultsEl.innerHTML = `<div style="padding:8px;color:var(--text-muted);font-size:13px;">${data.error}</div>`;
+            return;
+          }
+          if (!data || data.length === 0) {
+            resultsEl.innerHTML = `<div style="padding:8px;color:var(--text-muted);font-size:13px;">Nenhum resultado encontrado</div>`;
+            return;
+          }
+          resultsEl.innerHTML = data.map(v => `
+            <div class="result-item" onclick="selectSearchResult('${v.id}', '${escapeHtml(v.title)}', '${escapeHtml(v.artist || 'Desconhecido')}')">
+              <div class="thumb"><img src="https://img.youtube.com/vi/${v.id}/default.jpg" onerror="this.style.display='none'"></div>
+              <div class="info"><div class="title">${escapeHtml(v.title)}</div></div>
+            </div>
+          `).join('');
+        } catch (e) {
+          resultsEl.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:13px;">Erro ao buscar</div>';
+        }
+      }, 500);
+    }
+
+    function selectSearchResult(id, title, artist) {
+      $('songUrl').value = id;
+      $('searchResults').innerHTML = '';
+      // Atualiza a prévia
+      songData = { id, title, artist, duration: null };
+      showPreview(songData);
     }
 
     // ===== ROOM =====
@@ -2059,7 +2338,7 @@
       }, interval);
     }
 
-    // ===== RENDER QUEUE (SEM BOTÃO REMOVER) =====
+    // ===== RENDER QUEUE =====
     function renderQueue(queue, currentIndex) {
       const list = $('queueList');
       const count = $('queueCount');
@@ -2140,7 +2419,7 @@
       socket.emit('voteSong', { index, type, room: currentRoom });
     }
 
-    // ===== ADD SONG (COM FALLBACK) =====
+    // ===== ADD SONG =====
     function extractYouTubeId(url) {
       if (!url) return '';
       if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
@@ -2182,16 +2461,6 @@
           return;
         }
       } catch (e) {
-        // Se falhar, tenta pelo menos obter título do oembed diretamente
-        try {
-          const oembedRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-          if (oembedRes.ok) {
-            const oembedData = await oembedRes.json();
-            songData = { id: videoId, title: oembedData.title || 'Música do YouTube', artist: oembedData.author_name || 'Desconhecido', duration: null };
-            showPreview(songData);
-            return;
-          }
-        } catch (e2) {}
         toast('Erro ao buscar informações do vídeo. Tente novamente.', 'error');
         clearPreview();
         return;
@@ -2226,7 +2495,6 @@
           confirmBtn.textContent = '✓ Adicionar';
         }
       } else {
-        // Duração não verificada: permite adicionar com aviso
         $('previewStatus').textContent = '⚠️ Duração não verificada. O vídeo será verificado ao carregar.';
         $('previewStatus').style.color = 'var(--warning)';
         confirmBtn.disabled = false;
@@ -2239,27 +2507,22 @@
 
     function confirmAdd() {
       if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
-      // Se a duração foi fornecida e é maior que o limite, bloqueia
       if (songData.duration && songData.duration > MAX_SONG_DURATION) { 
         toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); 
         return; 
       }
-
       const now = Date.now();
       if (now - lastAddTime < COOLDOWN) { 
         const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); 
         toast(`Aguarde ${wait}s`, 'error'); 
         return; 
       }
-
-      // Envia a música com duração (pode ser null)
       socket.emit('addSong', { 
         id: songData.id, 
         title: songData.title || 'Música do YouTube', 
         artist: songData.artist || 'Desconhecido', 
         duration: songData.duration || null 
       });
-
       lastAddTime = Date.now();
       $('songUrl').value = '';
       clearPreview();
@@ -2269,13 +2532,15 @@
 
     function addSong() {
       const url = $('songUrl').value.trim();
-      if (!url) { toast('Cole um link do YouTube', 'error'); return; }
+      if (!url) { toast('Cole um link ou busque uma música', 'error'); return; }
       const videoId = extractYouTubeId(url);
-      if (!videoId) { toast('Link inválido. Use um link do YouTube', 'error'); return; }
-      if (songData && songData.id === videoId) { 
-        confirmAdd(); 
-      } else { 
-        previewSong(); 
+      if (videoId) {
+        if (songData && songData.id === videoId) { confirmAdd(); }
+        else { previewSong(); }
+      } else {
+        // Se não for ID, tenta buscar
+        onSearchInput();
+        toast('🔍 Buscando...', 'success');
       }
     }
 
@@ -2295,6 +2560,60 @@
       if (!currentRoomData || !currentRoomData.queue || currentRoomData.queue.length === 0) { toast('Fila vazia', 'error'); return; }
       const ids = currentRoomData.queue.map(t => t.id).join(',');
       navigator.clipboard.writeText(ids).then(() => toast('📋 IDs copiados!', 'success')).catch(() => toast('Erro ao copiar', 'error'));
+    }
+
+    // ===== LOBBY =====
+    async function loadRooms() {
+      try {
+        const res = await fetch('/api/rooms');
+        const rooms = await res.json();
+        const grid = $('roomGrid');
+        if (rooms.length === 0) { grid.innerHTML = '<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>'; return; }
+        grid.innerHTML = '';
+        rooms.forEach(r => {
+          const card = document.createElement('div');
+          card.className = 'room-card';
+          card.onclick = () => joinRoom(r.slug);
+          const track = r.currentTrack;
+          const thumb = track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>';
+          const live = r.isPlaying ? '<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>' : '';
+          card.innerHTML = `
+            <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge">👤 ${r.listenerCount || 0}</div></div>
+            <div class="room-card-body">
+              <h3>${escapeHtml(r.name)}</h3>
+              <div class="meta"><span>👤 ${r.listenerCount || 0} ouvintes</span><span>🎶 ${r.queueLength || 0} na fila</span></div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      } catch (e) {
+        $('roomGrid').innerHTML = '<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar</p></div>';
+      }
+    }
+
+    function showCreateRoom() { $('createRoomModal').classList.add('active'); }
+    function closeCreateRoom() { $('createRoomModal').classList.remove('active'); }
+
+    async function createRoom() {
+      const name = $('newRoomName').value.trim();
+      if (!name) return toast('Digite um nome', 'error');
+      try {
+        const res = await fetch('/api/rooms', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, adminName: myName })
+        });
+        const data = await res.json();
+        if (data.slug) { closeCreateRoom(); joinRoom(data.slug); }
+      } catch (e) { toast('Erro ao criar sala', 'error'); }
+    }
+
+    async function joinRandomRoom() {
+      try {
+        const res = await fetch('/api/rooms/random');
+        const data = await res.json();
+        if (data.slug) joinRoom(data.slug);
+        else toast('Nenhuma sala disponível', 'error');
+      } catch (e) { toast('Erro ao buscar sala', 'error'); }
     }
 
     // ===== CHAT =====
@@ -2328,12 +2647,13 @@
         const likeData = messageLikesSync[msgId] || { likes: 0, users: [] };
         const liked = likeData.users.includes(myName);
         const count = likeData.likes || 0;
+        const level = msg.userLevel || 1;
         div.innerHTML = `
           <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
             <div class="msg-avatar" style="background:${color}22;color:${color};border-color:${color}40;">${avatar}</div>
             <div class="msg-content">
               <div class="msg-header">
-                <span class="msg-user" style="color:${color};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}</span>
+                <span class="msg-user" style="color:${color};">${escapeHtml(msg.user)}${msg.isAdmin ? ' 👑' : ''}<span class="level-badge">🎚️ ${level}</span></span>
                 <span class="msg-time">${formatTime(msg.createdAt)}</span>
               </div>
               <span class="msg-text">${text}</span>
@@ -2341,6 +2661,11 @@
                 <button class="msg-like-btn ${liked ? 'liked' : ''}" onclick="likeMessage('${msgId}', this)">
                   ${liked ? '❤️' : '🤍'} <span class="msg-like-count">${count}</span>
                 </button>
+                ${['👍','❤️','😂','😮','😢','😡'].map(emoji => `
+                  <button class="msg-reaction" onclick="reactMessage('${msgId}','${emoji}')">
+                    ${emoji} <span class="count" id="reaction-${msgId}-${emoji}">${(messageReactions[msgId] && messageReactions[msgId][emoji]) ? messageReactions[msgId][emoji].length : 0}</span>
+                  </button>
+                `).join('')}
               </div>
             </div>
           </div>
@@ -2387,6 +2712,33 @@
       else likeBtn.classList.remove('liked');
     }
 
+    function reactMessage(msgId, emoji) {
+      if (!currentRoom) { toast('Entre em uma sala para reagir', 'error'); return; }
+      socket.emit('reactMessage', { messageId: msgId, emoji });
+    }
+
+    function updateReactionDisplay(data) {
+      const { messageId, reactions } = data;
+      messageReactions[messageId] = reactions;
+      const container = document.getElementById('chatMessagesInner');
+      if (!container) return;
+      const msgElements = container.querySelectorAll('.msg');
+      let targetElement = null;
+      for (const el of msgElements) {
+        if (el.dataset.msgId === messageId) { targetElement = el; break; }
+      }
+      if (!targetElement) return;
+      const reactionButtons = targetElement.querySelectorAll('.msg-reaction');
+      reactionButtons.forEach(btn => {
+        const emoji = btn.textContent.trim().charAt(0);
+        const countEl = btn.querySelector('.count');
+        if (countEl) {
+          const users = reactions && reactions[emoji] ? reactions[emoji] : [];
+          countEl.textContent = users.length;
+        }
+      });
+    }
+
     function sendMessage() {
       const input = $('chatInput');
       const text = input.value.trim();
@@ -2430,8 +2782,13 @@
       toast('Fila encerrada! Adicione músicas.', 'success');
     });
 
-    socket.on('users', (users) => { $('userCount').textContent = users.length; });
-    socket.on('chat', renderMessage);
+    socket.on('users', (users) => { 
+      $('userCount').textContent = users.length; 
+    });
+
+    socket.on('chat', (msg) => {
+      renderMessage(msg);
+    });
 
     socket.on('chatHistory', (messages) => {
       const container = document.getElementById('chatMessagesInner');
@@ -2459,6 +2816,10 @@
       }
     });
 
+    socket.on('messageReactions', (data) => {
+      updateReactionDisplay(data);
+    });
+
     socket.on('voteUpdate', (data) => {
       const { index, up, down } = data;
       queueVotes[index] = { up, down };
@@ -2473,6 +2834,20 @@
     socket.on('votesState', (votesData) => {
       queueVotes = votesData || {};
       if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
+    });
+
+    socket.on('playlists', (data) => {
+      if (document.getElementById('playlistsList')) {
+        renderPlaylists(data);
+      }
+    });
+
+    socket.on('score', (data) => {
+      userScore = data;
+      updateUserInfo();
+      if (document.getElementById('scoreDisplay')) {
+        renderScore();
+      }
     });
 
     socket.on('error', (msg) => toast(msg, 'error'));
@@ -2524,6 +2899,7 @@
             currentUser = data.user;
             myName = currentUser.nome;
             myAvatar = currentUser.avatar || '🎸';
+            if (data.user.score) userScore = data.user.score;
             $('landingScreen').style.display = 'none';
             hideLogin();
             showScreen('lobby');
