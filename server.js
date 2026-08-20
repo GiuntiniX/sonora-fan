@@ -31,6 +31,9 @@ const rooms = new Map();
 const roomLikes = new Map();
 const roomVotes = new Map();
 
+// ===== JOGO STOP =====
+const gameStates = new Map(); // slug -> estado do jogo
+
 function createRoom(slug, name, adminName = null) {
   roomLikes.set(slug, {});
   roomVotes.set(slug, {});
@@ -297,7 +300,7 @@ function fetchUrl(url) {
   });
 }
 
-// ===== VIDEO INFO (tenta extrair duração, mas sempre retorna 200) =====
+// ===== VIDEO INFO =====
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
   if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
@@ -306,7 +309,6 @@ app.get('/api/video-info', async (req, res) => {
 
   const info = { id, title: null, artist: null, duration: null };
 
-  // Tenta oembed (título e artista)
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
@@ -314,7 +316,6 @@ app.get('/api/video-info', async (req, res) => {
     info.artist = data.author_name || null;
   } catch (e) {}
 
-  // Tenta extrair duração com várias estratégias
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
 
@@ -385,7 +386,6 @@ app.get('/api/video-info', async (req, res) => {
     info.title = 'Vídeo do YouTube (ID: ' + id + ')';
   }
 
-  // Sempre retorna 200, mesmo se duration for null
   res.json(info);
 });
 
@@ -564,6 +564,163 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// ========== JOGO STOP (FUNÇÕES) ==========
+function getDefaultGame() {
+  return {
+    active: false,
+    categories: ['Nome', 'Cidade', 'Animal', 'Comida', 'Profissão'],
+    currentLetter: '',
+    round: 0,
+    timeLeft: 60,
+    timerInterval: null,
+    answers: {},     // { jogador: { categoria: 'palavra' } }
+    scores: {},      // { jogador: pontosAcumulados }
+    roundScores: {}, // { jogador: pontosNaRodada }
+    startedBy: null,
+    maxRounds: 3,
+    roundInProgress: false,
+    submitted: []    // lista de jogadores que já enviaram respostas
+  };
+}
+
+function calculateRound(slug) {
+  const game = gameStates.get(slug);
+  if (!game || !game.active) return;
+
+  // Para cada categoria, coletar respostas
+  const categoryAnswers = {};
+  game.categories.forEach(cat => { categoryAnswers[cat] = {}; });
+
+  // Mapeia jogador -> respostas
+  const playerAnswers = game.answers;
+  const players = Object.keys(playerAnswers);
+
+  // Para cada categoria, monta um mapa: palavra -> [jogadores]
+  for (const [player, ans] of Object.entries(playerAnswers)) {
+    for (const [cat, word] of Object.entries(ans)) {
+      if (!categoryAnswers[cat]) categoryAnswers[cat] = {};
+      if (!categoryAnswers[cat][word]) categoryAnswers[cat][word] = [];
+      categoryAnswers[cat][word].push(player);
+    }
+  }
+
+  // Calcula pontos
+  const roundPoints = {};
+  players.forEach(p => roundPoints[p] = 0);
+
+  for (const cat of game.categories) {
+    const wordMap = categoryAnswers[cat] || {};
+    for (const [word, playersList] of Object.entries(wordMap)) {
+      const isUnique = playersList.length === 1;
+      const points = isUnique ? 10 : 5;
+      playersList.forEach(p => {
+        roundPoints[p] = (roundPoints[p] || 0) + points;
+      });
+    }
+  }
+
+  // Atualiza scores globais
+  for (const [player, pts] of Object.entries(roundPoints)) {
+    game.scores[player] = (game.scores[player] || 0) + pts;
+  }
+
+  game.roundScores = roundPoints;
+
+  // Emite resultado
+  io.to(slug).emit('roundResult', {
+    roundScores: roundPoints,
+    scores: game.scores,
+    round: game.round,
+    letter: game.currentLetter
+  });
+
+  // Mensagem no chat
+  const sorted = Object.entries(game.scores).sort((a, b) => b[1] - a[1]);
+  let ranking = sorted.map(([name, pts], i) => `${i+1}º ${name}: ${pts} pts`).join(' | ');
+  addSystemMsg(slug, `🏆 Fim da rodada ${game.round}! Pontuação: ${ranking}`);
+
+  // Prepara próxima rodada ou encerra
+  game.round++;
+  game.answers = {};
+  game.submitted = [];
+  game.roundInProgress = false;
+
+  if (game.round > game.maxRounds) {
+    // Fim do jogo
+    endGame(slug);
+  } else {
+    // Nova letra e reinicia contagem
+    startNewRound(slug);
+  }
+}
+
+function startNewRound(slug) {
+  const game = gameStates.get(slug);
+  if (!game || !game.active) return;
+
+  const letters = 'BCDFGHJKLMNPQRSTVWXYZ'.split('');
+  const letter = letters[Math.floor(Math.random() * letters.length)];
+  game.currentLetter = letter;
+  game.timeLeft = 60;
+  game.answers = {};
+  game.submitted = [];
+  game.roundInProgress = true;
+
+  io.to(slug).emit('gameState', {
+    active: true,
+    categories: game.categories,
+    currentLetter: letter,
+    round: game.round,
+    timeLeft: game.timeLeft,
+    scores: game.scores,
+    startedBy: game.startedBy,
+    maxRounds: game.maxRounds,
+    roundInProgress: true
+  });
+
+  addSystemMsg(slug, `🎲 Nova rodada! Letra: ${letter} (Rodada ${game.round}/${game.maxRounds})`);
+
+  // Timer
+  if (game.timerInterval) clearInterval(game.timerInterval);
+  game.timerInterval = setInterval(() => {
+    game.timeLeft--;
+    io.to(slug).emit('gameTimer', game.timeLeft);
+    if (game.timeLeft <= 0) {
+      clearInterval(game.timerInterval);
+      game.timerInterval = null;
+      game.roundInProgress = false;
+      calculateRound(slug);
+    }
+  }, 1000);
+}
+
+function endGame(slug) {
+  const game = gameStates.get(slug);
+  if (!game) return;
+
+  game.active = false;
+  if (game.timerInterval) {
+    clearInterval(game.timerInterval);
+    game.timerInterval = null;
+  }
+
+  const sorted = Object.entries(game.scores).sort((a, b) => b[1] - a[1]);
+  let ranking = sorted.map(([name, pts], i) => `${i+1}º ${name}: ${pts} pts`).join(' | ');
+  io.to(slug).emit('gameEnd', { scores: game.scores, ranking });
+  addSystemMsg(slug, `🏁 Jogo Stop encerrado! Resultado final: ${ranking}`);
+
+  // Limpa estado, mas mantém scores para consulta
+  game.active = false;
+  game.roundInProgress = false;
+  game.round = 0;
+  game.currentLetter = '';
+  game.timeLeft = 0;
+  game.answers = {};
+  game.submitted = [];
+  game.startedBy = null;
+  // scores é mantido para referência, mas pode ser resetado depois
+}
+
 // ========== SOCKET ==========
 io.on('connection', (socket) => {
   let currentRoom = null;
@@ -615,6 +772,22 @@ io.on('connection', (socket) => {
     socket.emit('chatHistory', room.chatHistory.slice(-150));
     socket.emit('isAdmin', socket.isAdmin);
     broadcastUsers(slug);
+
+    // ===== JOGO STOP: enviar estado atual do jogo se existir =====
+    const game = gameStates.get(slug);
+    if (game && game.active) {
+      socket.emit('gameState', {
+        active: true,
+        categories: game.categories,
+        currentLetter: game.currentLetter,
+        round: game.round,
+        timeLeft: game.timeLeft,
+        scores: game.scores,
+        startedBy: game.startedBy,
+        maxRounds: game.maxRounds,
+        roundInProgress: game.roundInProgress
+      });
+    }
   });
 
   socket.on('chat', ({ text }) => {
@@ -633,7 +806,77 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', msg);
   });
 
-  // 🔥 ADD SONG COM VALIDAÇÃO FLEXÍVEL
+  // ===== JOGO STOP - EVENTOS =====
+
+  socket.on('startStopGame', ({ roomSlug }) => {
+    if (!roomSlug) return socket.emit('gameError', 'Sala não informada');
+    const room = rooms.get(roomSlug);
+    if (!room) return socket.emit('gameError', 'Sala não encontrada');
+    if (!socket.isAdmin) return socket.emit('gameError', 'Apenas o admin pode iniciar o jogo');
+
+    let game = gameStates.get(roomSlug);
+    if (game && game.active) return socket.emit('gameError', 'Já há um jogo em andamento');
+
+    if (!game) {
+      game = getDefaultGame();
+      game.maxRounds = 3; // pode vir da config
+    }
+
+    game.active = true;
+    game.startedBy = socket.userName;
+    game.scores = {}; // reset scores
+    game.round = 1;
+    game.answers = {};
+    game.submitted = [];
+    game.roundInProgress = false;
+
+    gameStates.set(roomSlug, game);
+
+    addSystemMsg(roomSlug, `🎮 ${socket.userName} iniciou o Jogo Stop! Preparem-se!`);
+    // Primeira rodada
+    startNewRound(roomSlug);
+  });
+
+  socket.on('submitStopAnswer', ({ roomSlug, answers }) => {
+    if (!roomSlug || !answers) return socket.emit('gameError', 'Dados inválidos');
+    const game = gameStates.get(roomSlug);
+    if (!game || !game.active) return socket.emit('gameError', 'Nenhum jogo ativo');
+    if (!game.roundInProgress) return socket.emit('gameError', 'A rodada já terminou');
+    if (game.submitted.includes(socket.userName)) return socket.emit('gameError', 'Você já respondeu');
+
+    // Valida se todas as categorias foram preenchidas
+    const allFilled = game.categories.every(cat => answers[cat] && answers[cat].trim() !== '');
+    if (!allFilled) return socket.emit('gameError', 'Preencha todas as categorias');
+
+    game.answers[socket.userName] = answers;
+    game.submitted.push(socket.userName);
+
+    // Verifica se todos os jogadores da sala já responderam
+    io.in(roomSlug).fetchSockets().then(sockets => {
+      const players = sockets.map(s => s.userName).filter(name => name);
+      const allAnswered = players.every(p => game.submitted.includes(p));
+      if (allAnswered && game.roundInProgress) {
+        // Interrompe o timer e calcula a rodada
+        if (game.timerInterval) {
+          clearInterval(game.timerInterval);
+          game.timerInterval = null;
+        }
+        game.roundInProgress = false;
+        calculateRound(roomSlug);
+      }
+    });
+  });
+
+  socket.on('endStopGame', ({ roomSlug }) => {
+    if (!roomSlug) return;
+    if (!socket.isAdmin) return socket.emit('gameError', 'Apenas admin pode encerrar');
+    const game = gameStates.get(roomSlug);
+    if (!game || !game.active) return socket.emit('gameError', 'Nenhum jogo ativo');
+    endGame(roomSlug);
+  });
+
+  // Fim dos eventos de jogo
+
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -657,13 +900,11 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Se a duração foi fornecida e é maior que o limite, bloqueia
     if (song.duration && song.duration > settings.maxDuration) {
       socket.emit('error', `⛔ Vídeo muito longo! Duração: ${Math.floor(song.duration / 60)} min. Limite: ${settings.maxDuration / 60} min.`);
       return;
     }
 
-    // Permite adição mesmo com duration: null, mas marca como não verificado
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
@@ -690,25 +931,21 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', musicMsg);
   });
 
-  // 🔥 RECEBE DURAÇÃO REAL DO PLAYER E VALIDA
   socket.on('videoDuration', ({ duration }) => {
     if (!currentRoom || !duration) return;
     const room = rooms.get(currentRoom);
     const track = room.queue[room.currentIndex];
     if (!track) return;
 
-    // Atualiza a duração no track
     track.duration = duration;
 
-    // Se a duração for maior que o limite, remove a música
     if (duration > settings.maxDuration) {
-      room.queue.shift(); // remove a música atual
+      room.queue.shift();
       room.currentIndex = 0;
       room.isPlaying = false;
       room.startedAt = Date.now();
       addSystemMsg(currentRoom, `⛔ A música "${track.title}" foi removida automaticamente por ser muito longa (${Math.floor(duration / 60)} min). Limite: ${settings.maxDuration / 60} min.`);
       
-      // Reindexa votos
       const votes = getRoomVotes(currentRoom);
       const newVotes = {};
       room.queue.forEach((_, i) => {
@@ -721,7 +958,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Se a duração foi atualizada e está OK, apenas broadcast do estado
     broadcastState(currentRoom);
   });
 
