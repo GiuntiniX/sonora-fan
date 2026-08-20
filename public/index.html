@@ -1501,44 +1501,47 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO - COM JOGO STOP
+    //  JAVASCRIPT COMPLETO - COM JOGO STOP E CORREÇÃO DE VARIÁVEIS
     // ============================================================
 
+    // ===== CONSTANTES =====
     const MAX_SONG_DURATION = 600;
     const DISLIKE_THRESHOLD = 10;
     const COOLDOWN = 30000;
     const MAX_SONGS_PER_USER = 3;
 
+    // ===== SOCKET =====
     const socket = io({ withCredentials: true });
 
-    let currentUser = null;
-    let myName = '';
-    let myAvatar = '🎸';
-    let amIAdmin = false;
-    let currentRoom = null;
-    let currentRoomData = null;
-    let player = null;
-    let currentTrackId = null;
-    let lastAddTime = 0;
-    let songData = null;
-    let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
-    let messageLikesSync = {};
-    let queueVotes = {};
-    let myFavorites = [];
-    let crossfadeInterval = null;
-    let pendingRoomAfterLogin = null;
+    // ===== VARIÁVEIS GLOBAIS (declaradas com var para evitar problemas de hoisting) =====
+    var currentUser = null;
+    var myName = '';
+    var myAvatar = '🎸';
+    var amIAdmin = false;
+    var currentRoom = null;
+    var currentRoomData = null;
+    var player = null;
+    var currentTrackId = null;
+    var lastAddTime = 0;
+    var songData = null;
+    var currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
+    var messageLikesSync = {};
+    var queueVotes = {};
+    var myFavorites = [];
+    var crossfadeInterval = null;
+    var pendingRoomAfterLogin = null;
 
     // ===== JOGO STOP =====
-    let gameActive = false;
-    let gameRound = 0;
-    let gameLetter = '';
-    let gameTimeLeft = 0;
-    let gameScores = {};
-    let gameCategories = [];
-    let gameStartedBy = '';
-    let gameMaxRounds = 3;
-    let gameRoundInProgress = false;
-    let gameTimerInterval = null;
+    var gameActive = false;
+    var gameRound = 0;
+    var gameLetter = '';
+    var gameTimeLeft = 0;
+    var gameScores = {};
+    var gameCategories = [];
+    var gameStartedBy = '';
+    var gameMaxRounds = 3;
+    var gameRoundInProgress = false;
+    var gameTimerInterval = null;
 
     // ===== UTILS =====
     function $(id) { return document.getElementById(id); }
@@ -2097,7 +2100,6 @@
       amIAdmin = false;
       $('adminBadge').classList.add('hidden');
       loadYouTubeAPI();
-      // Fecha jogo se estiver aberto
       if ($('gameModal').classList.contains('active')) closeGame();
     }
 
@@ -2552,7 +2554,6 @@
       const modal = $('gameModal');
       modal.classList.toggle('active');
       if (modal.classList.contains('active')) {
-        // Se já houver jogo ativo, atualiza a UI
         if (gameActive) {
           updateGameUI();
         } else {
@@ -2581,7 +2582,6 @@
       $('gameMaxRounds').textContent = gameMaxRounds;
       $('gameStartedBy').textContent = gameStartedBy || '—';
 
-      // Categorias
       const catContainer = $('gameCategories');
       catContainer.innerHTML = '';
       if (gameCategories.length) {
@@ -2598,7 +2598,6 @@
         catContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;">Nenhuma categoria definida</div>';
       }
 
-      // Placar
       const scoreContainer = $('gameScores');
       if (Object.keys(gameScores).length === 0) {
         scoreContainer.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;">Nenhuma pontuação ainda</div>';
@@ -2612,7 +2611,6 @@
         `).join('');
       }
 
-      // Botões
       if (gameActive) {
         $('gameStartBtn').style.display = 'none';
         $('gameSubmitBtn').disabled = !gameRoundInProgress;
@@ -2623,7 +2621,6 @@
         $('gameEndBtn').style.display = 'none';
       }
 
-      // Atualiza status
       if (gameActive && gameRoundInProgress) {
         $('gameStatus').textContent = `Rodada ${gameRound} - Letra ${gameLetter}`;
       } else if (gameActive && !gameRoundInProgress) {
@@ -2650,7 +2647,6 @@
       if (!filled) { toast('Preencha todas as categorias', 'error'); return; }
       socket.emit('submitStopAnswer', { roomSlug: currentRoom, answers });
       toast('Respostas enviadas!', 'success');
-      // Desabilita inputs para evitar reenvio
       inputs.forEach(inp => inp.disabled = true);
       $('gameSubmitBtn').disabled = true;
     }
@@ -2763,11 +2759,9 @@
       gameMaxRounds = state.maxRounds || 3;
       gameRoundInProgress = state.roundInProgress || false;
 
-      // Se o modal estiver aberto, atualiza a UI
       if ($('gameModal').classList.contains('active')) {
         updateGameUI();
       }
-      // Sempre atualiza o status global
     });
 
     socket.on('gameTimer', (timeLeft) => {
@@ -2784,16 +2778,8 @@
       gameScores = scores;
       gameRound = round || gameRound;
       gameLetter = letter || gameLetter;
-      // Mostra resultado no chat automaticamente
-      if (currentRoom) {
-        const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-        let ranking = sorted.map(([name, pts], i) => `${i+1}º ${name}: ${pts} pts`).join(' | ');
-        // Não precisa adicionar sistema porque o servidor já envia
-      }
-      // Atualiza UI se modal aberto
       if ($('gameModal').classList.contains('active')) {
         updateGameUI();
-        // Destaca os pontos da rodada
         toast(`🏆 Pontuação da rodada atualizada!`, 'success');
       }
     });
