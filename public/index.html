@@ -1980,11 +1980,16 @@
       });
     }
 
-    function syncPlayer(state) {
-      if (!player || !player.loadVideoById) return;
-      currentRoomData = state;
-      const track = state.queue[state.currentIndex];
-      renderQueue(state.queue, state.currentIndex);
+function syncPlayer(state) {
+  // 👇 ATUALIZA O TÍTULO PRIMEIRO
+  document.getElementById('roomTitle').textContent = state.name;
+
+  // Depois verifica o player
+  if (!player || !player.loadVideoById) return;
+
+  currentRoomData = state;
+  const track = state.queue[state.currentIndex];
+  renderQueue(state.queue, state.currentIndex);
 
       if (!track) {
         currentTrackId = null;
