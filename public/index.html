@@ -1000,67 +1000,6 @@
       .song-preview { flex-wrap: wrap; }
       .song-preview-actions { width: 100%; justify-content: flex-end; }
     }
-
-    /* ===== TEMA LIGHT: CHAT COM FUNDO BRANCO E TEXTO PRETO ===== */
-    body.theme-light .chat-column {
-      background: #ffffff !important;
-      backdrop-filter: none !important;
-    }
-
-    body.theme-light .chat-column .users-panel,
-    body.theme-light .chat-column .chat-panel,
-    body.theme-light .chat-column .chat-input-bar {
-      background: #ffffff !important;
-    }
-
-    body.theme-light .chat-column .msg-user,
-    body.theme-light .chat-column .msg-text,
-    body.theme-light .chat-column .msg-time,
-    body.theme-light .chat-column .music-info,
-    body.theme-light .chat-column .msg-content,
-    body.theme-light .chat-column .msg,
-    body.theme-light .chat-column .queue-votes .vote-count,
-    body.theme-light .chat-column .queue-item .info .title,
-    body.theme-light .chat-column .queue-item .info .artist,
-    body.theme-light .chat-column .user-count,
-    body.theme-light .chat-column .users-panel .user-count span,
-    body.theme-light .chat-column .msg-header span,
-    body.theme-light .chat-column .msg-actions .msg-like-btn,
-    body.theme-light .chat-column .msg-actions .msg-like-count {
-      color: #000000 !important;
-    }
-
-    body.theme-light .chat-column .chat-input-bar input {
-      background: #f0f0f0;
-      border-color: #cccccc;
-      color: #000000;
-    }
-
-    body.theme-light .chat-column .chat-input-bar button {
-      background: #333333;
-      color: #ffffff;
-    }
-
-    body.theme-light .chat-column .msg-avatar {
-      border-color: #cccccc;
-    }
-
-    body.theme-light .chat-column .queue-item {
-      border-left-color: #cccccc;
-    }
-
-    /* Ajuste para mensagens do sistema no tema light */
-    body.theme-light .chat-column .msg-system .msg-text {
-      color: #555555 !important;
-    }
-
-    /* Mensagens de música no tema light */
-    body.theme-light .chat-column .msg-music {
-      background: rgba(0,0,0,0.03);
-    }
-    body.theme-light .chat-column .msg-music .music-info {
-      color: #000000 !important;
-    }
   </style>
 </head>
 <body>
@@ -1509,10 +1448,6 @@
       document.documentElement.style.setProperty('--bg-overlay', t.overlay);
       const btns = document.querySelectorAll('#themeBtn, #themeBtnRoom');
       btns.forEach(btn => { if (btn) btn.textContent = t.btn; });
-      
-      // 👇 NOVO: controla a classe no body para o tema light
-      document.body.classList.toggle('theme-light', currentTheme === 'light');
-
       localStorage.setItem('sonoraTheme', currentTheme);
     }
 
