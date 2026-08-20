@@ -517,7 +517,7 @@
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM - LAYOUT 3 COLUNAS ===== */
+    /* ===== ROOM ===== */
     .room-layout {
       display: grid;
       grid-template-columns: 1fr 1.2fr 1fr;
@@ -530,7 +530,6 @@
       overflow: hidden;
     }
 
-    /* Coluna da esquerda - Fila */
     .queue-column {
       border-right: 1px solid var(--border);
       display: flex;
@@ -576,7 +575,6 @@
       height: 100%;
     }
 
-    /* Coluna central - Player */
     .player-column {
       display: flex;
       flex-direction: column;
@@ -603,7 +601,6 @@
       flex-shrink: 0;
     }
 
-    /* Coluna da direita - Chat */
     .chat-column {
       border-left: 1px solid var(--border);
       display: flex;
@@ -641,7 +638,6 @@
       overflow: hidden;
     }
 
-    /* Responsividade */
     @media (max-width: 1024px) {
       .room-layout {
         grid-template-columns: 1fr;
@@ -672,7 +668,7 @@
       .chat-column { max-height: 30%; }
     }
 
-    /* ===== ESTILOS DOS COMPONENTES DENTRO DAS COLUNAS ===== */
+    /* ===== COMPONENTES ===== */
     .queue-item {
       display: flex;
       align-items: center;
@@ -699,7 +695,6 @@
     .queue-item.dragging { opacity: 0.5; }
     .queue-item.drag-over { border: 2px dashed var(--accent); }
 
-    /* VOTAÇÃO */
     .queue-votes {
       display: flex;
       align-items: center;
@@ -748,7 +743,6 @@
     .vote-count.positive { color: var(--success); }
     .vote-count.negative { color: var(--danger); }
 
-    /* PLAYER */
     #youtube-player {
       width: 100%;
       aspect-ratio: 16 / 9;
@@ -791,7 +785,6 @@
     .volume-control input[type="range"] { flex: 1; height: 4px; -webkit-appearance: none; appearance: none; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
     .volume-control input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); cursor: pointer; }
 
-    /* ADD SONG */
     .add-song {
       display: flex;
       flex-direction: column;
@@ -865,7 +858,6 @@
     .cooldown-text { font-size: 12px; color: var(--accent); text-align: center; padding: 6px; border-radius: 8px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2); flex-shrink: 0; }
     .cooldown-text.hidden { display: none; }
 
-    /* ===== CHAT COM REAÇÕES ===== */
     .chat-messages {
       flex: 1;
       overflow: hidden;
@@ -957,6 +949,7 @@
       gap: 4px;
       margin-top: 2px;
       margin-left: 30px;
+      flex-wrap: wrap;
     }
     .msg-reaction {
       background: var(--bg-hover);
@@ -1033,7 +1026,6 @@
     .favorite-item .actions .remove { background: var(--danger); color: #fff; }
     .favorite-item .actions .remove:hover { opacity: 0.8; }
 
-    /* ===== PLAYLISTS ===== */
     .playlist-item {
       display: flex;
       align-items: center;
@@ -1052,7 +1044,6 @@
     .playlist-item .actions .load { background: var(--accent2); color: #fff; }
     .playlist-item .actions .delete { background: var(--danger); color: #fff; }
 
-    /* ===== SCORE ===== */
     .score-display {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -1488,7 +1479,7 @@
 
   <script>
     // ============================================================
-    //  JAVASCRIPT COMPLETO
+    //  JAVASCRIPT COMPLETO - VERSÃO CORRIGIDA
     // ============================================================
 
     const MAX_SONG_DURATION = 600;
@@ -1703,7 +1694,7 @@
       $('userDisplayName').textContent = myName;
       $('userAvatar').textContent = myAvatar;
       if (userScore.level) {
-        $('userLevel').textContent = `🎚️ ${userScore.level}`;
+        $('userLevel').textContent = '🎚️ ' + userScore.level;
       }
     }
 
@@ -2103,7 +2094,6 @@
       if (!currentRoomData || !currentRoomData.queue || !currentRoomData.queue.length) return toast('Nenhuma música tocando', 'error');
       const track = currentRoomData.queue[currentRoomData.currentIndex];
       if (!track) return toast('Nenhuma música tocando', 'error');
-      // Abre o modal de playlists e permite adicionar à playlist selecionada
       const playlistsRes = await fetch(`/api/playlists/${currentRoom}`, { credentials: 'include' });
       if (!playlistsRes.ok) return toast('Erro ao carregar playlists', 'error');
       const playlists = await playlistsRes.json();
@@ -2144,7 +2134,6 @@
         if (!confirm(`Carregar ${playlist.songs.length} músicas da playlist "${playlist.name}" na fila?`)) return;
         for (const song of playlist.songs) {
           socket.emit('addSong', song);
-          // Aguarda um pouco para não sobrecarregar
           await new Promise(r => setTimeout(r, 300));
         }
         toast(`✅ ${playlist.songs.length} músicas adicionadas!`, 'success');
@@ -2197,7 +2186,6 @@
     function selectSearchResult(id, title, artist) {
       $('songUrl').value = id;
       $('searchResults').innerHTML = '';
-      // Atualiza a prévia
       songData = { id, title, artist, duration: null };
       showPreview(songData);
     }
@@ -2538,7 +2526,6 @@
         if (songData && songData.id === videoId) { confirmAdd(); }
         else { previewSong(); }
       } else {
-        // Se não for ID, tenta buscar
         onSearchInput();
         toast('🔍 Buscando...', 'success');
       }
@@ -2647,6 +2634,7 @@
         const likeData = messageLikesSync[msgId] || { likes: 0, users: [] };
         const liked = likeData.users.includes(myName);
         const count = likeData.likes || 0;
+        // Nível do usuário: tenta obter do objeto, fallback para 1
         const level = msg.userLevel || 1;
         div.innerHTML = `
           <div style="display:flex;align-items:flex-start;gap:6px;width:100%;">
