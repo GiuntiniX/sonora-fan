@@ -34,6 +34,9 @@ const rooms = new Map();
 const roomLikes = new Map();
 const roomVotes = new Map();
 
+// ========== CHAVE DA API DO YOUTUBE (fixa) ==========
+const YOUTUBE_API_KEY = 'AIzaSyB--8a_0tAr9Mf2mxy0oWq7rB0qyacci3I';
+
 function createRoom(slug, name, adminName = null) {
   roomLikes.set(slug, {});
   roomVotes.set(slug, {});
@@ -327,22 +330,20 @@ app.post('/api/rooms', (req, res) => {
   res.json({ slug, name });
 });
 
-// ===== SEARCH YOUTUBE =====
+// ===== SEARCH YOUTUBE (com chave fixa) =====
 app.get('/api/search-youtube', async (req, res) => {
   const query = req.query.q;
   if (!query || query.length < 2) return res.json({ items: [] });
 
-  const apiKey = process.env.YOUTUBE_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Chave de API do YouTube não configurada' });
-  }
-
+  const apiKey = YOUTUBE_API_KEY; // chave fixa
   try {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(query)}&key=${apiKey}`;
     const response = await fetch(url);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+    }
     const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-
     const items = data.items.map(item => ({
       id: item.id.videoId,
       title: item.snippet.title,
@@ -351,7 +352,11 @@ app.get('/api/search-youtube', async (req, res) => {
     }));
     res.json({ items });
   } catch (e) {
-    res.status(500).json({ error: 'Erro na busca: ' + e.message });
+    console.error('Erro na busca do YouTube:', e.message);
+    res.status(500).json({ 
+      error: 'Erro ao buscar vídeos: ' + e.message,
+      items: []
+    });
   }
 });
 
@@ -812,7 +817,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ===== ADD SONG (com shuffle automático) =====
+  // ===== ADD SONG =====
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
