@@ -754,7 +754,7 @@
 
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO - SEM PAUSA, COM SHUFFLE AUTOMÁTICO
+    // JAVASCRIPT COMPLETO - TODAS AS MELHORIAS
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -1019,7 +1019,6 @@
         $('trackArtist').textContent=track.artist||'Desconhecido';
         $('trackDj').textContent='👤 '+(track.dj||'');
         $('trackCover').innerHTML=`<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
-        // Animação de destaque na fila
         const items = document.querySelectorAll('.queue-item');
         items.forEach((el, idx) => {
           if(idx === state.currentIndex) {
