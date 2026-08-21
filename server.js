@@ -21,6 +21,7 @@ const settings = { maxQueue: 20, cooldown: 30, maxDuration: 600, maxListeners: 2
 const DISLIKE_THRESHOLD = 10;
 const MAX_SONGS_PER_USER = 3;
 const SKIP_VOTE_THRESHOLD = 0.5;
+const MIN_SKIP_VOTES = 3; // número mínimo de votos para pular (além de 50%)
 const YOUTUBE_API_KEY = 'AIzaSyB--8a_0tAr9Mf2mxy0oWq7rB0qyacci3I';
 
 // ========== AUTENTICAÇÃO ==========
@@ -51,6 +52,7 @@ function createRoom(slug, name, adminName = null) {
     radioMode: false,
     radioGenre: 'pop',
     pinnedMessage: null,
+    color: '#7c3aed', // cor personalizada da sala
   };
 }
 
@@ -88,6 +90,7 @@ function broadcastState(slug) {
     pinnedMessage: room.pinnedMessage,
     listenerCount: room.listenerCount,
     maxListeners: settings.maxListeners,
+    color: room.color,
   });
 }
 
@@ -359,6 +362,7 @@ app.get('/api/rooms', (req, res) => {
     queueLength: r.queue.length, isPlaying: r.isPlaying,
     currentTrack: r.queue[r.currentIndex] || null,
     radioMode: r.radioMode,
+    color: r.color || '#7c3aed',
   }));
   res.json(list);
 });
@@ -377,10 +381,12 @@ app.get('/api/rooms/random', (req, res) => {
 });
 
 app.post('/api/rooms', (req, res) => {
-  const { name, adminName } = req.body;
+  const { name, adminName, color } = req.body;
   if (!name) return res.status(400).json({ error: 'Nome obrigatório' });
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
-  rooms.set(slug, createRoom(slug, name, adminName || null));
+  const room = createRoom(slug, name, adminName || null);
+  if (color) room.color = color;
+  rooms.set(slug, room);
   res.json({ slug, name });
 });
 
@@ -710,6 +716,7 @@ io.on('connection', (socket) => {
       pinnedMessage: room.pinnedMessage,
       listenerCount: room.listenerCount,
       maxListeners: settings.maxListeners,
+      color: room.color,
     });
     socket.emit('chatHistory', room.chatHistory.slice(-150));
     socket.emit('isAdmin', socket.isAdmin);
@@ -841,26 +848,37 @@ io.on('connection', (socket) => {
     }
   }
 
+  // ===== SKIP VOTE (CORRIGIDO) =====
   socket.on('voteSkip', () => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     if (room.queue.length === 0) return;
+
+    // Admin pode pular sempre
     if (socket.userName === room.admin || adminEmails.has(socket.userEmail)) {
       advanceQueue(currentRoom);
       addSystemMsg(currentRoom, `⏭️ ${socket.userName} pulou a música (admin)`);
       return;
     }
+
+    // Verifica se já votou
     if (room.skipVotes.has(socket.userName)) {
       socket.emit('error', 'Você já votou para pular.');
       return;
     }
+
+    // Adiciona voto
     room.skipVotes.add(socket.userName);
-    const total = room.listenerCount || 1;
-    const needed = Math.ceil(total * SKIP_VOTE_THRESHOLD);
+
+    // Define limite: mínimo 3 votos ou 50% dos ouvintes (o que for maior)
+    const totalListeners = room.listenerCount || 1;
+    const minVotes = Math.max(MIN_SKIP_VOTES, Math.ceil(totalListeners * SKIP_VOTE_THRESHOLD));
     const currentVotes = room.skipVotes.size;
-    io.to(currentRoom).emit('skipVoteUpdate', { votes: currentVotes, needed });
-    addSystemMsg(currentRoom, `🗳️ ${socket.userName} votou para pular (${currentVotes}/${needed})`);
-    if (currentVotes >= needed) {
+
+    io.to(currentRoom).emit('skipVoteUpdate', { votes: currentVotes, needed: minVotes });
+    addSystemMsg(currentRoom, `🗳️ ${socket.userName} votou para pular (${currentVotes}/${minVotes})`);
+
+    if (currentVotes >= minVotes) {
       addSystemMsg(currentRoom, `⏭️ Música pulada por votação! (${currentVotes} votos)`);
       advanceQueue(currentRoom);
       room.skipVotes = new Set();
