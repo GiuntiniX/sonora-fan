@@ -34,7 +34,7 @@ const userThemes = new Map();
 const rooms = new Map();
 const roomLikes = new Map();
 const roomVotes = new Map();
-const waitingRooms = new Map(); // slug -> array de sockets em espera
+const waitingRooms = new Map();
 
 function createRoom(slug, name, adminName = null) {
   roomLikes.set(slug, {});
@@ -48,9 +48,9 @@ function createRoom(slug, name, adminName = null) {
     lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0,
     history: [],
     skipVotes: new Set(),
-    radioMode: false, // novo: modo rádio
-    radioGenre: 'pop', // gênero padrão
-    pinnedMessage: null, // { text, author, createdAt }
+    radioMode: false,
+    radioGenre: 'pop',
+    pinnedMessage: null,
   };
 }
 
@@ -173,7 +173,6 @@ function advanceQueue(slug) {
     const next = room.queue[0];
     addSystemMsg(slug, `▶ ${next.title} — ${next.artist}`);
   } else {
-    // Modo rádio: se ativado, busca músicas relacionadas
     if (room.radioMode) {
       startRadio(slug);
     } else {
@@ -191,7 +190,6 @@ async function startRadio(slug) {
   const room = rooms.get(slug);
   if (!room || !room.radioMode) return;
   try {
-    // Busca músicas baseadas no histórico ou gênero padrão
     let query = room.radioGenre || 'pop';
     if (room.history.length > 0) {
       const last = room.history[room.history.length - 1];
@@ -205,9 +203,8 @@ async function startRadio(slug) {
       id: item.id.videoId,
       title: item.snippet.title,
       artist: item.snippet.channelTitle,
-      duration: null, // será preenchido depois
+      duration: null,
     }));
-    // Adiciona à fila
     for (const song of items) {
       if (room.queue.length >= settings.maxQueue) break;
       song.dj = '🎧 Rádio';
@@ -243,7 +240,7 @@ setInterval(() => {
   }
 }, 2000);
 
-// ===== API =====
+// ========== API ==========
 app.post('/api/signup', (req, res) => {
   const { nome, email, senha, estilos } = req.body;
   if (!nome || nome.length < 2) return res.status(400).json({ error: 'Nome inválido' });
@@ -488,24 +485,6 @@ app.get('/api/video-info', async (req, res) => {
   res.json(info);
 });
 
-// ===== LETRAS (lyrics.ovh) =====
-app.get('/api/lyrics', async (req, res) => {
-  const { artist, title } = req.query;
-  if (!artist || !title) return res.status(400).json({ error: 'Artista e título são obrigatórios' });
-  try {
-    const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      if (response.status === 404) return res.status(404).json({ error: 'Letra não encontrada' });
-      throw new Error('Erro ao buscar letra');
-    }
-    const data = await response.json();
-    res.json({ lyrics: data.lyrics });
-  } catch (e) {
-    res.status(500).json({ error: 'Erro ao buscar letra: ' + e.message });
-  }
-});
-
 // ========== ADMIN ROTAS ==========
 function isAdmin(req, res, next) {
   const token = req.cookies.sessionToken;
@@ -680,9 +659,7 @@ io.on('connection', (socket) => {
     if (!room) { socket.emit('error', 'Sala não encontrada'); return; }
     if (room.bannedUsers.includes(name)) { socket.emit('error', 'Você foi banido'); return; }
 
-    // Verifica limite de ouvintes
     if (room.listenerCount >= settings.maxListeners) {
-      // Coloca na fila de espera
       if (!waitingRooms.has(slug)) waitingRooms.set(slug, []);
       waitingRooms.get(slug).push(socket);
       socket.emit('waitingRoom', { position: waitingRooms.get(slug).length, maxListeners: settings.maxListeners });
@@ -713,7 +690,6 @@ io.on('connection', (socket) => {
 
     if (isGlobalAdmin && !room.admin) room.admin = name;
 
-    // Notifica próximos da fila de espera
     notifyNextWaiting(slug);
 
     const likes = getRoomLikes(slug);
@@ -750,11 +726,7 @@ io.on('connection', (socket) => {
     if (room.listenerCount < settings.maxListeners) {
       const nextSocket = waiting.shift();
       if (nextSocket) {
-        // Tenta novamente entrar
-        const { slug: s, userName, userAvatar } = nextSocket;
-        // Simula a entrada chamando o evento novamente
         nextSocket.emit('waitingRoom', { position: 0, maxListeners: settings.maxListeners, canJoin: true });
-        // O frontend deve tentar novamente
       }
     }
   }
@@ -869,7 +841,6 @@ io.on('connection', (socket) => {
     }
   }
 
-  // ===== SKIP VOTE =====
   socket.on('voteSkip', () => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -896,7 +867,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ===== MODO RÁDIO =====
   socket.on('toggleRadio', (enabled) => {
     if (!currentRoom || !socket.isAdmin) {
       socket.emit('error', 'Apenas admin pode controlar o modo rádio');
@@ -921,7 +891,6 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `🎵 Gênero do rádio alterado para "${genre}" por ${socket.userName}`);
   });
 
-  // ===== MENSAGEM FIXADA =====
   socket.on('setPinnedMessage', ({ text }) => {
     if (!currentRoom || !socket.isAdmin) {
       socket.emit('error', 'Apenas admin pode fixar mensagem');
@@ -948,7 +917,6 @@ io.on('connection', (socket) => {
     addSystemMsg(currentRoom, `📌 Mensagem fixada removida por ${socket.userName}`);
   });
 
-  // ===== ADD SONG =====
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -976,7 +944,6 @@ io.on('connection', (socket) => {
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
     addPoints(socket.userEmail, 2);
-    // Toca efeito sonoro (enviado para todos)
     io.to(currentRoom).emit('playSound', 'add');
 
     if (!room.isPlaying && room.queue.length === 1) {
@@ -1001,7 +968,6 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', musicMsg);
   });
 
-  // ===== LIKE (com efeito sonoro) =====
   socket.on('likeMessage', ({ messageId, room }) => {
     if (!room || !socket.userName) return;
     const likes = getRoomLikes(room);
@@ -1020,7 +986,6 @@ io.on('connection', (socket) => {
     io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
   });
 
-  // ===== VIDEO INFO =====
   socket.on('videoDuration', ({ duration }) => {
     if (!currentRoom || !duration) return;
     const room = rooms.get(currentRoom);
@@ -1046,24 +1011,137 @@ io.on('connection', (socket) => {
     broadcastState(currentRoom);
   });
 
-  // ===== KARAOKÊ (solicitar letra) =====
-  socket.on('requestLyrics', ({ artist, title }) => {
-    if (!currentRoom) return;
-    fetch(`/api/lyrics?artist=${encodeURIComponent(artist)}&title=${encodeURIComponent(title)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.lyrics) {
-          socket.emit('lyricsResult', { artist, title, lyrics: data.lyrics });
-        } else {
-          socket.emit('lyricsResult', { artist, title, lyrics: null, error: 'Letra não encontrada' });
-        }
-      })
-      .catch(() => {
-        socket.emit('lyricsResult', { artist, title, lyrics: null, error: 'Erro ao buscar letra' });
-      });
+  socket.on('skipTo', (index) => {
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    if (index < 0 || index >= room.queue.length) return;
+    room.lastAdvanceAt = Date.now();
+    if (index > 0) room.queue.splice(0, index);
+    room.currentIndex = 0;
+    room.startedAt = Date.now();
+    room.isPlaying = true;
+    room.skipVotes = new Set();
+    const votes = getRoomVotes(currentRoom);
+    const newVotes = {};
+    room.queue.forEach((_, i) => {
+      if (votes[i]) newVotes[i] = votes[i];
+    });
+    roomVotes.set(currentRoom, newVotes);
+    autoShuffle(room);
+    broadcastState(currentRoom);
+    addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
   });
 
-  // ===== DISCONNECT =====
+  socket.on('removeFromQueue', (index) => {
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
+      return;
+    }
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    const room = rooms.get(currentRoom);
+    if (!room) return;
+    if (!isGlobalAdmin && !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode remover músicas');
+      return;
+    }
+    const track = room.queue[index];
+    if (!track || index === room.currentIndex) {
+      socket.emit('error', 'Não é possível remover a música atual');
+      return;
+    }
+    room.queue.splice(index, 1);
+    if (index < room.currentIndex) room.currentIndex--;
+    const votes = getRoomVotes(currentRoom);
+    const newVotes = {};
+    room.queue.forEach((_, i) => {
+      if (votes[i + 1]) newVotes[i] = votes[i + 1];
+    });
+    roomVotes.set(currentRoom, newVotes);
+    autoShuffle(room);
+    broadcastState(currentRoom);
+    addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
+  });
+
+  socket.on('reorderQueue', (newOrder) => {
+    if (!currentRoom) {
+      socket.emit('error', 'Você não está em uma sala');
+      return;
+    }
+    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
+    if (!isGlobalAdmin && !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode reordenar');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    if (!room || room.queue.length === 0) return;
+    const currentTrack = room.queue[room.currentIndex];
+    const currentId = currentTrack ? currentTrack.id : null;
+    const newQueue = [];
+    for (const id of newOrder) {
+      const track = room.queue.find(t => t.id === id);
+      if (track) newQueue.push(track);
+    }
+    if (newQueue.length === room.queue.length) {
+      room.queue = newQueue;
+      const newIndex = room.queue.findIndex(t => t.id === currentId);
+      room.currentIndex = newIndex !== -1 ? newIndex : 0;
+      const votes = getRoomVotes(currentRoom);
+      const newVotes = {};
+      room.queue.forEach((track, i) => {
+        const oldIndex = room.queue.indexOf(track);
+        if (votes[oldIndex]) newVotes[i] = votes[oldIndex];
+      });
+      roomVotes.set(currentRoom, newVotes);
+      broadcastState(currentRoom);
+    }
+  });
+
+  socket.on('voteSong', ({ index, type, room }) => {
+    if (!room || !socket.userName) return;
+    const roomData = rooms.get(room);
+    if (!roomData) return;
+    if (roomData.currentIndex === index) {
+      socket.emit('error', 'Não é possível votar na música atual');
+      return;
+    }
+    if (index >= roomData.queue.length) {
+      socket.emit('error', 'Música não encontrada');
+      return;
+    }
+    const votes = getRoomVotes(room);
+    if (!votes[index]) votes[index] = { up: [], down: [] };
+    const data = votes[index];
+    const upIndex = data.up.indexOf(socket.userName);
+    if (upIndex > -1) data.up.splice(upIndex, 1);
+    const downIndex = data.down.indexOf(socket.userName);
+    if (downIndex > -1) data.down.splice(downIndex, 1);
+    if (type === 'up') {
+      data.up.push(socket.userName);
+      addPoints(socket.userEmail, 1);
+    } else if (type === 'down') data.down.push(socket.userName);
+    if (data.down.length >= DISLIKE_THRESHOLD) {
+      const removed = roomData.queue.splice(index, 1)[0];
+      if (index < roomData.currentIndex) roomData.currentIndex--;
+      delete votes[index];
+      const newVotes = {};
+      roomData.queue.forEach((_, i) => {
+        if (votes[i + 1]) newVotes[i] = votes[i + 1];
+      });
+      roomVotes.set(room, newVotes);
+      autoShuffle(roomData);
+      broadcastState(room);
+      io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down, removed: true });
+      addSystemMsg(room, `👎 "${removed.title}" foi removida por votação! (${data.down.length} votos negativos)`);
+      return;
+    }
+    if (type === 'up') autoShuffle(roomData);
+    io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down });
+    broadcastState(room);
+  });
+
   socket.on('disconnect', () => {
     if (currentRoom) {
       const room = rooms.get(currentRoom);
@@ -1071,7 +1149,6 @@ io.on('connection', (socket) => {
         room.listenerCount = Math.max(0, room.listenerCount - 1);
         broadcastState(currentRoom);
         broadcastUsers(currentRoom);
-        // Verifica fila de espera
         notifyNextWaiting(currentRoom);
       }
     }
