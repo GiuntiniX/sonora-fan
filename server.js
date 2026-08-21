@@ -113,22 +113,17 @@ function autoShuffle(room) {
   if (!room || room.queue.length <= 1) return;
   const current = room.queue[room.currentIndex];
   if (!current) return;
-  // Pega o restante (todas exceto a atual)
   const rest = room.queue.filter((_, i) => i !== room.currentIndex);
-  // Embaralha o restante
   for (let i = rest.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [rest[i], rest[j]] = [rest[j], rest[i]];
   }
-  // Reconstroi a fila: [atual, ...rest]
   room.queue = [current, ...rest];
   room.currentIndex = 0;
 
-  // Reindexa os votos para a nova ordem
   const votes = getRoomVotes(room.slug);
   const newVotes = {};
   room.queue.forEach((track, idx) => {
-    // Encontra o índice antigo da track na fila antiga (usando o id)
     const oldIndex = room.queue.findIndex(t => t.id === track.id);
     if (votes[oldIndex] !== undefined) {
       newVotes[idx] = votes[oldIndex];
@@ -163,7 +158,6 @@ function advanceQueue(slug) {
   });
   roomVotes.set(slug, newVotes);
 
-  // Após avançar, reordena aleatoriamente (exceto a atual)
   autoShuffle(room);
   broadcastState(slug);
 
@@ -859,7 +853,6 @@ io.on('connection', (socket) => {
       room.lastAdvanceAt = Date.now();
       addSystemMsg(currentRoom, `▶ ${song.title} — ${song.artist}`);
     } else {
-      // Embaralha automaticamente (mantém a atual)
       autoShuffle(room);
     }
 
