@@ -602,7 +602,6 @@
           <div style="font-weight:700;font-size:13px;margin-bottom:8px;">🏆 Músicas mais votadas (últimos 7 dias)</div>
           <div id="adminTopSongs" style="font-size:13px;color:var(--text-secondary);">Carregando...</div>
         </div>
-        <!-- Gráfico removido -->
       </div>
       <div id="tab-settings" class="admin-tab">
         <div class="admin-action-grid">
@@ -897,7 +896,7 @@
 
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO - SEM GRÁFICO DE ATIVIDADE
+    // JAVASCRIPT COMPLETO - VOLUME CORRIGIDO
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -910,6 +909,7 @@
     let currentLang = localStorage.getItem('sonoraLang') || 'pt';
     let audioCtx = null;
     let eventCountdownInterval = null;
+    let isUserInteractingWithVolume = false;
 
     // ===== TRADUÇÕES =====
     const translations = {
@@ -1830,11 +1830,12 @@
           onReady: () => { if (currentRoomData) syncPlayer(currentRoomData); },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
+              // Apenas garantir que o volume do player corresponda ao slider
               const vol = parseInt($('volumeSlider').value);
               if (player && player.setVolume) player.setVolume(vol);
+              // Não chamamos mais fadeVolume aqui para não travar o slider
               try { const d = player.getDuration(); if (d > 0) socket.emit('videoDuration', { duration: Math.floor(d) }); } catch(e) {}
               if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-              fadeVolume(vol, 500);
               $('bufferingOverlay').classList.remove('show');
             }
             if (e.data === YT.PlayerState.BUFFERING) { $('bufferingOverlay').classList.add('show'); }
@@ -1873,6 +1874,7 @@
       if (currentTrackId !== track.id) {
         currentTrackId = track.id;
         player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
+        // Definir volume após carregar o vídeo
         const vol = parseInt($('volumeSlider').value);
         setTimeout(() => {
           if (player && player.setVolume) {
@@ -2029,23 +2031,16 @@
         } catch(e) {}
       }, 500);
     }
-    function fadeVolume(target, duration) {
-      const startVol = player.getVolume ? player.getVolume() : parseInt($('volumeSlider').value);
-      const diff = target - startVol;
-      const steps = 20;
-      const step = diff / steps;
-      const interval = duration / steps;
-      let current = startVol;
-      const timer = setInterval(() => {
-        current += step;
-        if ((diff > 0 && current >= target) || (diff < 0 && current <= target)) {
-          current = target;
-          clearInterval(timer);
-        }
-        if (player && player.setVolume) player.setVolume(Math.round(current));
-        $('volumeSlider').value = Math.round(current);
-        $('volumeValue').textContent = Math.round(current) + '%';
-      }, interval);
+
+    // ===== VOLUME (CORRIGIDO) =====
+    function setVolume(val) {
+      const volume = parseInt(val);
+      if (isNaN(volume)) return;
+      $('volumeValue').textContent = volume + '%';
+      if (player && player.setVolume) {
+        player.setVolume(volume);
+      }
+      // Não sobrescrever o slider com outras funções
     }
 
     function voteSong(index, type) {
@@ -2354,13 +2349,6 @@
 
     function toggleEmojis() { $('emojiPanel').classList.toggle('show'); }
     function insertEmoji(e) { $('chatInput').value += e; $('chatInput').focus(); $('emojiPanel').classList.remove('show'); }
-
-    function setVolume(val) {
-      $('volumeValue').textContent = val + '%';
-      if (player && player.setVolume) {
-        player.setVolume(parseInt(val));
-      }
-    }
 
     // ===== KEYBOARD =====
     document.addEventListener('keydown', (e) => {
