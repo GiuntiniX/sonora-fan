@@ -20,14 +20,14 @@ const adminEmails = new Set(['admin@sonora.com']);
 const settings = { maxQueue: 20, cooldown: 30, maxDuration: 600 };
 const DISLIKE_THRESHOLD = 10;
 const MAX_SONGS_PER_USER = 3;
-const SKIP_VOTE_THRESHOLD = 0.5; // 50% dos ouvintes para pular
+const SKIP_VOTE_THRESHOLD = 0.5;
 
 // ========== AUTENTICAÇÃO ==========
 const users = new Map();
 const sessions = new Map();
 const userFavorites = new Map();
 const userPoints = new Map();
-const userThemes = new Map(); // email -> tema
+const userThemes = new Map();
 
 // ========== ESTADO ==========
 const rooms = new Map();
@@ -43,9 +43,8 @@ function createRoom(slug, name, adminName = null) {
     votes: { up: 0, down: 0 }, bannedUsers: [],
     chatHistory: [], listenerCount: 0,
     lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0,
-    paused: false, pausedAt: 0,
-    history: [], // músicas já tocadas
-    skipVotes: new Set(), // usuários que votaram para pular
+    history: [],
+    skipVotes: new Set(),
   };
 }
 
@@ -62,7 +61,6 @@ function getRoomVotes(slug) {
 rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
 
 function getPosition(room) {
-  if (room.paused) return room.pausedAt;
   const track = room.queue[room.currentIndex];
   if (!track) return 0;
   return Math.min((Date.now() - room.startedAt) / 1000, track.duration || 180);
@@ -79,8 +77,7 @@ function broadcastState(slug) {
     queue: room.queue,
     admin: room.admin,
     isPlaying: room.isPlaying,
-    paused: room.paused || false,
-    history: room.history.slice(-10), // últimas 10
+    history: room.history.slice(-10),
   });
 }
 
@@ -111,27 +108,34 @@ function addSystemMsg(slug, text) {
   io.to(slug).emit('chat', msg);
 }
 
-function reorderQueueByVotes(room) {
+// ===== SHUFFLE AUTOMÁTICO (mantém a atual em primeiro) =====
+function autoShuffle(room) {
   if (!room || room.queue.length <= 1) return;
-  const currentTrack = room.queue[room.currentIndex];
-  if (!currentTrack) return;
+  const current = room.queue[room.currentIndex];
+  if (!current) return;
+  // Pega o restante (todas exceto a atual)
   const rest = room.queue.filter((_, i) => i !== room.currentIndex);
-  const votes = getRoomVotes(room.slug);
-  rest.sort((a, b) => {
-    const aIdx = room.queue.indexOf(a);
-    const bIdx = room.queue.indexOf(b);
-    const aUp = votes[aIdx] ? votes[aIdx].up.length : 0;
-    const bUp = votes[bIdx] ? votes[bIdx].up.length : 0;
-    return bUp - aUp;
-  });
-  room.queue = [currentTrack, ...rest];
+  // Embaralha o restante
+  for (let i = rest.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rest[i], rest[j]] = [rest[j], rest[i]];
+  }
+  // Reconstroi a fila: [atual, ...rest]
+  room.queue = [current, ...rest];
   room.currentIndex = 0;
+
+  // Reindexa os votos para a nova ordem
+  const votes = getRoomVotes(room.slug);
   const newVotes = {};
-  room.queue.forEach((track, i) => {
-    const oldIndex = room.queue.indexOf(track);
-    if (votes[oldIndex]) newVotes[i] = votes[oldIndex];
+  room.queue.forEach((track, idx) => {
+    // Encontra o índice antigo da track na fila antiga (usando o id)
+    const oldIndex = room.queue.findIndex(t => t.id === track.id);
+    if (votes[oldIndex] !== undefined) {
+      newVotes[idx] = votes[oldIndex];
+    }
   });
   roomVotes.set(room.slug, newVotes);
+  broadcastState(room.slug);
 }
 
 function advanceQueue(slug) {
@@ -140,7 +144,6 @@ function advanceQueue(slug) {
   if (Date.now() - room.lastAdvanceAt < 10000) return false;
   room.lastAdvanceAt = Date.now();
 
-  // Adiciona ao histórico
   const current = room.queue[room.currentIndex];
   if (current) {
     room.history.push(current);
@@ -151,17 +154,17 @@ function advanceQueue(slug) {
   room.currentIndex = 0;
   room.startedAt = Date.now();
   room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
-  room.paused = false;
   room.skipVotes = new Set();
-  
+
   const votes = getRoomVotes(slug);
   const newVotes = {};
   room.queue.forEach((_, i) => {
     if (votes[i + 1]) newVotes[i] = votes[i + 1];
   });
   roomVotes.set(slug, newVotes);
-  
-  reorderQueueByVotes(room);
+
+  // Após avançar, reordena aleatoriamente (exceto a atual)
+  autoShuffle(room);
   broadcastState(slug);
 
   if (room.queue.length > 0) {
@@ -178,7 +181,7 @@ function advanceQueue(slug) {
 
 setInterval(() => {
   for (const [slug, room] of rooms) {
-    if (!room.isPlaying || room.paused || room.queue.length === 0) continue;
+    if (!room.isPlaying || room.queue.length === 0) continue;
     const track = room.queue[room.currentIndex];
     if (!track) continue;
     const pos = getPosition(room);
@@ -330,7 +333,7 @@ app.post('/api/rooms', (req, res) => {
   res.json({ slug, name });
 });
 
-// ===== SEARCH YOUTUBE (requer chave de API) =====
+// ===== SEARCH YOUTUBE =====
 app.get('/api/search-youtube', async (req, res) => {
   const query = req.query.q;
   if (!query || query.length < 2) return res.json({ items: [] });
@@ -393,7 +396,6 @@ app.get('/api/video-info', async (req, res) => {
 
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
-    // ... extração de duração (mesmo código anterior)
     const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
     if (jsonLdMatch) {
       try {
@@ -562,7 +564,6 @@ app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
     room.queue = [];
     room.currentIndex = 0;
     room.isPlaying = false;
-    room.paused = false;
     room.history = [];
     room.skipVotes = new Set();
     roomLikes.set(slug, {});
@@ -605,6 +606,7 @@ app.post('/api/admin/remove-song', isAdmin, (req, res) => {
     if (votes[i + 1]) newVotes[i] = votes[i + 1];
   });
   roomVotes.set(roomSlug, newVotes);
+  autoShuffle(room);
   broadcastState(roomSlug);
   addSystemMsg(roomSlug, `🗑️ Admin removeu "${track.title}"`);
   res.json({ success: true });
@@ -661,7 +663,6 @@ io.on('connection', (socket) => {
       queue: room.queue,
       admin: room.admin,
       isPlaying: room.isPlaying,
-      paused: room.paused || false,
       history: room.history.slice(-10),
     });
     socket.emit('chatHistory', room.chatHistory.slice(-150));
@@ -696,7 +697,6 @@ io.on('connection', (socket) => {
 
   function handleCommand(socket, cmd, args, room) {
     const email = socket.userEmail;
-    const pointsData = userPoints.get(email) || { points: 0, badges: [] };
     let reply = '';
 
     switch(cmd) {
@@ -790,60 +790,16 @@ io.on('connection', (socket) => {
     }
   }
 
-  // ===== PAUSE =====
-  socket.on('togglePause', () => {
-    if (!currentRoom) return;
-    const room = rooms.get(currentRoom);
-    if (!socket.isAdmin) { socket.emit('error', 'Apenas admin pode pausar'); return; }
-    room.paused = !room.paused;
-    if (room.paused) {
-      room.pausedAt = getPosition(room);
-      addSystemMsg(currentRoom, `⏸️ Música pausada por ${socket.userName}`);
-    } else {
-      room.startedAt = Date.now() - (room.pausedAt || 0) * 1000;
-      addSystemMsg(currentRoom, `▶️ Música retomada por ${socket.userName}`);
-    }
-    broadcastState(currentRoom);
-  });
-
-  // ===== SHUFFLE =====
-  socket.on('shuffleQueue', () => {
-    if (!currentRoom) return;
-    const room = rooms.get(currentRoom);
-    if (!socket.isAdmin) { socket.emit('error', 'Apenas admin pode embaralhar'); return; }
-    if (room.queue.length <= 1) return;
-    const current = room.queue[room.currentIndex];
-    const rest = room.queue.filter((_, i) => i !== room.currentIndex);
-    for (let i = rest.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [rest[i], rest[j]] = [rest[j], rest[i]];
-    }
-    room.queue = [current, ...rest];
-    room.currentIndex = 0;
-    // Reindexar votos
-    const votes = getRoomVotes(currentRoom);
-    const newVotes = {};
-    room.queue.forEach((track, i) => {
-      const oldIndex = room.queue.indexOf(track);
-      if (votes[oldIndex]) newVotes[i] = votes[oldIndex];
-    });
-    roomVotes.set(currentRoom, newVotes);
-    broadcastState(currentRoom);
-    addSystemMsg(currentRoom, `🔀 Fila embaralhada por ${socket.userName}`);
-  });
-
   // ===== SKIP VOTE =====
   socket.on('voteSkip', () => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
     if (room.queue.length === 0) return;
     if (socket.userName === room.admin || adminEmails.has(socket.userEmail)) {
-      // Admin pula direto
       advanceQueue(currentRoom);
       addSystemMsg(currentRoom, `⏭️ ${socket.userName} pulou a música (admin)`);
       return;
     }
-    // Votação
     if (room.skipVotes.has(socket.userName)) {
       socket.emit('error', 'Você já votou para pular.');
       return;
@@ -862,7 +818,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ===== ADD SONG =====
+  // ===== ADD SONG (com shuffle automático) =====
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -901,8 +857,10 @@ io.on('connection', (socket) => {
       room.currentIndex = 0;
       room.startedAt = Date.now();
       room.lastAdvanceAt = Date.now();
-      room.paused = false;
       addSystemMsg(currentRoom, `▶ ${song.title} — ${song.artist}`);
+    } else {
+      // Embaralha automaticamente (mantém a atual)
+      autoShuffle(room);
     }
 
     broadcastState(currentRoom);
@@ -929,7 +887,6 @@ io.on('connection', (socket) => {
       room.queue.shift();
       room.currentIndex = 0;
       room.isPlaying = false;
-      room.paused = false;
       room.startedAt = Date.now();
       addSystemMsg(currentRoom, `⛔ A música "${track.title}" foi removida automaticamente por ser muito longa (${Math.floor(duration / 60)} min). Limite: ${settings.maxDuration / 60} min.`);
       const votes = getRoomVotes(currentRoom);
@@ -957,7 +914,6 @@ io.on('connection', (socket) => {
     room.currentIndex = 0;
     room.startedAt = Date.now();
     room.isPlaying = true;
-    room.paused = false;
     room.skipVotes = new Set();
     const votes = getRoomVotes(currentRoom);
     const newVotes = {};
@@ -965,7 +921,7 @@ io.on('connection', (socket) => {
       if (votes[i]) newVotes[i] = votes[i];
     });
     roomVotes.set(currentRoom, newVotes);
-    reorderQueueByVotes(room);
+    autoShuffle(room);
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
   });
@@ -995,6 +951,7 @@ io.on('connection', (socket) => {
       if (votes[i + 1]) newVotes[i] = votes[i + 1];
     });
     roomVotes.set(currentRoom, newVotes);
+    autoShuffle(room);
     broadcastState(currentRoom);
     addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
   });
@@ -1065,12 +1022,13 @@ io.on('connection', (socket) => {
         if (votes[i + 1]) newVotes[i] = votes[i + 1];
       });
       roomVotes.set(room, newVotes);
+      autoShuffle(roomData);
       broadcastState(room);
       io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down, removed: true });
       addSystemMsg(room, `👎 "${removed.title}" foi removida por votação! (${data.down.length} votos negativos)`);
       return;
     }
-    if (type === 'up') reorderQueueByVotes(roomData);
+    if (type === 'up') autoShuffle(roomData);
     io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down });
     broadcastState(room);
   });
