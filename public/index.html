@@ -90,7 +90,7 @@
       border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       background-size: 200% 200%;
-      animation: gradientMove 3s ease infinite;
+      animation: gradientMove 3s ease infinite, pulseGlow 2s infinite;
       color: #fff; font-weight: 700; font-size: 14px;
       cursor: pointer; transition: all 0.2s; font-family: inherit;
       box-shadow: 0 0 15px rgba(124,58,237,0.3);
@@ -103,10 +103,6 @@
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
-    }
-    /* Botão CTA com pulsação */
-    .btn-cta-pulse {
-      animation: pulseGlow 2s infinite;
     }
     @keyframes pulseGlow {
       0% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
@@ -168,25 +164,6 @@
       gap: 14px;
       flex-wrap: wrap;
     }
-    .landing-hero-ctas .btn-hero-primary {
-      padding: 16px 40px;
-      border-radius: 12px;
-      border: none;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      background-size: 200% 200%;
-      animation: gradientMove 3s ease infinite;
-      color: #fff;
-      font-weight: 700;
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-      box-shadow: 0 0 20px rgba(124,58,237,0.3);
-    }
-    .landing-hero-ctas .btn-hero-primary:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 12px 40px rgba(124,58,237,0.5);
-    }
     .landing-hero-ctas .btn-hero-secondary {
       padding: 16px 40px;
       border-radius: 12px;
@@ -203,6 +180,25 @@
     .landing-hero-ctas .btn-hero-secondary:hover {
       background: rgba(255,255,255,0.1);
       border-color: var(--accent2);
+    }
+    .landing-hero-ctas .btn-hero-primary {
+      padding: 16px 40px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      background-size: 200% 200%;
+      animation: gradientMove 3s ease infinite, pulseGlow 2s infinite;
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      box-shadow: 0 0 20px rgba(124,58,237,0.3);
+    }
+    .landing-hero-ctas .btn-hero-primary:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(124,58,237,0.5);
     }
 
     /* Features */
@@ -692,7 +688,7 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- LANDING PAGE REFORMULADA (sem seção de estilos) -->
+  <!-- LANDING PAGE REFORMULADA -->
   <!-- ============================================================ -->
   <div class="landing-screen" id="landingScreen">
     <div class="landing-inner">
@@ -703,7 +699,9 @@
           <button class="lang-btn active" data-lang="pt" onclick="setLanguage('pt')">PT</button>
           <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
           <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">ES</button>
+          <!-- Botão Entrar (discreto) -->
           <button class="btn-outline" onclick="showLogin()" data-i18n="hero.cta2">Entrar</button>
+          <!-- Botão Criar conta (chamativo) -->
           <button class="btn-primary" onclick="openSignup()" data-i18n="hero.cta1">Criar conta</button>
         </div>
       </div>
@@ -716,8 +714,10 @@
           <h1 data-i18n="hero.title">A pista é sua.<br>A trilha sonora é <span>de todo mundo</span>.</h1>
           <p data-i18n="hero.sub">Entre em uma sala, adicione suas músicas favoritas do YouTube e converse em tempo real com a galera.</p>
           <div class="landing-hero-ctas">
-            <button class="btn-hero-primary" onclick="showLogin()" data-i18n="hero.cta1">🎤 Entrar na sala</button>
-            <button class="btn-hero-secondary" onclick="openSignup()" data-i18n="hero.cta2">✍️ Criar conta</button>
+            <!-- Entrar na sala (discreto) -->
+            <button class="btn-hero-secondary" onclick="showLogin()" data-i18n="hero.cta1">🎤 Entrar na sala</button>
+            <!-- Criar conta (chamativo) -->
+            <button class="btn-hero-primary" onclick="openSignup()" data-i18n="hero.cta2">✍️ Criar conta</button>
           </div>
         </div>
       </div>
@@ -747,7 +747,7 @@
       <div class="landing-cta-band">
         <h2 data-i18n="band.title">Ainda não tem conta? Crie uma agora!</h2>
         <p data-i18n="band.sub">Cadastre-se e entre nas salas para ouvir música com amigos.</p>
-        <button class="btn-cta btn-cta-pulse" onclick="openSignup()" data-i18n="band.cta">Criar minha conta 🎵</button>
+        <button class="btn-cta" onclick="openSignup()" data-i18n="band.cta">Criar minha conta 🎵</button>
       </div>
     </div>
   </div>
