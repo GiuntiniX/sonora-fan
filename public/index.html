@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* ===== ESTILOS GLOBAIS ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -603,10 +602,7 @@
           <div style="font-weight:700;font-size:13px;margin-bottom:8px;">🏆 Músicas mais votadas (últimos 7 dias)</div>
           <div id="adminTopSongs" style="font-size:13px;color:var(--text-secondary);">Carregando...</div>
         </div>
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;">
-          <div style="font-weight:700;font-size:13px;margin-bottom:8px;">📈 Gráfico de atividade</div>
-          <canvas id="adminChart" style="width:100%;height:150px;background:var(--bg);border-radius:8px;"></canvas>
-        </div>
+        <!-- Gráfico removido -->
       </div>
       <div id="tab-settings" class="admin-tab">
         <div class="admin-action-grid">
@@ -901,7 +897,7 @@
 
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO - COM AUTENTICAÇÃO FUNCIONANDO
+    // JAVASCRIPT COMPLETO - SEM GRÁFICO DE ATIVIDADE
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -914,7 +910,6 @@
     let currentLang = localStorage.getItem('sonoraLang') || 'pt';
     let audioCtx = null;
     let eventCountdownInterval = null;
-    let adminChartInstance = null;
 
     // ===== TRADUÇÕES =====
     const translations = {
@@ -1236,7 +1231,7 @@
       toast('Tema: ' + currentTheme, 'success');
     }
 
-    // ===== AUTENTICAÇÃO (CORRIGIDA) =====
+    // ===== AUTENTICAÇÃO =====
     function showLogin() { $('landingScreen').style.display = 'none'; $('loginScreen').classList.add('active'); }
     function hideLogin() { $('loginScreen').classList.remove('active'); }
     function openSignup() { hideLogin(); $('signupModal').classList.add('active'); }
@@ -1369,7 +1364,6 @@
       document.querySelectorAll('.tab-bar button').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       document.querySelector(`.tab-bar button[data-tab="${tabId}"]`).classList.add('active');
-      if (tabId === 'tab-stats') setTimeout(initAdminChart, 100);
     }
 
     function toggleAdmin() {
@@ -1381,7 +1375,6 @@
         loadAdminUsers();
         loadAdminQueues();
         loadAdminTopSongs();
-        setTimeout(initAdminChart, 200);
       }
     }
     function closeAdmin() { $('adminPanel').classList.remove('active'); }
@@ -1582,49 +1575,6 @@
         if (top.length === 0) { container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Nenhuma música votada ainda.</div>'; return; }
         container.innerHTML = top.map((s, i) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>${i+1}. ${escapeHtml(s.title)} — ${escapeHtml(s.artist)}</span><span style="color:var(--accent);font-weight:700;">👍 ${s.votes}</span></div>`).join('');
       } catch(e) { $('adminTopSongs').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Erro ao carregar</div>'; }
-    }
-
-    // ===== GRÁFICO =====
-    function initAdminChart() {
-      const ctx = document.getElementById('adminChart');
-      if (!ctx) return;
-      if (adminChartInstance) { adminChartInstance.destroy(); adminChartInstance = null; }
-      const labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-      const data = {
-        labels: labels,
-        datasets: [{
-          label: 'Músicas adicionadas',
-          data: [12, 19, 15, 22, 30, 18, 25],
-          backgroundColor: 'rgba(255,107,53,0.2)',
-          borderColor: 'var(--accent)',
-          borderWidth: 2,
-          tension: 0.4,
-          fill: true
-        }]
-      };
-      adminChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: data,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: { color: 'var(--text-secondary)' }
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: 'var(--text-muted)' },
-              grid: { color: 'var(--border)' }
-            },
-            y: {
-              ticks: { color: 'var(--text-muted)' },
-              grid: { color: 'var(--border)' }
-            }
-          }
-        }
-      });
     }
 
     // ===== COMPARTILHAR PÁGINA =====
