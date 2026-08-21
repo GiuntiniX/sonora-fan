@@ -298,6 +298,23 @@
     .chat-messages-inner::-webkit-scrollbar { width: 0px; background: transparent; }
     .chat-messages-inner { scrollbar-width: none; -ms-overflow-style: none; }
 
+    /* Mensagem fixada */
+    .pinned-message {
+      background: rgba(124,58,237,0.15);
+      border-left: 4px solid var(--accent2);
+      padding: 10px 14px;
+      margin: 4px 0 8px 0;
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .pinned-message .pin-icon { font-size: 16px; }
+    .pinned-message .content { flex: 1; font-size: 13px; color: var(--text-secondary); }
+    .pinned-message .content strong { color: var(--text); }
+    .pinned-message .remove-pin { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; padding: 2px; }
+
     .msg { display: flex; gap: 8px; line-height: 1.5; padding: 4px 8px; border-radius: 8px; animation: msgIn 0.2s ease; flex-shrink: 0; transition: all 0.3s ease; }
     .msg:hover { background: rgba(255,255,255,0.02); }
     .msg.removing { opacity: 0; transform: translateY(-10px) scale(0.95); height: 0; padding: 0 8px; margin: 0; overflow: hidden; transition: all 0.4s ease; }
@@ -361,6 +378,15 @@
     .avatar-option:hover { border-color: var(--border-hover); transform: scale(1.05); }
     .avatar-option.selected { border-color: var(--accent); background: rgba(255,107,53,0.1); }
 
+    /* ===== KARAOKÊ MODAL ===== */
+    .lyrics-content { white-space: pre-wrap; font-family: inherit; font-size: 14px; line-height: 1.8; color: var(--text-secondary); max-height: 400px; overflow-y: auto; padding: 8px; }
+    .lyrics-content .highlight { color: var(--accent); font-weight: 700; }
+
+    /* ===== RADIO CONTROLS ===== */
+    .radio-controls { display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
+    .radio-controls label { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .radio-controls input[type="text"] { padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 12px; width: 100px; }
+
     /* ===== RESPONSIVE ===== */
     @media (max-width: 480px) {
       .player-column { padding: 10px 12px; }
@@ -372,6 +398,12 @@
       .landing-features { grid-template-columns: 1fr; }
       .landing-hero h1 { font-size: 32px; }
     }
+
+    /* ===== LANG SELECTOR ===== */
+    .lang-selector { display: flex; gap: 4px; align-items: center; }
+    .lang-btn { background: transparent; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 11px; cursor: pointer; color: var(--text-muted); font-family: inherit; transition: all 0.15s; }
+    .lang-btn:hover { border-color: var(--accent2); color: var(--text); }
+    .lang-btn.active { border-color: var(--accent); color: var(--text); background: rgba(255,107,53,0.1); }
   </style>
 </head>
 <body>
@@ -392,24 +424,31 @@
   <!-- LANDING -->
   <div class="landing-screen" id="landingScreen">
     <div class="landing-inner">
-      <div class="landing-nav"><div class="landing-logo">🎸 Sonora <span>Fan</span></div></div>
+      <div class="landing-nav">
+        <div class="landing-logo">🎸 Sonora <span>Fan</span></div>
+        <div class="lang-selector">
+          <button class="lang-btn active" data-lang="pt" onclick="setLanguage('pt')">PT</button>
+          <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+          <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">ES</button>
+        </div>
+      </div>
       <div class="landing-hero">
-        <h1>A pista é sua.<br>A trilha sonora é <span>de todo mundo</span>.</h1>
-        <p>Entre em uma sala, adicione suas músicas favoritas do YouTube e converse em tempo real com a galera.</p>
+        <h1 data-i18n="hero.title">A pista é sua.<br>A trilha sonora é <span>de todo mundo</span>.</h1>
+        <p data-i18n="hero.sub">Entre em uma sala, adicione suas músicas favoritas do YouTube e converse em tempo real com a galera.</p>
         <div class="landing-ctas">
-          <button class="landing-cta-primary" onclick="showLogin()">🎤 Entrar na sala</button>
-          <button class="landing-cta-secondary" onclick="openSignup()">✍️ Criar conta</button>
+          <button class="landing-cta-primary" onclick="showLogin()" data-i18n="hero.cta1">🎤 Entrar na sala</button>
+          <button class="landing-cta-secondary" onclick="openSignup()" data-i18n="hero.cta2">✍️ Criar conta</button>
         </div>
       </div>
       <div class="landing-features">
-        <div class="landing-feature-card"><div class="icon">🎶</div><h3>Fila colaborativa</h3><p>Todo mundo adiciona música do YouTube, a fila toca em sincronia para todos.</p></div>
-        <div class="landing-feature-card"><div class="icon">💬</div><h3>Chat ao vivo</h3><p>Comente as músicas, reaja com emojis e curta as escolhas da galera.</p></div>
-        <div class="landing-feature-card"><div class="icon">🗳️</div><h3>Votação democrática</h3><p>Curta ou dispense músicas da fila. Com 10 votos negativos, a música sai!</p></div>
+        <div class="landing-feature-card"><div class="icon">🎶</div><h3 data-i18n="feature1.title">Fila colaborativa</h3><p data-i18n="feature1.desc">Todo mundo adiciona música do YouTube, a fila toca em sincronia para todos.</p></div>
+        <div class="landing-feature-card"><div class="icon">💬</div><h3 data-i18n="feature2.title">Chat ao vivo</h3><p data-i18n="feature2.desc">Comente as músicas, reaja com emojis e curta as escolhas da galera.</p></div>
+        <div class="landing-feature-card"><div class="icon">🗳️</div><h3 data-i18n="feature3.title">Votação democrática</h3><p data-i18n="feature3.desc">Curta ou dispense músicas da fila. Com 10 votos negativos, a música sai!</p></div>
       </div>
       <div class="landing-cta-band">
-        <h2>Ainda não tem conta? Crie uma agora!</h2>
-        <p>Cadastre-se e entre nas salas para ouvir música com amigos.</p>
-        <button class="landing-cta-primary" onclick="openSignup()">Criar minha conta 🎵</button>
+        <h2 data-i18n="band.title">Ainda não tem conta? Crie uma agora!</h2>
+        <p data-i18n="band.sub">Cadastre-se e entre nas salas para ouvir música com amigos.</p>
+        <button class="landing-cta-primary" onclick="openSignup()" data-i18n="band.cta">Criar minha conta 🎵</button>
       </div>
     </div>
   </div>
@@ -419,29 +458,29 @@
     <div class="login-card">
       <div class="logo">🎸</div>
       <h1>Sonora <span>Fan</span></h1>
-      <p>Entre com sua conta para acessar as salas.</p>
-      <div class="login-error" id="loginError">Credenciais inválidas.</div>
-      <input type="email" id="loginEmail" placeholder="E-mail" onkeydown="if(event.key==='Enter') doLogin()">
-      <input type="password" id="loginPassword" placeholder="Senha" onkeydown="if(event.key==='Enter') doLogin()">
-      <button id="loginBtn" onclick="doLogin()">Entrar no palco</button>
-      <div class="login-switch">Não tem conta? <a onclick="openSignup()">Cadastre-se</a></div>
+      <p data-i18n="login.sub">Entre com sua conta para acessar as salas.</p>
+      <div class="login-error" id="loginError" data-i18n="login.error">Credenciais inválidas.</div>
+      <input type="email" id="loginEmail" placeholder="E-mail" data-i18n-placeholder="login.email" onkeydown="if(event.key==='Enter') doLogin()">
+      <input type="password" id="loginPassword" placeholder="Senha" data-i18n-placeholder="login.password" onkeydown="if(event.key==='Enter') doLogin()">
+      <button id="loginBtn" onclick="doLogin()" data-i18n="login.btn">Entrar no palco</button>
+      <div class="login-switch"><span data-i18n="login.switch">Não tem conta?</span> <a onclick="openSignup()" data-i18n="login.signup">Cadastre-se</a></div>
     </div>
   </div>
 
   <!-- SIGNUP -->
   <div class="modal-overlay" id="signupModal">
     <div class="modal">
-      <h3>🎵 Criar conta</h3>
-      <label class="form-label">Nome <span class="required">*</span></label>
-      <input type="text" id="signupNome" placeholder="Seu nome" maxlength="60">
-      <div class="form-error" id="signupNomeError">Digite seu nome</div>
-      <label class="form-label">E-mail <span class="required">*</span></label>
-      <input type="email" id="signupEmail" placeholder="voce@email.com" maxlength="120">
-      <div class="form-error" id="signupEmailError">Digite um e-mail válido</div>
-      <label class="form-label">Senha <span class="required">*</span> <span class="hint">(mínimo 6 caracteres)</span></label>
-      <input type="password" id="signupPassword" placeholder="Crie uma senha" maxlength="30">
-      <div class="form-error" id="signupPasswordError">Mínimo 6 caracteres</div>
-      <label class="form-label">Estilo musical <span class="required">*</span></label>
+      <h3 data-i18n="signup.title">🎵 Criar conta</h3>
+      <label class="form-label" data-i18n="signup.name">Nome <span class="required">*</span></label>
+      <input type="text" id="signupNome" placeholder="Seu nome" maxlength="60" data-i18n-placeholder="signup.namePlaceholder">
+      <div class="form-error" id="signupNomeError" data-i18n="signup.nameError">Digite seu nome</div>
+      <label class="form-label" data-i18n="signup.email">E-mail <span class="required">*</span></label>
+      <input type="email" id="signupEmail" placeholder="voce@email.com" maxlength="120" data-i18n-placeholder="signup.emailPlaceholder">
+      <div class="form-error" id="signupEmailError" data-i18n="signup.emailError">Digite um e-mail válido</div>
+      <label class="form-label" data-i18n="signup.password">Senha <span class="required">*</span> <span class="hint">(mínimo 6 caracteres)</span></label>
+      <input type="password" id="signupPassword" placeholder="Crie uma senha" maxlength="30" data-i18n-placeholder="signup.passwordPlaceholder">
+      <div class="form-error" id="signupPasswordError" data-i18n="signup.passwordError">Mínimo 6 caracteres</div>
+      <label class="form-label" data-i18n="signup.style">Estilo musical <span class="required">*</span></label>
       <div class="chip-group" id="signupStyles">
         <div class="chip" data-style="sertanejo" onclick="toggleChip(this)">Sertanejo</div>
         <div class="chip" data-style="funk" onclick="toggleChip(this)">Funk</div>
@@ -455,10 +494,10 @@
         <div class="chip" data-style="gospel" onclick="toggleChip(this)">Gospel</div>
         <div class="chip" data-style="indie" onclick="toggleChip(this)">Indie</div>
       </div>
-      <div class="form-error" id="signupStylesError">Escolha pelo menos um estilo</div>
+      <div class="form-error" id="signupStylesError" data-i18n="signup.styleError">Escolha pelo menos um estilo</div>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeSignup()">Cancelar</button>
-        <button class="btn-primary" onclick="submitSignup()">Criar conta 🎶</button>
+        <button class="btn-secondary" onclick="closeSignup()" data-i18n="signup.cancel">Cancelar</button>
+        <button class="btn-primary" onclick="submitSignup()" data-i18n="signup.submit">Criar conta 🎶</button>
       </div>
     </div>
   </div>
@@ -473,39 +512,39 @@
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:16px;">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
           <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminUsers">0</div>
-          <div style="font-size:11px;color:var(--text-muted);">Usuários</div>
+          <div style="font-size:11px;color:var(--text-muted);" data-i18n="admin.users">Usuários</div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
           <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminRooms">0</div>
-          <div style="font-size:11px;color:var(--text-muted);">Salas</div>
+          <div style="font-size:11px;color:var(--text-muted);" data-i18n="admin.rooms">Salas</div>
         </div>
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
           <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminOnline">0</div>
-          <div style="font-size:11px;color:var(--text-muted);">Online</div>
+          <div style="font-size:11px;color:var(--text-muted);" data-i18n="admin.online">Online</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-        <button onclick="adminClearChats()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">🗑️ Limpar Chats</button>
-        <button onclick="adminClearRooms()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">🧹 Limpar Salas</button>
-        <button onclick="adminExport()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📥 Exportar</button>
-        <button onclick="adminBroadcast()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;">📢 Mensagem</button>
+        <button onclick="adminClearChats()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;" data-i18n="admin.clearChats">🗑️ Limpar Chats</button>
+        <button onclick="adminClearRooms()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;" data-i18n="admin.clearRooms">🧹 Limpar Salas</button>
+        <button onclick="adminExport()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;" data-i18n="admin.export">📥 Exportar</button>
+        <button onclick="adminBroadcast()" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-family:inherit;font-weight:600;font-size:12px;" data-i18n="admin.broadcast">📢 Mensagem</button>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-weight:700;font-size:13px;">🎵 Gerenciar Filas</span>
-          <button onclick="loadAdminQueues()" style="background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;">🔄 Atualizar</button>
+          <span style="font-weight:700;font-size:13px;" data-i18n="admin.manageQueues">🎵 Gerenciar Filas</span>
+          <button onclick="loadAdminQueues()" style="background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;" data-i18n="admin.refresh">🔄 Atualizar</button>
         </div>
         <div id="adminQueueList" style="max-height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
-          <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px;">Carregando salas...</div>
+          <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px;" data-i18n="admin.loadingQueues">Carregando salas...</div>
         </div>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:12px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-          <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
+          <span style="font-weight:700;font-size:13px;" data-i18n="admin.usersTitle">👥 Usuários</span>
           <span style="font-size:11px;color:var(--text-muted);" id="adminUserCount">0</span>
         </div>
         <div id="adminUserList" style="max-height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
-          <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Carregando...</div>
+          <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;" data-i18n="admin.loadingUsers">Carregando...</div>
         </div>
       </div>
     </div>
@@ -515,11 +554,11 @@
   <div class="modal-overlay" id="favoritesModal">
     <div class="modal">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid var(--border);">
-        <h3 style="font-size:20px;font-weight:800;">⭐ Minhas Favoritas</h3>
+        <h3 style="font-size:20px;font-weight:800;" data-i18n="favorites.title">⭐ Minhas Favoritas</h3>
         <button onclick="closeFavorites()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
       </div>
       <div id="favoritesList">
-        <div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;">Carregando favoritos...</div>
+        <div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;" data-i18n="favorites.loading">Carregando favoritos...</div>
       </div>
     </div>
   </div>
@@ -527,7 +566,7 @@
   <!-- AVATAR SELECTOR -->
   <div class="modal-overlay" id="avatarModal">
     <div class="modal">
-      <h3>🎨 Escolha seu avatar</h3>
+      <h3 data-i18n="avatar.title">🎨 Escolha seu avatar</h3>
       <div class="avatar-grid" id="avatarGrid">
         <div class="avatar-option" data-avatar="🎸">🎸</div>
         <div class="avatar-option" data-avatar="🎤">🎤</div>
@@ -549,8 +588,21 @@
         <div class="avatar-option" data-avatar="⭐">⭐</div>
       </div>
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeAvatarModal()">Cancelar</button>
-        <button class="btn-primary" onclick="saveAvatar()">Salvar</button>
+        <button class="btn-secondary" onclick="closeAvatarModal()" data-i18n="avatar.cancel">Cancelar</button>
+        <button class="btn-primary" onclick="saveAvatar()" data-i18n="avatar.save">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KARAOKÊ MODAL -->
+  <div class="modal-overlay" id="karaokeModal">
+    <div class="modal" style="max-width: 600px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid var(--border);">
+        <h3 style="font-size:20px;font-weight:800;" data-i18n="karaoke.title">🎤 Letra da Música</h3>
+        <button onclick="closeKaraoke()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div id="karaokeContent">
+        <div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;" data-i18n="karaoke.loading">Buscando letra...</div>
       </div>
     </div>
   </div>
@@ -568,19 +620,24 @@
           </div>
           <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtn" style="display:none;">🎛️</button>
           <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtn">🌙</button>
-          <button class="logout-btn" onclick="doLogout()">Sair</button>
+          <div class="lang-selector">
+            <button class="lang-btn active" data-lang="pt" onclick="setLanguage('pt')">PT</button>
+            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">ES</button>
+          </div>
+          <button class="logout-btn" onclick="doLogout()" data-i18n="logout">Sair</button>
         </div>
       </div>
       <div class="lobby">
         <div class="lobby-top">
-          <h2>Salas disponíveis</h2>
+          <h2 data-i18n="lobby.title">Salas disponíveis</h2>
           <div class="lobby-actions">
-            <button onclick="showCreateRoom()">+ Nova sala</button>
-            <button onclick="joinRandomRoom()">🎲 Sala aleatória</button>
+            <button onclick="showCreateRoom()" data-i18n="lobby.newRoom">+ Nova sala</button>
+            <button onclick="joinRandomRoom()" data-i18n="lobby.random">🎲 Sala aleatória</button>
           </div>
         </div>
         <div class="room-grid" id="roomGrid">
-          <div class="empty-state"><div class="icon">🎵</div><p>Carregando salas...</p></div>
+          <div class="empty-state"><div class="icon">🎵</div><p data-i18n="lobby.loading">Carregando salas...</p></div>
         </div>
       </div>
     </div>
@@ -591,15 +648,18 @@
     <div class="app">
       <div class="header">
         <div class="header-left">
-          <button onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;">← Voltar</button>
+          <button onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;" data-i18n="room.back">← Voltar</button>
           <h1 id="roomTitle">Sala</h1>
         </div>
         <div class="header-right">
+          <button class="action-btn" onclick="toggleRadio()" title="Modo Rádio" id="radioBtn" style="display:none;">📻</button>
+          <button class="action-btn" onclick="openKaraoke()" title="Karaokê" id="karaokeBtn">🎤</button>
           <button class="action-btn" onclick="copyRoomLink()" title="Copiar link da sala">🔗</button>
           <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom" style="display:none;">🎛️</button>
           <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtnRoom">🌙</button>
           <button class="action-btn" onclick="toggleFavorites()" title="Favoritos" style="border-color:var(--accent2);">⭐</button>
           <span id="adminBadge" class="admin-badge hidden">Admin</span>
+          <span id="radioBadge" class="admin-badge hidden" style="background:var(--accent);">📻 Rádio</span>
         </div>
       </div>
 
@@ -614,7 +674,7 @@
             </div>
           </div>
           <div class="queue-list" id="queueList">
-            <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;">Nenhuma música na fila</div>
+            <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;" data-i18n="queue.empty">Nenhuma música na fila</div>
           </div>
         </div>
 
@@ -622,9 +682,9 @@
         <div class="player-column">
           <div class="player-section">
             <div class="player-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);">
-              <span class="now-playing-label" style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:2px;font-weight:700;">Tocando agora</span>
+              <span class="now-playing-label" style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:2px;font-weight:700;" data-i18n="player.now">Tocando agora</span>
               <span class="live-indicator" style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--danger);font-weight:700;text-transform:uppercase;letter-spacing:1px;">
-                <span class="live-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--danger);animation:pulse 1.5s infinite;"></span>Ao vivo
+                <span class="live-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--danger);animation:pulse 1.5s infinite;"></span><span data-i18n="player.live">Ao vivo</span>
               </span>
             </div>
             <div id="youtube-player">
@@ -633,12 +693,13 @@
             <div class="player-info">
               <div class="cover" id="trackCover">🎵</div>
               <div class="track-info">
-                <div class="track-title" id="trackTitle">Nenhuma música</div>
-                <div class="track-artist" id="trackArtist">Adicione uma música</div>
+                <div class="track-title" id="trackTitle" data-i18n="player.noTrack">Nenhuma música</div>
+                <div class="track-artist" id="trackArtist" data-i18n="player.addTrack">Adicione uma música</div>
                 <div class="track-dj" id="trackDj"></div>
                 <div class="track-actions">
-                  <button onclick="favoriteCurrent()" id="favCurrentBtn">⭐ Favoritar</button>
-                  <button onclick="voteSkip()" id="skipBtn" title="Votar para pular">⏭️ Pular</button>
+                  <button onclick="favoriteCurrent()" id="favCurrentBtn" data-i18n="player.fav">⭐ Favoritar</button>
+                  <button onclick="voteSkip()" id="skipBtn" title="Votar para pular" data-i18n="player.skip">⏭️ Pular</button>
+                  <button onclick="openKaraoke()" id="lyricsBtn" data-i18n="player.lyrics">📜 Letra</button>
                 </div>
               </div>
             </div>
@@ -658,7 +719,7 @@
 
           <!-- PRÓXIMA MÚSICA -->
           <div class="next-track" id="nextTrack" style="display:none;">
-            <span class="label">A seguir</span>
+            <span class="label" data-i18n="next.label">A seguir</span>
             <div class="thumb" id="nextThumb"></div>
             <div class="info">
               <div class="title" id="nextTitle">-</div>
@@ -669,8 +730,8 @@
           <!-- ADICIONAR MÚSICA -->
           <div class="add-song-area">
             <div class="add-song">
-              <input type="text" id="songUrl" placeholder="Buscar no YouTube ou colar link..." oninput="handleSearchInput(this.value)" onkeydown="if(event.key==='Enter') addSong()">
-              <button id="addBtn" onclick="addSong()">Adicionar</button>
+              <input type="text" id="songUrl" placeholder="Buscar no YouTube ou colar link..." data-i18n-placeholder="add.placeholder" oninput="handleSearchInput(this.value)" onkeydown="if(event.key==='Enter') addSong()">
+              <button id="addBtn" onclick="addSong()" data-i18n="add.btn">Adicionar</button>
             </div>
             <div class="search-results" id="searchResults"></div>
             <div class="song-preview hidden" id="songPreview">
@@ -687,22 +748,31 @@
               </div>
             </div>
             <div class="cooldown-text hidden" id="cooldownText"></div>
+            <!-- Controles de rádio (admin) -->
+            <div class="radio-controls" id="radioControls" style="display:none;">
+              <label>
+                <input type="checkbox" id="radioToggle" onchange="toggleRadioCheck()"> <span data-i18n="radio.label">Modo Rádio</span>
+              </label>
+              <input type="text" id="radioGenre" placeholder="Gênero" value="pop" data-i18n-placeholder="radio.genre" onchange="setRadioGenre(this.value)">
+            </div>
           </div>
         </div>
 
         <!-- CHAT -->
         <div class="chat-column">
           <div class="users-panel">
-            <div class="user-count"><span class="icon">👥</span> <span id="userCount">0</span> ouvintes</div>
+            <div class="user-count"><span class="icon">👥</span> <span id="userCount">0</span> <span data-i18n="chat.listeners">ouvintes</span></div>
           </div>
           <div class="chat-panel">
             <div class="chat-messages" id="chatMessages">
-              <div class="chat-messages-inner" id="chatMessagesInner"></div>
+              <div class="chat-messages-inner" id="chatMessagesInner">
+                <!-- Mensagem fixada será inserida aqui -->
+              </div>
             </div>
             <div class="chat-input-bar">
               <button class="emoji-btn" onclick="toggleEmojis()">😀</button>
-              <input type="text" id="chatInput" placeholder="Mensagem..." onkeydown="if(event.key==='Enter') sendMessage()">
-              <button onclick="sendMessage()">Enviar</button>
+              <input type="text" id="chatInput" placeholder="Mensagem..." data-i18n-placeholder="chat.input" onkeydown="if(event.key==='Enter') sendMessage()">
+              <button onclick="sendMessage()" data-i18n="chat.send">Enviar</button>
               <div class="emoji-panel" id="emojiPanel">
                 <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
                 <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
@@ -737,11 +807,11 @@
   <!-- CREATE ROOM -->
   <div class="modal-overlay" id="createRoomModal">
     <div class="modal">
-      <h3>Criar sala</h3>
-      <input type="text" id="newRoomName" placeholder="Nome da sala" maxlength="40">
+      <h3 data-i18n="createRoom.title">Criar sala</h3>
+      <input type="text" id="newRoomName" placeholder="Nome da sala" maxlength="40" data-i18n-placeholder="createRoom.placeholder">
       <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeCreateRoom()">Cancelar</button>
-        <button class="btn-primary" onclick="createRoom()">Criar</button>
+        <button class="btn-secondary" onclick="closeCreateRoom()" data-i18n="createRoom.cancel">Cancelar</button>
+        <button class="btn-primary" onclick="createRoom()" data-i18n="createRoom.create">Criar</button>
       </div>
     </div>
   </div>
@@ -754,7 +824,7 @@
 
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO - TODAS AS MELHORIAS
+    // JAVASCRIPT COMPLETO - COM TODAS AS MELHORIAS
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -764,7 +834,322 @@
     let messageLikesSync = {}, queueVotes = {}, myFavorites = [], crossfadeInterval = null;
     let pendingRoomAfterLogin = null, myPoints = 0, myBadges = [];
     let searchTimeout = null;
+    let currentLang = localStorage.getItem('sonoraLang') || 'pt';
+    let audioCtx = null;
 
+    // ===== TRADUÇÕES =====
+    const translations = {
+      pt: {
+        'hero.title': 'A pista é sua.<br>A trilha sonora é <span>de todo mundo</span>.',
+        'hero.sub': 'Entre em uma sala, adicione suas músicas favoritas do YouTube e converse em tempo real com a galera.',
+        'hero.cta1': '🎤 Entrar na sala',
+        'hero.cta2': '✍️ Criar conta',
+        'feature1.title': 'Fila colaborativa',
+        'feature1.desc': 'Todo mundo adiciona música do YouTube, a fila toca em sincronia para todos.',
+        'feature2.title': 'Chat ao vivo',
+        'feature2.desc': 'Comente as músicas, reaja com emojis e curta as escolhas da galera.',
+        'feature3.title': 'Votação democrática',
+        'feature3.desc': 'Curta ou dispense músicas da fila. Com 10 votos negativos, a música sai!',
+        'band.title': 'Ainda não tem conta? Crie uma agora!',
+        'band.sub': 'Cadastre-se e entre nas salas para ouvir música com amigos.',
+        'band.cta': 'Criar minha conta 🎵',
+        'login.sub': 'Entre com sua conta para acessar as salas.',
+        'login.error': 'Credenciais inválidas.',
+        'login.email': 'E-mail',
+        'login.password': 'Senha',
+        'login.btn': 'Entrar no palco',
+        'login.switch': 'Não tem conta?',
+        'login.signup': 'Cadastre-se',
+        'signup.title': '🎵 Criar conta',
+        'signup.name': 'Nome',
+        'signup.namePlaceholder': 'Seu nome',
+        'signup.nameError': 'Digite seu nome',
+        'signup.email': 'E-mail',
+        'signup.emailPlaceholder': 'voce@email.com',
+        'signup.emailError': 'Digite um e-mail válido',
+        'signup.password': 'Senha',
+        'signup.passwordPlaceholder': 'Crie uma senha',
+        'signup.passwordError': 'Mínimo 6 caracteres',
+        'signup.style': 'Estilo musical',
+        'signup.styleError': 'Escolha pelo menos um estilo',
+        'signup.cancel': 'Cancelar',
+        'signup.submit': 'Criar conta 🎶',
+        'admin.users': 'Usuários',
+        'admin.rooms': 'Salas',
+        'admin.online': 'Online',
+        'admin.clearChats': '🗑️ Limpar Chats',
+        'admin.clearRooms': '🧹 Limpar Salas',
+        'admin.export': '📥 Exportar',
+        'admin.broadcast': '📢 Mensagem',
+        'admin.manageQueues': '🎵 Gerenciar Filas',
+        'admin.refresh': '🔄 Atualizar',
+        'admin.loadingQueues': 'Carregando salas...',
+        'admin.usersTitle': '👥 Usuários',
+        'admin.loadingUsers': 'Carregando...',
+        'favorites.title': '⭐ Minhas Favoritas',
+        'favorites.loading': 'Carregando favoritos...',
+        'avatar.title': '🎨 Escolha seu avatar',
+        'avatar.cancel': 'Cancelar',
+        'avatar.save': 'Salvar',
+        'karaoke.title': '🎤 Letra da Música',
+        'karaoke.loading': 'Buscando letra...',
+        'logout': 'Sair',
+        'lobby.title': 'Salas disponíveis',
+        'lobby.newRoom': '+ Nova sala',
+        'lobby.random': '🎲 Sala aleatória',
+        'lobby.loading': 'Carregando salas...',
+        'room.back': '← Voltar',
+        'queue.empty': 'Nenhuma música na fila',
+        'player.now': 'Tocando agora',
+        'player.live': 'Ao vivo',
+        'player.noTrack': 'Nenhuma música',
+        'player.addTrack': 'Adicione uma música',
+        'player.fav': '⭐ Favoritar',
+        'player.skip': '⏭️ Pular',
+        'player.lyrics': '📜 Letra',
+        'next.label': 'A seguir',
+        'add.placeholder': 'Buscar no YouTube ou colar link...',
+        'add.btn': 'Adicionar',
+        'radio.label': 'Modo Rádio',
+        'radio.genre': 'Gênero',
+        'chat.listeners': 'ouvintes',
+        'chat.input': 'Mensagem...',
+        'chat.send': 'Enviar',
+        'createRoom.title': 'Criar sala',
+        'createRoom.placeholder': 'Nome da sala',
+        'createRoom.cancel': 'Cancelar',
+        'createRoom.create': 'Criar',
+      },
+      en: {
+        'hero.title': 'The dance floor is yours.<br>The soundtrack is <span>everyone\'s</span>.',
+        'hero.sub': 'Join a room, add your favorite YouTube songs and chat live with the crew.',
+        'hero.cta1': '🎤 Enter the room',
+        'hero.cta2': '✍️ Create account',
+        'feature1.title': 'Collaborative queue',
+        'feature1.desc': 'Everyone adds YouTube music, the queue plays in sync for everyone.',
+        'feature2.title': 'Live chat',
+        'feature2.desc': 'Comment on the songs, react with emojis and like the crew\'s choices.',
+        'feature3.title': 'Democratic voting',
+        'feature3.desc': 'Like or dislike songs in the queue. With 10 dislikes, the song is removed!',
+        'band.title': 'Don\'t have an account yet? Create one now!',
+        'band.sub': 'Sign up and join rooms to listen to music with friends.',
+        'band.cta': 'Create my account 🎵',
+        'login.sub': 'Log in to access the rooms.',
+        'login.error': 'Invalid credentials.',
+        'login.email': 'Email',
+        'login.password': 'Password',
+        'login.btn': 'Enter the stage',
+        'login.switch': 'Don\'t have an account?',
+        'login.signup': 'Sign up',
+        'signup.title': '🎵 Create account',
+        'signup.name': 'Name',
+        'signup.namePlaceholder': 'Your name',
+        'signup.nameError': 'Enter your name',
+        'signup.email': 'Email',
+        'signup.emailPlaceholder': 'you@email.com',
+        'signup.emailError': 'Enter a valid email',
+        'signup.password': 'Password',
+        'signup.passwordPlaceholder': 'Create a password',
+        'signup.passwordError': 'Minimum 6 characters',
+        'signup.style': 'Music style',
+        'signup.styleError': 'Choose at least one style',
+        'signup.cancel': 'Cancel',
+        'signup.submit': 'Create account 🎶',
+        'admin.users': 'Users',
+        'admin.rooms': 'Rooms',
+        'admin.online': 'Online',
+        'admin.clearChats': '🗑️ Clear Chats',
+        'admin.clearRooms': '🧹 Clear Rooms',
+        'admin.export': '📥 Export',
+        'admin.broadcast': '📢 Message',
+        'admin.manageQueues': '🎵 Manage Queues',
+        'admin.refresh': '🔄 Refresh',
+        'admin.loadingQueues': 'Loading rooms...',
+        'admin.usersTitle': '👥 Users',
+        'admin.loadingUsers': 'Loading...',
+        'favorites.title': '⭐ My Favorites',
+        'favorites.loading': 'Loading favorites...',
+        'avatar.title': '🎨 Choose your avatar',
+        'avatar.cancel': 'Cancel',
+        'avatar.save': 'Save',
+        'karaoke.title': '🎤 Song Lyrics',
+        'karaoke.loading': 'Fetching lyrics...',
+        'logout': 'Logout',
+        'lobby.title': 'Available rooms',
+        'lobby.newRoom': '+ New room',
+        'lobby.random': '🎲 Random room',
+        'lobby.loading': 'Loading rooms...',
+        'room.back': '← Back',
+        'queue.empty': 'No songs in the queue',
+        'player.now': 'Now playing',
+        'player.live': 'Live',
+        'player.noTrack': 'No song',
+        'player.addTrack': 'Add a song',
+        'player.fav': '⭐ Favorite',
+        'player.skip': '⏭️ Skip',
+        'player.lyrics': '📜 Lyrics',
+        'next.label': 'Up next',
+        'add.placeholder': 'Search YouTube or paste link...',
+        'add.btn': 'Add',
+        'radio.label': 'Radio Mode',
+        'radio.genre': 'Genre',
+        'chat.listeners': 'listeners',
+        'chat.input': 'Message...',
+        'chat.send': 'Send',
+        'createRoom.title': 'Create room',
+        'createRoom.placeholder': 'Room name',
+        'createRoom.cancel': 'Cancel',
+        'createRoom.create': 'Create',
+      },
+      es: {
+        'hero.title': 'La pista es tuya.<br>La banda sonora es <span>de todos</span>.',
+        'hero.sub': 'Entra en una sala, añade tus canciones favoritas de YouTube y chatea en vivo con la banda.',
+        'hero.cta1': '🎤 Entrar a la sala',
+        'hero.cta2': '✍️ Crear cuenta',
+        'feature1.title': 'Cola colaborativa',
+        'feature1.desc': 'Todos añaden música de YouTube, la cola se reproduce en sincronía para todos.',
+        'feature2.title': 'Chat en vivo',
+        'feature2.desc': 'Comenta las canciones, reacciona con emojis y da like a las elecciones de la banda.',
+        'feature3.title': 'Votación democrática',
+        'feature3.desc': 'Da like o dislike a las canciones de la cola. ¡Con 10 dislikes, la canción se elimina!',
+        'band.title': '¿Aún no tienes cuenta? ¡Crea una ahora!',
+        'band.sub': 'Regístrate y únete a las salas para escuchar música con amigos.',
+        'band.cta': 'Crear mi cuenta 🎵',
+        'login.sub': 'Inicia sesión para acceder a las salas.',
+        'login.error': 'Credenciales inválidas.',
+        'login.email': 'Correo',
+        'login.password': 'Contraseña',
+        'login.btn': 'Entrar al escenario',
+        'login.switch': '¿No tienes cuenta?',
+        'login.signup': 'Regístrate',
+        'signup.title': '🎵 Crear cuenta',
+        'signup.name': 'Nombre',
+        'signup.namePlaceholder': 'Tu nombre',
+        'signup.nameError': 'Ingresa tu nombre',
+        'signup.email': 'Correo',
+        'signup.emailPlaceholder': 'tu@email.com',
+        'signup.emailError': 'Ingresa un correo válido',
+        'signup.password': 'Contraseña',
+        'signup.passwordPlaceholder': 'Crea una contraseña',
+        'signup.passwordError': 'Mínimo 6 caracteres',
+        'signup.style': 'Estilo musical',
+        'signup.styleError': 'Elige al menos un estilo',
+        'signup.cancel': 'Cancelar',
+        'signup.submit': 'Crear cuenta 🎶',
+        'admin.users': 'Usuarios',
+        'admin.rooms': 'Salas',
+        'admin.online': 'En línea',
+        'admin.clearChats': '🗑️ Limpiar Chats',
+        'admin.clearRooms': '🧹 Limpiar Salas',
+        'admin.export': '📥 Exportar',
+        'admin.broadcast': '📢 Mensaje',
+        'admin.manageQueues': '🎵 Gestionar Colas',
+        'admin.refresh': '🔄 Actualizar',
+        'admin.loadingQueues': 'Cargando salas...',
+        'admin.usersTitle': '👥 Usuarios',
+        'admin.loadingUsers': 'Cargando...',
+        'favorites.title': '⭐ Mis Favoritas',
+        'favorites.loading': 'Cargando favoritas...',
+        'avatar.title': '🎨 Elige tu avatar',
+        'avatar.cancel': 'Cancelar',
+        'avatar.save': 'Guardar',
+        'karaoke.title': '🎤 Letra de la Canción',
+        'karaoke.loading': 'Buscando letra...',
+        'logout': 'Salir',
+        'lobby.title': 'Salas disponibles',
+        'lobby.newRoom': '+ Nueva sala',
+        'lobby.random': '🎲 Sala aleatoria',
+        'lobby.loading': 'Cargando salas...',
+        'room.back': '← Volver',
+        'queue.empty': 'No hay canciones en la cola',
+        'player.now': 'Reproduciendo ahora',
+        'player.live': 'En vivo',
+        'player.noTrack': 'Sin canción',
+        'player.addTrack': 'Añade una canción',
+        'player.fav': '⭐ Favorito',
+        'player.skip': '⏭️ Saltar',
+        'player.lyrics': '📜 Letra',
+        'next.label': 'Siguiente',
+        'add.placeholder': 'Buscar en YouTube o pegar enlace...',
+        'add.btn': 'Añadir',
+        'radio.label': 'Modo Radio',
+        'radio.genre': 'Género',
+        'chat.listeners': 'oyentes',
+        'chat.input': 'Mensaje...',
+        'chat.send': 'Enviar',
+        'createRoom.title': 'Crear sala',
+        'createRoom.placeholder': 'Nombre de la sala',
+        'createRoom.cancel': 'Cancelar',
+        'createRoom.create': 'Crear',
+      }
+    };
+
+    function t(key) {
+      return translations[currentLang]?.[key] || key;
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('sonoraLang', lang);
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+      // Atualizar textos com data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        const text = t(key);
+        if (text) el.innerHTML = text;
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.dataset.i18nPlaceholder;
+        const text = t(key);
+        if (text) el.placeholder = text;
+      });
+    }
+
+    // ===== EFEITOS SONOROS (Web Audio) =====
+    function playSound(type) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        gain.gain.value = 0.15;
+        if (type === 'add') {
+          // Aplauso simulado com ruído
+          const bufferSize = audioCtx.sampleRate * 0.3;
+          const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.1));
+          }
+          const noise = audioCtx.createBufferSource();
+          noise.buffer = buffer;
+          const noiseGain = audioCtx.createGain();
+          noiseGain.gain.value = 0.3;
+          noise.connect(noiseGain);
+          noiseGain.connect(audioCtx.destination);
+          noise.start();
+          noise.stop(audioCtx.currentTime + 0.3);
+          return;
+        }
+        if (type === 'like') {
+          osc.frequency.value = 800;
+          osc.type = 'sine';
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.2);
+          return;
+        }
+        // Fallback
+        osc.frequency.value = 600;
+        osc.type = 'sine';
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } catch(e) {}
+    }
+
+    // ===== FUNÇÕES UTILITÁRIAS =====
     function $(id) { return document.getElementById(id); }
     function toast(msg, type) {
       const el = $('toast');
@@ -886,7 +1271,79 @@
       amIAdmin = isAdmin;
       ['adminBtn','adminBtnRoom'].forEach(id => { const el = $(id); if(el) el.style.display = isAdmin ? 'flex' : 'none'; });
       ['adminBadge'].forEach(id => { const el = $(id); if(el) el.classList.toggle('hidden', !isAdmin); });
+      // Radio controls
+      const radioControls = $('radioControls');
+      if (radioControls) radioControls.style.display = isAdmin ? 'flex' : 'none';
+      if (isAdmin && currentRoomData) {
+        $('radioToggle').checked = currentRoomData.radioMode || false;
+        $('radioGenre').value = currentRoomData.radioGenre || 'pop';
+      }
     }
+
+    // ===== RADIO =====
+    function toggleRadio() {
+      if (!amIAdmin) { toast('Apenas admin','error'); return; }
+      const enabled = !$('radioToggle').checked;
+      $('radioToggle').checked = enabled;
+      socket.emit('toggleRadio', enabled);
+    }
+    function toggleRadioCheck() {
+      if (!amIAdmin) { toast('Apenas admin','error'); return; }
+      socket.emit('toggleRadio', $('radioToggle').checked);
+    }
+    function setRadioGenre(genre) {
+      if (!amIAdmin) return;
+      socket.emit('setRadioGenre', genre);
+    }
+
+    // ===== PINNED MESSAGE =====
+    function renderPinnedMessage(msg) {
+      const container = $('chatMessagesInner');
+      if (!container) return;
+      const existing = container.querySelector('.pinned-message');
+      if (existing) existing.remove();
+      if (!msg) return;
+      const div = document.createElement('div');
+      div.className = 'pinned-message';
+      div.innerHTML = `
+        <span class="pin-icon">📌</span>
+        <div class="content"><strong>${escapeHtml(msg.author)}:</strong> ${escapeHtml(msg.text)}</div>
+        ${amIAdmin ? `<button class="remove-pin" onclick="removePinnedMessage()">✕</button>` : ''}
+      `;
+      container.prepend(div);
+    }
+
+    function removePinnedMessage() {
+      if (!amIAdmin) return;
+      socket.emit('removePinnedMessage');
+    }
+
+    // ===== KARAOKÊ =====
+    function openKaraoke() {
+      if (!currentRoomData || !currentRoomData.queue || currentRoomData.queue.length === 0) {
+        toast('Nenhuma música tocando','error');
+        return;
+      }
+      const track = currentRoomData.queue[currentRoomData.currentIndex];
+      if (!track) { toast('Nenhuma música','error'); return; }
+      const modal = $('karaokeModal');
+      modal.classList.add('active');
+      $('karaokeContent').innerHTML = `<div style="color:var(--text-muted);font-size:14px;text-align:center;padding:20px;">${t('karaoke.loading')}</div>`;
+      socket.emit('requestLyrics', { artist: track.artist, title: track.title });
+    }
+
+    function closeKaraoke() { $('karaokeModal').classList.remove('active'); }
+
+    socket.on('lyricsResult', (data) => {
+      const container = $('karaokeContent');
+      if (!container) return;
+      if (data.lyrics) {
+        const lines = data.lyrics.split('\n').filter(l => l.trim());
+        container.innerHTML = `<div class="lyrics-content">${lines.map(l => `<div>${escapeHtml(l)}</div>`).join('')}</div>`;
+      } else {
+        container.innerHTML = `<div style="color:var(--danger);padding:20px;text-align:center;">${data.error || 'Letra não encontrada'}</div>`;
+      }
+    });
 
     // ===== AVATAR =====
     function openAvatarModal() { $('avatarModal').classList.add('active'); document.querySelectorAll('.avatar-option').forEach(el => el.classList.toggle('selected', el.dataset.avatar === myAvatar)); }
@@ -938,7 +1395,7 @@
       try {
         const r=await fetch('/api/rooms'); const rooms=await r.json(); const grid=$('roomGrid');
         if(!rooms.length){ grid.innerHTML='<div class="empty-state"><div class="icon">🎵</div><p>Nenhuma sala ainda. Crie a primeira!</p></div>'; return; }
-        grid.innerHTML=''; rooms.forEach(r=>{ const card=document.createElement('div'); card.className='room-card'; card.onclick=()=>joinRoom(r.slug); const track=r.currentTrack; const thumb=track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>'; const live=r.isPlaying?'<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>':''; card.innerHTML=`<div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge">👤 ${r.listenerCount||0}</div></div><div class="room-card-body"><h3>${escapeHtml(r.name)}</h3><div class="meta"><span>👤 ${r.listenerCount||0} ouvintes</span><span>🎶 ${r.queueLength||0} na fila</span></div></div>`; grid.appendChild(card); });
+        grid.innerHTML=''; rooms.forEach(r=>{ const card=document.createElement('div'); card.className='room-card'; card.onclick=()=>joinRoom(r.slug); const track=r.currentTrack; const thumb=track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>'; const live=r.isPlaying?'<div class="room-live-badge"><span class="live-dot"></span>AO VIVO</div>':''; const radioBadge=r.radioMode?'<span style="background:var(--accent);padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;color:#fff;">📻 Rádio</span>':''; card.innerHTML=`<div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge">👤 ${r.listenerCount||0}</div></div><div class="room-card-body"><h3>${escapeHtml(r.name)} ${radioBadge}</h3><div class="meta"><span>👤 ${r.listenerCount||0} ouvintes</span><span>🎶 ${r.queueLength||0} na fila</span></div></div>`; grid.appendChild(card); });
       } catch(e){ $('roomGrid').innerHTML='<div class="empty-state"><div class="icon">😕</div><p>Erro ao carregar</p></div>'; }
     }
     function showCreateRoom() { $('createRoomModal').classList.add('active'); }
@@ -953,7 +1410,7 @@
       socket.emit('joinRoom',{slug,name:myName,avatar:myAvatar});
       showScreen('room');
       document.getElementById('chatMessagesInner').innerHTML='';
-      amIAdmin=false; $('adminBadge').classList.add('hidden');
+      amIAdmin=false; $('adminBadge').classList.add('hidden'); $('radioBadge').classList.add('hidden');
       loadYouTubeAPI();
     }
     function leaveRoom() {
@@ -998,6 +1455,16 @@
       const track = state.queue[state.currentIndex];
       renderQueue(state.queue, state.currentIndex);
       updateNextTrack(state.queue, state.currentIndex);
+      // Pinned message
+      renderPinnedMessage(state.pinnedMessage);
+      // Radio badge
+      if (state.radioMode) {
+        $('radioBadge').classList.remove('hidden');
+        if (amIAdmin) $('radioToggle').checked = true;
+      } else {
+        $('radioBadge').classList.add('hidden');
+        if (amIAdmin) $('radioToggle').checked = false;
+      }
 
       if(!track) {
         currentTrackId=null;
@@ -1121,7 +1588,12 @@
         try {
           const r = await fetch(`/api/search-youtube?q=${encodeURIComponent(value)}`);
           const data = await r.json();
-          if(!data.items || data.items.length===0){ results.classList.remove('show'); return; }
+          if (!r.ok) {
+            results.innerHTML = `<div style="color:var(--danger);padding:10px;text-align:center;font-size:13px;">⚠️ ${data.error || 'Erro na busca'}</div>`;
+            results.classList.add('show');
+            return;
+          }
+          if(!data.items || data.items.length===0){ results.innerHTML='<div style="color:var(--text-muted);padding:10px;text-align:center;font-size:13px;">Nenhum resultado encontrado</div>'; results.classList.add('show'); return; }
           results.innerHTML = data.items.map(item => `
             <div class="search-item" onclick="selectSearchResult('${item.id}','${escapeHtml(item.title)}','${escapeHtml(item.artist)}')">
               <img src="${item.thumb}" alt="">
@@ -1129,7 +1601,7 @@
             </div>
           `).join('');
           results.classList.add('show');
-        } catch(e){ results.classList.remove('show'); }
+        } catch(e){ results.innerHTML='<div style="color:var(--danger);padding:10px;text-align:center;font-size:13px;">⚠️ Erro de conexão. Tente novamente.</div>'; results.classList.add('show'); }
       }, 500);
     }
 
@@ -1323,6 +1795,17 @@
     socket.on('adminBroadcast', (data)=>{ toast(`📢 ${data.message}`,'success'); if(currentRoom){ const msg={user:'📢 Admin',text:data.message,isSystem:true,createdAt:new Date()}; renderMessage(msg); } });
     socket.on('roomClosed', (msg)=>{ alert(msg); leaveRoom(); });
     socket.on('skipVoteUpdate', ({votes,needed})=>{ toast(`🗳️ Votos para pular: ${votes}/${needed}`,'success'); });
+    socket.on('waitingRoom', ({position, maxListeners, canJoin})=>{
+      if (canJoin) {
+        toast('🟢 Uma vaga foi liberada! Tentando entrar...', 'success');
+        joinRoom(currentRoom);
+      } else {
+        toast(`⏳ Você está na fila de espera (posição ${position}). Aguarde uma vaga.`, 'error');
+      }
+    });
+    socket.on('playSound', (type) => {
+      playSound(type);
+    });
 
     // ===== PROGRESS =====
     setInterval(()=>{
@@ -1335,6 +1818,7 @@
 
     // ===== INICIALIZAÇÃO =====
     function init() {
+      setLanguage(currentLang);
       applyTheme();
       const params=new URLSearchParams(window.location.search); const room=params.get('room');
       if(room) pendingRoomAfterLogin=room;
