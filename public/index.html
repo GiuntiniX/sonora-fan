@@ -687,9 +687,7 @@
     <div class="particle" style="bottom:-10%;left:95%;"></div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- LANDING PAGE REFORMULADA -->
-  <!-- ============================================================ -->
+  <!-- ===== LANDING PAGE ===== -->
   <div class="landing-screen" id="landingScreen">
     <div class="landing-inner">
       <!-- Nav -->
@@ -699,14 +697,14 @@
           <button class="lang-btn active" data-lang="pt" onclick="setLanguage('pt')">PT</button>
           <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
           <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">ES</button>
-          <!-- Botão Entrar (discreto) -->
+          <!-- Botão Entrar -> showLogin -->
           <button class="btn-outline" onclick="showLogin()" data-i18n="hero.cta2">Entrar</button>
-          <!-- Botão Criar conta (chamativo) -->
+          <!-- Botão Criar conta -> openSignup -->
           <button class="btn-primary" onclick="openSignup()" data-i18n="hero.cta1">Criar conta</button>
         </div>
       </div>
 
-      <!-- Hero com imagem colorida -->
+      <!-- Hero -->
       <div class="landing-hero">
         <div class="hero-bg"></div>
         <div class="hero-overlay"></div>
@@ -714,9 +712,9 @@
           <h1 data-i18n="hero.title">A pista é sua.<br>A trilha sonora é <span>de todo mundo</span>.</h1>
           <p data-i18n="hero.sub">Entre em uma sala, adicione suas músicas favoritas do YouTube e converse em tempo real com a galera.</p>
           <div class="landing-hero-ctas">
-            <!-- Entrar na sala (discreto) -->
+            <!-- Entrar na sala -> showLogin -->
             <button class="btn-hero-secondary" onclick="showLogin()" data-i18n="hero.cta1">🎤 Entrar na sala</button>
-            <!-- Criar conta (chamativo) -->
+            <!-- Criar conta -> openSignup -->
             <button class="btn-hero-primary" onclick="openSignup()" data-i18n="hero.cta2">✍️ Criar conta</button>
           </div>
         </div>
@@ -743,7 +741,7 @@
         </div>
       </div>
 
-      <!-- CTA Band com botão pulsante -->
+      <!-- CTA Band -->
       <div class="landing-cta-band">
         <h2 data-i18n="band.title">Ainda não tem conta? Crie uma agora!</h2>
         <p data-i18n="band.sub">Cadastre-se e entre nas salas para ouvir música com amigos.</p>
@@ -752,9 +750,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- LOGIN -->
-  <!-- ============================================================ -->
+  <!-- ===== LOGIN ===== -->
   <div class="login-screen" id="loginScreen">
     <div class="login-card">
       <div class="logo">🎸</div>
@@ -768,9 +764,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- SIGNUP -->
-  <!-- ============================================================ -->
+  <!-- ===== SIGNUP ===== -->
   <div class="modal-overlay" id="signupModal">
     <div class="modal">
       <h3 data-i18n="signup.title">🎵 Criar conta</h3>
@@ -805,9 +799,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- ADMIN PANEL -->
-  <!-- ============================================================ -->
+  <!-- ===== ADMIN PANEL ===== -->
   <div class="modal-overlay" id="adminPanel">
     <div class="modal admin-panel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
@@ -891,9 +883,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- FAVORITOS MODAL -->
-  <!-- ============================================================ -->
+  <!-- ===== FAVORITOS ===== -->
   <div class="modal-overlay" id="favoritesModal">
     <div class="modal">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid var(--border);">
@@ -904,9 +894,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- AVATAR SELECTOR -->
-  <!-- ============================================================ -->
+  <!-- ===== AVATAR ===== -->
   <div class="modal-overlay" id="avatarModal">
     <div class="modal">
       <h3 data-i18n="avatar.title">🎨 Escolha seu avatar</h3>
@@ -937,9 +925,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- LOBBY -->
-  <!-- ============================================================ -->
+  <!-- ===== LOBBY ===== -->
   <div class="screen" id="screen-lobby">
     <div class="app">
       <div class="header">
@@ -975,9 +961,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- ROOM -->
-  <!-- ============================================================ -->
+  <!-- ===== ROOM ===== -->
   <div class="screen" id="screen-room">
     <div class="app">
       <div class="header">
@@ -1117,9 +1101,7 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- CREATE ROOM -->
-  <!-- ============================================================ -->
+  <!-- ===== CREATE ROOM ===== -->
   <div class="modal-overlay" id="createRoomModal">
     <div class="modal">
       <h3 data-i18n="createRoom.title">Criar sala</h3>
@@ -1131,14 +1113,10 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- TOAST -->
-  <!-- ============================================================ -->
+  <!-- ===== TOAST ===== -->
   <div class="toast" id="toast"></div>
 
-  <!-- ============================================================ -->
-  <!-- FOOTER -->
-  <!-- ============================================================ -->
+  <!-- ===== FOOTER ===== -->
   <div class="footer">
     <span>Desenvolvido por <a href="https://www.linkedin.com/in/ggiuntini/" target="_blank">Guilherme Giuntini</a></span>
     <div class="social-icons">
@@ -1149,12 +1127,10 @@
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- JAVASCRIPT COMPLETO -->
-  <!-- ============================================================ -->
+  <!-- ===== JAVASCRIPT ===== -->
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO - COM VOLUME CORRIGIDO E NOVA LANDING PAGE
+    // JAVASCRIPT COMPLETO
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -1167,7 +1143,6 @@
     let currentLang = localStorage.getItem('sonoraLang') || 'pt';
     let audioCtx = null;
     let eventCountdownInterval = null;
-    let isUserInteractingWithVolume = false;
 
     // ===== TRADUÇÕES =====
     const translations = {
@@ -1468,13 +1443,13 @@
     const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
     function censorText(t) { let c = t; badWords.forEach(w => { const r = new RegExp('\\b' + w + '\\b','gi'); c = c.replace(r,'***'); }); return c; }
 
-    // ===== TEMAS =====
+    // ===== TEMAS (com ajuste para light) =====
     function applyTheme() {
       const themes = {
-        'dark': { btn:'🌙', bg:'#050508', card:'#0f0f18', hover:'#161620', border:'#1e1e2e', text:'#f0f0f8', textSec:'#9a9ab0', accent:'#ff6b35', accent2:'#7c3aed', bgImage:'none', overlay:'transparent' },
-        'light': { btn:'✨', bg:'#ffffff', card:'#fafafa', hover:'#f0f0f0', border:'#d4af37', borderHover:'#b8860b', text:'#000000', textSec:'#333333', accent:'#d4af37', accent2:'#b8860b', bgImage:'none', overlay:'transparent' },
-        'neon': { btn:'🟢', bg:'#070a12', card:'#111827', hover:'#1a2236', border:'#1f2a4a', text:'#e0f0ff', textSec:'#88aacc', accent:'#22d3ee', accent2:'#10b981', bgImage:'none', overlay:'transparent' },
-        'terra-sonora': { btn:'🌄', bg:'#140a05', card:'#2a180e', hover:'#3a2216', border:'#4a2e1e', text:'#fcf3ee', textSec:'#cbaa98', accent:'#e85d3a', accent2:'#d94a20', bgImage:'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay:'rgba(0,0,0,0.65)' }
+        'dark': { btn:'🌙', bg:'#050508', card:'#0f0f18', hover:'#161620', border:'#1e1e2e', text:'#f0f0f8', textSec:'#9a9ab0', textMuted:'#555570', accent:'#ff6b35', accent2:'#7c3aed', bgImage:'none', overlay:'transparent' },
+        'light': { btn:'☀️', bg:'#ffffff', card:'#fafafa', hover:'#f0f0f0', border:'#d4af37', text:'#000000', textSec:'#222222', textMuted:'#333333', accent:'#d4af37', accent2:'#b8860b', bgImage:'none', overlay:'transparent' },
+        'neon': { btn:'🟢', bg:'#070a12', card:'#111827', hover:'#1a2236', border:'#1f2a4a', text:'#e0f0ff', textSec:'#88aacc', textMuted:'#446688', accent:'#22d3ee', accent2:'#10b981', bgImage:'none', overlay:'transparent' },
+        'terra-sonora': { btn:'🌄', bg:'#140a05', card:'#2a180e', hover:'#3a2216', border:'#4a2e1e', text:'#fcf3ee', textSec:'#cbaa98', textMuted:'#8a6a58', accent:'#e85d3a', accent2:'#d94a20', bgImage:'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay:'rgba(0,0,0,0.65)' }
       };
       const t = themes[currentTheme] || themes['dark'];
       Object.entries(t).forEach(([k,v]) => {
@@ -1841,7 +1816,7 @@
       } catch(e) { $('adminTopSongs').innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Erro ao carregar</div>'; }
     }
 
-    // ===== COMPARTILHAR PÁGINA =====
+    // ===== COMPARTILHAR =====
     function sharePage(platform) {
       const url = window.location.origin;
       const text = '🎵 Venha ouvir música no Sonora Fan!';
@@ -1866,7 +1841,7 @@
       }).catch(() => toast('Erro ao copiar', 'error'));
     }
 
-    // ===== WEBHOOK DISCORD =====
+    // ===== WEBHOOK =====
     function saveDiscordWebhook() {
       const url = $('discordWebhookInput').value.trim();
       if (!url) { toast('Digite uma URL', 'error'); return; }
@@ -2192,7 +2167,7 @@
     }
     function removePinnedMessage() { if (!amIAdmin) return; socket.emit('removePinnedMessage'); }
 
-    // ===== RENDER FILA E ESPERA =====
+    // ===== RENDER FILA =====
     function renderQueue(queue, currentIndex) {
       const list = $('queueList');
       const count = $('queueCount');
@@ -2267,7 +2242,7 @@
       `).join('');
     }
 
-    // ===== SKIP VOTE =====
+    // ===== SKIP =====
     function voteSkip() { if (!currentRoom) { toast('Entre em uma sala', 'error'); return; } socket.emit('voteSkip'); }
 
     // ===== CROSSFADE =====
@@ -2633,7 +2608,7 @@
       }
     });
 
-    // ===== SOCKET EVENTS =====
+    // ===== SOCKET =====
     socket.on('adminUsersUpdated', () => { if (amIAdmin) loadAdminUsers(); });
     socket.on('userPoints', (data) => { if (data) { myPoints = data.points || 0; myBadges = data.badges || []; updateUserInfo(); } });
     socket.on('roomState', (state) => {
