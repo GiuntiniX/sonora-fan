@@ -283,6 +283,15 @@
     .cooldown-text { font-size: 12px; color: var(--accent); text-align: center; padding: 6px; border-radius: 8px; background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2); flex-shrink: 0; }
     .cooldown-text.hidden { display: none; }
 
+    .search-results { display: none; flex-direction: column; gap: 6px; padding: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; max-height: 200px; overflow-y: auto; flex-shrink: 0; }
+    .search-results.show { display: flex; }
+    .search-item { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+    .search-item:hover { background: var(--bg-hover); }
+    .search-item img { width: 40px; height: 30px; border-radius: 4px; object-fit: cover; }
+    .search-item .info { flex: 1; min-width: 0; }
+    .search-item .info .title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .search-item .info .artist { font-size: 11px; color: var(--text-secondary); }
+
     /* ===== CHAT ===== */
     .chat-messages { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0; min-height: 0; max-height: 100%; height: 100%; position: relative; }
     .chat-messages-inner { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; scroll-behavior: smooth; min-height: 0; max-height: 100%; }
@@ -351,16 +360,6 @@
     .avatar-option { font-size: 28px; padding: 6px; text-align: center; border-radius: 10px; border: 2px solid transparent; cursor: pointer; transition: all 0.15s; background: var(--bg); }
     .avatar-option:hover { border-color: var(--border-hover); transform: scale(1.05); }
     .avatar-option.selected { border-color: var(--accent); background: rgba(255,107,53,0.1); }
-
-    /* ===== SEARCH RESULTS ===== */
-    .search-results { display: none; flex-direction: column; gap: 6px; padding: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; max-height: 200px; overflow-y: auto; flex-shrink: 0; }
-    .search-results.show { display: flex; }
-    .search-item { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
-    .search-item:hover { background: var(--bg-hover); }
-    .search-item img { width: 40px; height: 30px; border-radius: 4px; object-fit: cover; }
-    .search-item .info { flex: 1; min-width: 0; }
-    .search-item .info .title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .search-item .info .artist { font-size: 11px; color: var(--text-secondary); }
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 480px) {
@@ -596,8 +595,6 @@
           <h1 id="roomTitle">Sala</h1>
         </div>
         <div class="header-right">
-          <button class="action-btn" onclick="togglePause()" title="Pausar/Retomar" id="pauseBtn" style="display:none;">⏸️</button>
-          <button class="action-btn" onclick="shuffleQueue()" title="Embaralhar fila" id="shuffleBtn" style="display:none;">🔀</button>
           <button class="action-btn" onclick="copyRoomLink()" title="Copiar link da sala">🔗</button>
           <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtnRoom" style="display:none;">🎛️</button>
           <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtnRoom">🌙</button>
@@ -641,7 +638,6 @@
                 <div class="track-dj" id="trackDj"></div>
                 <div class="track-actions">
                   <button onclick="favoriteCurrent()" id="favCurrentBtn">⭐ Favoritar</button>
-                  <button onclick="togglePause()" id="pauseBtnTrack" style="display:none;">⏸️ Pausar</button>
                   <button onclick="voteSkip()" id="skipBtn" title="Votar para pular">⏭️ Pular</button>
                 </div>
               </div>
@@ -758,7 +754,7 @@
 
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO - TODAS AS MELHORIAS UX/UI
+    // JAVASCRIPT COMPLETO - SEM PAUSA, COM SHUFFLE AUTOMÁTICO
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -799,7 +795,6 @@
       });
       document.querySelectorAll('#themeBtn, #themeBtnRoom').forEach(b => { if(b) b.textContent = t.btn; });
       localStorage.setItem('sonoraTheme', currentTheme);
-      // Salvar tema no servidor
       if (currentUser) {
         fetch('/api/update-theme', { method: 'POST', headers: { 'Content-Type':'application/json' }, credentials: 'include', body: JSON.stringify({ theme: currentTheme }) }).catch(()=>{});
       }
@@ -891,10 +886,6 @@
       amIAdmin = isAdmin;
       ['adminBtn','adminBtnRoom'].forEach(id => { const el = $(id); if(el) el.style.display = isAdmin ? 'flex' : 'none'; });
       ['adminBadge'].forEach(id => { const el = $(id); if(el) el.classList.toggle('hidden', !isAdmin); });
-      ['pauseBtn','pauseBtnTrack','shuffleBtn'].forEach(id => { const el = $(id); if(el) el.style.display = isAdmin ? 'flex' : 'none'; });
-      if (isAdmin && currentRoomData) {
-        $('pauseBtnTrack').textContent = currentRoomData.paused ? '▶️ Retomar' : '⏸️ Pausar';
-      }
     }
 
     // ===== AVATAR =====
@@ -963,7 +954,6 @@
       showScreen('room');
       document.getElementById('chatMessagesInner').innerHTML='';
       amIAdmin=false; $('adminBadge').classList.add('hidden');
-      ['pauseBtn','pauseBtnTrack','shuffleBtn'].forEach(id=>{ const el=$(id); if(el) el.style.display='none'; });
       loadYouTubeAPI();
     }
     function leaveRoom() {
@@ -995,7 +985,6 @@
               $('bufferingOverlay').classList.add('show');
             }
             if(e.data === YT.PlayerState.ENDED) socket.emit('videoEnded');
-            if(e.data === YT.PlayerState.PAUSED) { /* pode mostrar indicador */ }
           },
           onError:()=>{ toast('Erro no vídeo, pulando...','error'); setTimeout(()=>socket.emit('videoEnded'),2000); }
         }
@@ -1019,7 +1008,6 @@
         $('progressFill').style.width='0%';
         $('currentTime').textContent='0:00';
         $('totalTime').textContent='0:00';
-        ['pauseBtn','pauseBtnTrack'].forEach(id=>{ const el=$(id); if(el) el.style.display='none'; });
         try { player.stopVideo(); } catch(e){}
         return;
       }
@@ -1041,15 +1029,6 @@
           } else el.classList.remove('current');
         });
       }
-
-      // Botões de pause
-      if(amIAdmin) {
-        ['pauseBtn','pauseBtnTrack'].forEach(id=>{ const el=$(id); if(el) el.style.display='flex'; });
-        $('pauseBtnTrack').textContent = state.paused ? '▶️ Retomar' : '⏸️ Pausar';
-        $('shuffleBtn').style.display = 'flex';
-      } else {
-        ['pauseBtn','pauseBtnTrack','shuffleBtn'].forEach(id=>{ const el=$(id); if(el) el.style.display='none'; });
-      }
     }
 
     function updateNextTrack(queue, currentIndex) {
@@ -1063,15 +1042,7 @@
       } else container.style.display='none';
     }
 
-    // ===== PAUSE / SHUFFLE / SKIP =====
-    function togglePause() {
-      if(!amIAdmin){ toast('Apenas admin','error'); return; }
-      socket.emit('togglePause');
-    }
-    function shuffleQueue() {
-      if(!amIAdmin){ toast('Apenas admin','error'); return; }
-      socket.emit('shuffleQueue');
-    }
+    // ===== SKIP VOTE =====
     function voteSkip() {
       if(!currentRoom){ toast('Entre em uma sala','error'); return; }
       socket.emit('voteSkip');
@@ -1166,7 +1137,6 @@
     function selectSearchResult(id, title, artist) {
       $('searchResults').classList.remove('show');
       $('songUrl').value = id;
-      // Buscar duração
       fetch(`/api/video-info?id=${id}`)
         .then(r=>r.json())
         .then(data=>{
@@ -1309,10 +1279,6 @@
       const roomActive = document.getElementById('screen-room').classList.contains('active');
       if(!roomActive) return;
       if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      if(e.key === ' ') {
-        e.preventDefault();
-        togglePause();
-      }
       if(e.key === 'ArrowUp') {
         e.preventDefault();
         const v = Math.min(100, parseInt($('volumeSlider').value) + 5);
