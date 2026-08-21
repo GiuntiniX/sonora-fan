@@ -25,6 +25,7 @@ const MAX_SONGS_PER_USER = 3;
 const users = new Map();
 const sessions = new Map();
 const userFavorites = new Map();
+const userPoints = new Map(); // email -> { points, badges }
 
 // ========== ESTADO ==========
 const rooms = new Map();
@@ -39,7 +40,8 @@ function createRoom(slug, name, adminName = null) {
     queue: [], currentIndex: 0, startedAt: Date.now(),
     votes: { up: 0, down: 0 }, bannedUsers: [],
     chatHistory: [], listenerCount: 0,
-    lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0
+    lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0,
+    paused: false // novo: estado de pausa
   };
 }
 
@@ -56,6 +58,7 @@ function getRoomVotes(slug) {
 rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
 
 function getPosition(room) {
+  if (room.paused) return room.pausedAt || 0; // mantém posição
   const track = room.queue[room.currentIndex];
   if (!track) return 0;
   return Math.min((Date.now() - room.startedAt) / 1000, track.duration || 180);
@@ -72,6 +75,7 @@ function broadcastState(slug) {
     queue: room.queue,
     admin: room.admin,
     isPlaying: room.isPlaying,
+    paused: room.paused || false,
   });
 }
 
@@ -82,6 +86,8 @@ function broadcastUsers(slug) {
       color: s.userColor || '#888',
       isAdmin: s.isAdmin || false,
       avatar: s.userAvatar || '👤',
+      points: userPoints.get(s.userEmail)?.points || 0,
+      badges: userPoints.get(s.userEmail)?.badges || [],
     }));
     io.to(slug).emit('users', users);
   });
@@ -133,6 +139,7 @@ function advanceQueue(slug) {
   room.currentIndex = 0;
   room.startedAt = Date.now();
   room.votes = { up: Math.floor(Math.random() * 8) + 1, down: 0 };
+  room.paused = false;
   
   const votes = getRoomVotes(slug);
   const newVotes = {};
@@ -158,7 +165,7 @@ function advanceQueue(slug) {
 
 setInterval(() => {
   for (const [slug, room] of rooms) {
-    if (!room.isPlaying || room.queue.length === 0) continue;
+    if (!room.isPlaying || room.paused || room.queue.length === 0) continue;
     const track = room.queue[room.currentIndex];
     if (!track) continue;
     const pos = getPosition(room);
@@ -177,6 +184,7 @@ app.post('/api/signup', (req, res) => {
   if (users.has(email)) return res.status(400).json({ error: 'E-mail já cadastrado' });
 
   users.set(email, { nome, email, senha, estilos, avatar: '🎸', criadoEm: new Date() });
+  userPoints.set(email, { points: 0, badges: [] });
   res.json({ success: true, nome, email });
 });
 
@@ -209,7 +217,21 @@ app.get('/api/me', (req, res) => {
   const user = users.get(email);
   if (!user) { sessions.delete(token); return res.status(401).json({ error: 'Usuário não encontrado' }); }
   const { senha: _, ...userData } = user;
-  res.json({ success: true, user: userData });
+  const points = userPoints.get(email) || { points: 0, badges: [] };
+  res.json({ success: true, user: { ...userData, points: points.points, badges: points.badges } });
+});
+
+app.post('/api/update-avatar', (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const { avatar } = req.body;
+  if (!avatar) return res.status(400).json({ error: 'Avatar obrigatório' });
+  const user = users.get(email);
+  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+  user.avatar = avatar;
+  res.json({ success: true, avatar });
 });
 
 // ===== FAVORITOS =====
@@ -297,7 +319,6 @@ function fetchUrl(url) {
   });
 }
 
-// ===== VIDEO INFO (tenta extrair duração, mas sempre retorna 200) =====
 app.get('/api/video-info', async (req, res) => {
   const id = String(req.query.id || '').trim();
   if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
@@ -306,7 +327,6 @@ app.get('/api/video-info', async (req, res) => {
 
   const info = { id, title: null, artist: null, duration: null };
 
-  // Tenta oembed (título e artista)
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
@@ -314,7 +334,6 @@ app.get('/api/video-info', async (req, res) => {
     info.artist = data.author_name || null;
   } catch (e) {}
 
-  // Tenta extrair duração com várias estratégias
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
 
@@ -385,7 +404,6 @@ app.get('/api/video-info', async (req, res) => {
     info.title = 'Vídeo do YouTube (ID: ' + id + ')';
   }
 
-  // Sempre retorna 200, mesmo se duration for null
   res.json(info);
 });
 
@@ -426,6 +444,7 @@ app.post('/api/admin/delete-user', isAdmin, (req, res) => {
 
   users.delete(email);
   adminEmails.delete(email);
+  userPoints.delete(email);
 
   for (const [token, storedEmail] of sessions) {
     if (storedEmail === email) sessions.delete(token);
@@ -507,6 +526,7 @@ app.post('/api/admin/clear-all-rooms', isAdmin, (req, res) => {
     room.queue = [];
     room.currentIndex = 0;
     room.isPlaying = false;
+    room.paused = false;
     roomLikes.set(slug, {});
     roomVotes.set(slug, {});
     broadcastState(slug);
@@ -611,15 +631,28 @@ io.on('connection', (socket) => {
       queue: room.queue,
       admin: room.admin,
       isPlaying: room.isPlaying,
+      paused: room.paused || false,
     });
     socket.emit('chatHistory', room.chatHistory.slice(-150));
     socket.emit('isAdmin', socket.isAdmin);
+    // Envia pontuação do usuário
+    const points = userPoints.get(email) || { points: 0, badges: [] };
+    socket.emit('userPoints', points);
     broadcastUsers(slug);
   });
 
   socket.on('chat', ({ text }) => {
     if (!currentRoom || !text.trim()) return;
     const room = rooms.get(currentRoom);
+    
+    // Comandos de chat
+    const parts = text.trim().split(' ');
+    const command = parts[0].toLowerCase();
+    if (command.startsWith('/')) {
+      handleCommand(socket, command, parts.slice(1), room);
+      return;
+    }
+
     const msg = {
       _id: Date.now().toString() + Math.random(),
       user: socket.userName, text: text.trim(),
@@ -633,7 +666,114 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', msg);
   });
 
-  // 🔥 ADD SONG COM VALIDAÇÃO FLEXÍVEL
+  function handleCommand(socket, cmd, args, room) {
+    const email = socket.userEmail;
+    const pointsData = userPoints.get(email) || { points: 0, badges: [] };
+    let reply = '';
+
+    switch(cmd) {
+      case '/stats':
+        let stats = '📊 Estatísticas da sala:\n';
+        const userCounts = {};
+        room.queue.forEach(t => {
+          const dj = t.dj || 'Desconhecido';
+          userCounts[dj] = (userCounts[dj] || 0) + 1;
+        });
+        const sorted = Object.entries(userCounts).sort((a,b) => b[1] - a[1]);
+        sorted.forEach(([user, count]) => {
+          stats += `  ${user}: ${count} música(s)\n`;
+        });
+        stats += `Total: ${room.queue.length} músicas`;
+        socket.emit('chat', { 
+          _id: Date.now().toString() + Math.random(),
+          user: 'Sistema', text: stats, color: '#888', isSystem: true, createdAt: new Date() 
+        });
+        break;
+
+      case '/vote':
+        if (room.queue.length === 0) { reply = 'Nenhuma música na fila.'; break; }
+        const track = room.queue[room.currentIndex];
+        if (!track) { reply = 'Nenhuma música tocando.'; break; }
+        // Vota positivo na atual
+        const votes = getRoomVotes(room.slug);
+        if (!votes[room.currentIndex]) votes[room.currentIndex] = { up: [], down: [] };
+        const data = votes[room.currentIndex];
+        if (!data.up.includes(socket.userName)) {
+          data.up.push(socket.userName);
+          // Remove down se existir
+          const downIdx = data.down.indexOf(socket.userName);
+          if (downIdx > -1) data.down.splice(downIdx, 1);
+          // Adiciona pontos
+          addPoints(email, 1);
+          reply = '👍 Você votou na música atual!';
+          io.to(currentRoom).emit('voteUpdate', { index: room.currentIndex, up: data.up, down: data.down });
+          broadcastState(currentRoom);
+        } else {
+          reply = 'Você já votou nessa música.';
+        }
+        break;
+
+      case '/clear':
+        if (!socket.isAdmin) { reply = 'Apenas admin pode limpar o chat.'; break; }
+        room.chatHistory = [];
+        roomLikes.set(currentRoom, {});
+        io.to(currentRoom).emit('chatCleared');
+        addSystemMsg(currentRoom, '🧹 Chat limpo pelo admin');
+        reply = 'Chat limpo.';
+        break;
+
+      case '/me':
+        const p = userPoints.get(email) || { points: 0, badges: [] };
+        reply = `👤 ${socket.userName} | Pontos: ${p.points} | Badges: ${p.badges.join(', ') || 'Nenhum'}`;
+        break;
+
+      default:
+        reply = `Comando desconhecido: ${cmd}. Use /stats, /vote, /clear (admin), /me`;
+    }
+
+    if (reply) {
+      socket.emit('chat', { 
+        _id: Date.now().toString() + Math.random(),
+        user: 'Sistema', text: reply, color: '#888', isSystem: true, createdAt: new Date() 
+      });
+    }
+  }
+
+  function addPoints(email, amount) {
+    if (!email) return;
+    const p = userPoints.get(email);
+    if (!p) return;
+    p.points += amount;
+    // Verifica badges
+    if (p.points >= 10 && !p.badges.includes('DJ Iniciante')) p.badges.push('DJ Iniciante');
+    if (p.points >= 50 && !p.badges.includes('DJ Expert')) p.badges.push('DJ Expert');
+    if (p.points >= 100 && !p.badges.includes('DJ Lendário')) p.badges.push('DJ Lendário');
+    userPoints.set(email, p);
+    // Atualiza o socket do usuário
+    const sockets = io.sockets.sockets;
+    for (const [id, s] of sockets) {
+      if (s.userEmail === email) {
+        s.emit('userPoints', p);
+      }
+    }
+  }
+
+  // Evento de pause/resume (apenas admin)
+  socket.on('togglePause', () => {
+    if (!currentRoom) return;
+    const room = rooms.get(currentRoom);
+    if (!socket.isAdmin) { socket.emit('error', 'Apenas admin pode pausar'); return; }
+    room.paused = !room.paused;
+    if (room.paused) {
+      room.pausedAt = getPosition(room);
+      addSystemMsg(currentRoom, `⏸️ Música pausada por ${socket.userName}`);
+    } else {
+      room.startedAt = Date.now() - (room.pausedAt || 0) * 1000;
+      addSystemMsg(currentRoom, `▶️ Música retomada por ${socket.userName}`);
+    }
+    broadcastState(currentRoom);
+  });
+
   socket.on('addSong', (song) => {
     if (!currentRoom) return;
     const room = rooms.get(currentRoom);
@@ -657,22 +797,24 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Se a duração foi fornecida e é maior que o limite, bloqueia
     if (song.duration && song.duration > settings.maxDuration) {
       socket.emit('error', `⛔ Vídeo muito longo! Duração: ${Math.floor(song.duration / 60)} min. Limite: ${settings.maxDuration / 60} min.`);
       return;
     }
 
-    // Permite adição mesmo com duration: null, mas marca como não verificado
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
+
+    // Adiciona pontos ao adicionar música
+    addPoints(socket.userEmail, 2);
 
     if (!room.isPlaying && room.queue.length === 1) {
       room.isPlaying = true;
       room.currentIndex = 0;
       room.startedAt = Date.now();
       room.lastAdvanceAt = Date.now();
+      room.paused = false;
       addSystemMsg(currentRoom, `▶ ${song.title} — ${song.artist}`);
     }
 
@@ -690,25 +832,22 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', musicMsg);
   });
 
-  // 🔥 RECEBE DURAÇÃO REAL DO PLAYER E VALIDA
   socket.on('videoDuration', ({ duration }) => {
     if (!currentRoom || !duration) return;
     const room = rooms.get(currentRoom);
     const track = room.queue[room.currentIndex];
     if (!track) return;
 
-    // Atualiza a duração no track
     track.duration = duration;
 
-    // Se a duração for maior que o limite, remove a música
     if (duration > settings.maxDuration) {
-      room.queue.shift(); // remove a música atual
+      room.queue.shift();
       room.currentIndex = 0;
       room.isPlaying = false;
+      room.paused = false;
       room.startedAt = Date.now();
       addSystemMsg(currentRoom, `⛔ A música "${track.title}" foi removida automaticamente por ser muito longa (${Math.floor(duration / 60)} min). Limite: ${settings.maxDuration / 60} min.`);
       
-      // Reindexa votos
       const votes = getRoomVotes(currentRoom);
       const newVotes = {};
       room.queue.forEach((_, i) => {
@@ -721,7 +860,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Se a duração foi atualizada e está OK, apenas broadcast do estado
     broadcastState(currentRoom);
   });
 
@@ -737,6 +875,7 @@ io.on('connection', (socket) => {
     room.currentIndex = 0;
     room.startedAt = Date.now();
     room.isPlaying = true;
+    room.paused = false;
     
     const votes = getRoomVotes(currentRoom);
     const newVotes = {};
@@ -838,7 +977,10 @@ io.on('connection', (socket) => {
     const downIndex = data.down.indexOf(socket.userName);
     if (downIndex > -1) data.down.splice(downIndex, 1);
     
-    if (type === 'up') data.up.push(socket.userName);
+    if (type === 'up') {
+      data.up.push(socket.userName);
+      addPoints(socket.userEmail, 1);
+    }
     else if (type === 'down') data.down.push(socket.userName);
     
     if (data.down.length >= DISLIKE_THRESHOLD) {
@@ -873,6 +1015,7 @@ io.on('connection', (socket) => {
     } else {
       data.users.push(socket.userName);
       data.likes++;
+      addPoints(socket.userEmail, 1);
     }
     io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
   });
