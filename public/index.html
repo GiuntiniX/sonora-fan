@@ -87,12 +87,31 @@
     }
     .landing-nav-actions .btn-primary {
       padding: 8px 24px; border-radius: 8px;
-      border: none; background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      background-size: 200% 200%;
+      animation: gradientMove 3s ease infinite;
       color: #fff; font-weight: 700; font-size: 14px;
       cursor: pointer; transition: all 0.2s; font-family: inherit;
+      box-shadow: 0 0 15px rgba(124,58,237,0.3);
     }
     .landing-nav-actions .btn-primary:hover {
-      transform: translateY(-2px); box-shadow: 0 8px 30px rgba(124,58,237,0.35);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 30px rgba(124,58,237,0.5);
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* Botão CTA com pulsação */
+    .btn-cta-pulse {
+      animation: pulseGlow 2s infinite;
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(124,58,237,0); }
+      100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); }
     }
 
     /* Hero com imagem */
@@ -105,16 +124,16 @@
     .landing-hero .hero-bg {
       position: absolute;
       inset: 0;
-      background-image: url('https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZmVzdGl2YWx8ZW58MHx8MHx8fDA%3D');
+      background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTY3lRWnq5v01NPP0PcZxUJwQRlJvBVy4QsGPWxZKltu-NjR5FGbVSVpYo&s=10');
       background-size: cover;
       background-position: center;
-      filter: brightness(0.6) saturate(0.9);
+      filter: brightness(0.55) saturate(1.1);
       transform: scale(1.02);
     }
     .landing-hero .hero-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.45);
       backdrop-filter: blur(3px);
     }
     .landing-hero-content {
@@ -154,16 +173,19 @@
       border-radius: 12px;
       border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
+      background-size: 200% 200%;
+      animation: gradientMove 3s ease infinite;
       color: #fff;
       font-weight: 700;
       font-size: 18px;
       cursor: pointer;
       transition: all 0.2s;
       font-family: inherit;
+      box-shadow: 0 0 20px rgba(124,58,237,0.3);
     }
     .landing-hero-ctas .btn-hero-primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 40px rgba(124,58,237,0.4);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(124,58,237,0.5);
     }
     .landing-hero-ctas .btn-hero-secondary {
       padding: 16px 40px;
@@ -215,33 +237,6 @@
       color: var(--text-secondary); font-size: 15px; line-height: 1.7;
     }
 
-    /* Genres */
-    .landing-genres {
-      margin: 60px 0;
-    }
-    .landing-genres-title {
-      text-align: center; font-size: 32px; font-weight: 800;
-      margin-bottom: 8px;
-    }
-    .landing-genres-sub {
-      text-align: center; color: var(--text-secondary);
-      font-size: 16px; margin-bottom: 32px;
-    }
-    .landing-genres-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 16px;
-    }
-    .landing-genre-item {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 20px 12px;
-      text-align: center; transition: all 0.2s; cursor: default;
-    }
-    .landing-genre-item:hover {
-      border-color: var(--accent); transform: scale(1.04);
-    }
-    .landing-genre-item .emoji { font-size: 32px; display: block; margin-bottom: 6px; }
-    .landing-genre-item .name { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
-
     /* CTA Band */
     .landing-cta-band {
       background: var(--bg-card); border: 1px solid var(--border);
@@ -262,11 +257,13 @@
     .landing-cta-band .btn-cta {
       padding: 16px 48px; border-radius: 12px; border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
+      background-size: 200% 200%;
+      animation: gradientMove 3s ease infinite, pulseGlow 2s infinite;
       color: #fff; font-weight: 700; font-size: 18px;
       cursor: pointer; transition: all 0.2s; font-family: inherit;
     }
     .landing-cta-band .btn-cta:hover {
-      transform: translateY(-3px); box-shadow: 0 12px 40px rgba(124,58,237,0.4);
+      transform: translateY(-3px) scale(1.02);
     }
 
     /* Responsive Landing */
@@ -695,7 +692,7 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- LANDING PAGE REFORMULADA -->
+  <!-- LANDING PAGE REFORMULADA (sem seção de estilos) -->
   <!-- ============================================================ -->
   <div class="landing-screen" id="landingScreen">
     <div class="landing-inner">
@@ -711,7 +708,7 @@
         </div>
       </div>
 
-      <!-- Hero com imagem de fundo -->
+      <!-- Hero com imagem colorida -->
       <div class="landing-hero">
         <div class="hero-bg"></div>
         <div class="hero-overlay"></div>
@@ -746,31 +743,11 @@
         </div>
       </div>
 
-      <!-- Genres -->
-      <div class="landing-genres">
-        <h2 class="landing-genres-title" data-i18n="genres.title">🎸 Estilos que você ama</h2>
-        <p class="landing-genres-sub" data-i18n="genres.sub">Encontre sua turma e toque o que você curte</p>
-        <div class="landing-genres-grid">
-          <div class="landing-genre-item"><span class="emoji">🎸</span><span class="name">Rock</span></div>
-          <div class="landing-genre-item"><span class="emoji">🎤</span><span class="name">Pop</span></div>
-          <div class="landing-genre-item"><span class="emoji">🎵</span><span class="name">MPB</span></div>
-          <div class="landing-genre-item"><span class="emoji">🪕</span><span class="name">Sertanejo</span></div>
-          <div class="landing-genre-item"><span class="emoji">🎧</span><span class="name">Eletrônica</span></div>
-          <div class="landing-genre-item"><span class="emoji">🎶</span><span class="name">Pagode/Samba</span></div>
-          <div class="landing-genre-item"><span class="emoji">🔥</span><span class="name">Funk</span></div>
-          <div class="landing-genre-item"><span class="emoji">🎙️</span><span class="name">Hip Hop/Rap</span></div>
-          <div class="landing-genre-item"><span class="emoji">🪗</span><span class="name">Forró</span></div>
-          <div class="landing-genre-item"><span class="emoji">🙏</span><span class="name">Gospel</span></div>
-          <div class="landing-genre-item"><span class="emoji">🎸</span><span class="name">Indie</span></div>
-          <div class="landing-genre-item"><span class="emoji">🌍</span><span class="name">Todos</span></div>
-        </div>
-      </div>
-
-      <!-- CTA Band -->
+      <!-- CTA Band com botão pulsante -->
       <div class="landing-cta-band">
         <h2 data-i18n="band.title">Ainda não tem conta? Crie uma agora!</h2>
         <p data-i18n="band.sub">Cadastre-se e entre nas salas para ouvir música com amigos.</p>
-        <button class="btn-cta" onclick="openSignup()" data-i18n="band.cta">Criar minha conta 🎵</button>
+        <button class="btn-cta btn-cta-pulse" onclick="openSignup()" data-i18n="band.cta">Criar minha conta 🎵</button>
       </div>
     </div>
   </div>
@@ -1207,8 +1184,6 @@
         'feature2.desc': 'Comente as músicas, reaja com emojis e curta as escolhas da galera.',
         'feature3.title': 'Votação democrática',
         'feature3.desc': 'Curta ou dispense músicas da fila. Com 10 votos negativos, a música sai!',
-        'genres.title': '🎸 Estilos que você ama',
-        'genres.sub': 'Encontre sua turma e toque o que você curte',
         'band.title': 'Ainda não tem conta? Crie uma agora!',
         'band.sub': 'Cadastre-se e entre nas salas para ouvir música com amigos.',
         'band.cta': 'Criar minha conta 🎵',
@@ -1287,8 +1262,6 @@
         'feature2.desc': 'Comment on the songs, react with emojis and like the crew\'s choices.',
         'feature3.title': 'Democratic voting',
         'feature3.desc': 'Like or dislike songs in the queue. With 10 dislikes, the song is removed!',
-        'genres.title': '🎸 Genres you love',
-        'genres.sub': 'Find your crew and play what you like',
         'band.title': 'Don\'t have an account yet? Create one now!',
         'band.sub': 'Sign up and join rooms to listen to music with friends.',
         'band.cta': 'Create my account 🎵',
@@ -1367,8 +1340,6 @@
         'feature2.desc': 'Comenta las canciones, reacciona con emojis y da like a las elecciones de la banda.',
         'feature3.title': 'Votación democrática',
         'feature3.desc': 'Da like o dislike a las canciones de la cola. ¡Con 10 dislikes, la canción se elimina!',
-        'genres.title': '🎸 Estilos que amas',
-        'genres.sub': 'Encuentra tu grupo y toca lo que te gusta',
         'band.title': '¿Aún no tienes cuenta? ¡Crea una ahora!',
         'band.sub': 'Regístrate y únete a las salas para escuchar música con amigos.',
         'band.cta': 'Crear mi cuenta 🎵',
