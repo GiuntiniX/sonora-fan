@@ -17,10 +17,11 @@ app.use(cookieParser());
 // ========== CONFIG ==========
 const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#22c55e', '#a855f7', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6'];
 const adminEmails = new Set(['admin@sonora.com']);
-const settings = { maxQueue: 20, cooldown: 30, maxDuration: 600 };
+const settings = { maxQueue: 20, cooldown: 30, maxDuration: 600, maxListeners: 20 };
 const DISLIKE_THRESHOLD = 10;
 const MAX_SONGS_PER_USER = 3;
 const SKIP_VOTE_THRESHOLD = 0.5;
+const YOUTUBE_API_KEY = 'AIzaSyB--8a_0tAr9Mf2mxy0oWq7rB0qyacci3I';
 
 // ========== AUTENTICAÇÃO ==========
 const users = new Map();
@@ -33,13 +34,12 @@ const userThemes = new Map();
 const rooms = new Map();
 const roomLikes = new Map();
 const roomVotes = new Map();
-
-// ========== CHAVE DA API DO YOUTUBE (fixa) ==========
-const YOUTUBE_API_KEY = 'AIzaSyB--8a_0tAr9Mf2mxy0oWq7rB0qyacci3I';
+const waitingRooms = new Map(); // slug -> array de sockets em espera
 
 function createRoom(slug, name, adminName = null) {
   roomLikes.set(slug, {});
   roomVotes.set(slug, {});
+  waitingRooms.set(slug, []);
   return {
     slug, name, admin: adminName,
     queue: [], currentIndex: 0, startedAt: Date.now(),
@@ -48,6 +48,9 @@ function createRoom(slug, name, adminName = null) {
     lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0,
     history: [],
     skipVotes: new Set(),
+    radioMode: false, // novo: modo rádio
+    radioGenre: 'pop', // gênero padrão
+    pinnedMessage: null, // { text, author, createdAt }
   };
 }
 
@@ -81,6 +84,10 @@ function broadcastState(slug) {
     admin: room.admin,
     isPlaying: room.isPlaying,
     history: room.history.slice(-10),
+    radioMode: room.radioMode,
+    pinnedMessage: room.pinnedMessage,
+    listenerCount: room.listenerCount,
+    maxListeners: settings.maxListeners,
   });
 }
 
@@ -111,7 +118,7 @@ function addSystemMsg(slug, text) {
   io.to(slug).emit('chat', msg);
 }
 
-// ===== SHUFFLE AUTOMÁTICO (mantém a atual em primeiro) =====
+// ===== SHUFFLE AUTOMÁTICO =====
 function autoShuffle(room) {
   if (!room || room.queue.length <= 1) return;
   const current = room.queue[room.currentIndex];
@@ -123,19 +130,17 @@ function autoShuffle(room) {
   }
   room.queue = [current, ...rest];
   room.currentIndex = 0;
-
   const votes = getRoomVotes(room.slug);
   const newVotes = {};
   room.queue.forEach((track, idx) => {
     const oldIndex = room.queue.findIndex(t => t.id === track.id);
-    if (votes[oldIndex] !== undefined) {
-      newVotes[idx] = votes[oldIndex];
-    }
+    if (votes[oldIndex] !== undefined) newVotes[idx] = votes[oldIndex];
   });
   roomVotes.set(room.slug, newVotes);
   broadcastState(room.slug);
 }
 
+// ===== ADVANCE QUEUE =====
 function advanceQueue(slug) {
   const room = rooms.get(slug);
   if (!room || !room.isPlaying || room.queue.length === 0) return false;
@@ -168,12 +173,63 @@ function advanceQueue(slug) {
     const next = room.queue[0];
     addSystemMsg(slug, `▶ ${next.title} — ${next.artist}`);
   } else {
-    room.isPlaying = false;
-    broadcastState(slug);
-    addSystemMsg(slug, '🏁 Fila encerrada. Adicione músicas!');
-    io.to(slug).emit('queueEmpty');
+    // Modo rádio: se ativado, busca músicas relacionadas
+    if (room.radioMode) {
+      startRadio(slug);
+    } else {
+      room.isPlaying = false;
+      broadcastState(slug);
+      addSystemMsg(slug, '🏁 Fila encerrada. Adicione músicas!');
+      io.to(slug).emit('queueEmpty');
+    }
   }
   return true;
+}
+
+// ===== MODO RÁDIO =====
+async function startRadio(slug) {
+  const room = rooms.get(slug);
+  if (!room || !room.radioMode) return;
+  try {
+    // Busca músicas baseadas no histórico ou gênero padrão
+    let query = room.radioGenre || 'pop';
+    if (room.history.length > 0) {
+      const last = room.history[room.history.length - 1];
+      if (last && last.title) query = last.title + ' ' + (last.artist || '');
+    }
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Erro na busca');
+    const data = await response.json();
+    const items = data.items.map(item => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      artist: item.snippet.channelTitle,
+      duration: null, // será preenchido depois
+    }));
+    // Adiciona à fila
+    for (const song of items) {
+      if (room.queue.length >= settings.maxQueue) break;
+      song.dj = '🎧 Rádio';
+      room.queue.push(song);
+    }
+    if (room.queue.length > 0) {
+      room.isPlaying = true;
+      room.currentIndex = 0;
+      room.startedAt = Date.now();
+      room.lastAdvanceAt = Date.now();
+      const next = room.queue[0];
+      addSystemMsg(slug, `📻 Rádio automático: ▶ ${next.title} — ${next.artist}`);
+      broadcastState(slug);
+    } else {
+      addSystemMsg(slug, '⚠️ Não foi possível buscar músicas para o modo rádio.');
+    }
+  } catch (e) {
+    console.error('Erro no modo rádio:', e.message);
+    addSystemMsg(slug, '⚠️ Erro ao buscar músicas para o rádio.');
+    room.isPlaying = false;
+    broadcastState(slug);
+  }
 }
 
 setInterval(() => {
@@ -187,7 +243,7 @@ setInterval(() => {
   }
 }, 2000);
 
-// ========== API ==========
+// ===== API =====
 app.post('/api/signup', (req, res) => {
   const { nome, email, senha, estilos } = req.body;
   if (!nome || nome.length < 2) return res.status(400).json({ error: 'Nome inválido' });
@@ -305,6 +361,7 @@ app.get('/api/rooms', (req, res) => {
     slug: r.slug, name: r.name, listenerCount: r.listenerCount,
     queueLength: r.queue.length, isPlaying: r.isPlaying,
     currentTrack: r.queue[r.currentIndex] || null,
+    radioMode: r.radioMode,
   }));
   res.json(list);
 });
@@ -330,14 +387,12 @@ app.post('/api/rooms', (req, res) => {
   res.json({ slug, name });
 });
 
-// ===== SEARCH YOUTUBE (com chave fixa) =====
+// ===== SEARCH YOUTUBE =====
 app.get('/api/search-youtube', async (req, res) => {
   const query = req.query.q;
   if (!query || query.length < 2) return res.json({ items: [] });
-
-  const apiKey = YOUTUBE_API_KEY; // chave fixa
   try {
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(query)}&key=${apiKey}`;
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
     const response = await fetch(url);
     if (!response.ok) {
       const errorData = await response.json();
@@ -353,10 +408,7 @@ app.get('/api/search-youtube', async (req, res) => {
     res.json({ items });
   } catch (e) {
     console.error('Erro na busca do YouTube:', e.message);
-    res.status(500).json({ 
-      error: 'Erro ao buscar vídeos: ' + e.message,
-      items: []
-    });
+    res.status(500).json({ error: 'Erro ao buscar vídeos: ' + e.message, items: [] });
   }
 });
 
@@ -383,16 +435,13 @@ app.get('/api/video-info', async (req, res) => {
   if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) {
     return res.status(400).json({ error: 'ID inválido' });
   }
-
   const info = { id, title: null, artist: null, duration: null };
-
   try {
     const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
     const data = JSON.parse(raw);
     info.title = data.title || null;
     info.artist = data.author_name || null;
   } catch (e) {}
-
   try {
     const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
     const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
@@ -411,7 +460,6 @@ app.get('/api/video-info', async (req, res) => {
         }
       } catch (e) {}
     }
-
     if (!info.duration) {
       const playerResponseMatch = html.match(/var ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
       if (playerResponseMatch) {
@@ -423,14 +471,12 @@ app.get('/api/video-info', async (req, res) => {
         } catch (e) {}
       }
     }
-
     if (!info.duration) {
       const regexMatch = html.match(/"lengthSeconds":"?(\d+)"?/);
       if (regexMatch) {
         info.duration = parseInt(regexMatch[1], 10);
       }
     }
-
     if (!info.title) {
       const titleMatch = html.match(/<title>([^<]+)<\/title>/);
       if (titleMatch) {
@@ -438,9 +484,26 @@ app.get('/api/video-info', async (req, res) => {
       }
     }
   } catch (e) {}
-
   if (!info.title) info.title = 'Vídeo do YouTube (ID: ' + id + ')';
   res.json(info);
+});
+
+// ===== LETRAS (lyrics.ovh) =====
+app.get('/api/lyrics', async (req, res) => {
+  const { artist, title } = req.query;
+  if (!artist || !title) return res.status(400).json({ error: 'Artista e título são obrigatórios' });
+  try {
+    const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      if (response.status === 404) return res.status(404).json({ error: 'Letra não encontrada' });
+      throw new Error('Erro ao buscar letra');
+    }
+    const data = await response.json();
+    res.json({ lyrics: data.lyrics });
+  } catch (e) {
+    res.status(500).json({ error: 'Erro ao buscar letra: ' + e.message });
+  }
 });
 
 // ========== ADMIN ROTAS ==========
@@ -477,23 +540,19 @@ app.post('/api/admin/delete-user', isAdmin, (req, res) => {
   if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
   if (email === 'admin@sonora.com') return res.status(400).json({ error: 'Não pode deletar o super admin' });
   if (!users.has(email)) return res.status(404).json({ error: 'Usuário não encontrado' });
-
   users.delete(email);
   adminEmails.delete(email);
   userPoints.delete(email);
   userThemes.delete(email);
-
   for (const [token, storedEmail] of sessions) {
     if (storedEmail === email) sessions.delete(token);
   }
-
   for (const [socketId, socket] of io.sockets.sockets) {
     if (socket.userEmail === email) {
       socket.emit('kicked', 'Sua conta foi removida pelo administrador.');
       socket.disconnect(true);
     }
   }
-
   io.emit('adminUsersUpdated');
   res.json({ success: true });
 });
@@ -503,7 +562,6 @@ app.post('/api/admin/kick-user', isAdmin, (req, res) => {
   if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
   const room = rooms.get(roomSlug);
   if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
-
   let kicked = false;
   for (const [socketId, socket] of io.sockets.sockets) {
     if (socket.userEmail === email && socket.currentRoom === roomSlug) {
@@ -513,7 +571,6 @@ app.post('/api/admin/kick-user', isAdmin, (req, res) => {
       kicked = true;
     }
   }
-
   if (kicked) {
     broadcastUsers(roomSlug);
     addSystemMsg(roomSlug, `👢 ${email} foi expulso da sala pelo admin.`);
@@ -529,21 +586,18 @@ app.post('/api/admin/ban-user', isAdmin, (req, res) => {
   if (!email) return res.status(400).json({ error: 'E-mail obrigatório' });
   const user = users.get(email);
   if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-
   const userName = user.nome;
   for (const [slug, room] of rooms) {
     if (!room.bannedUsers.includes(userName)) {
       room.bannedUsers.push(userName);
     }
   }
-
   for (const [socketId, socket] of io.sockets.sockets) {
     if (socket.userEmail === email) {
       socket.emit('banned', 'Você foi banido globalmente pelo administrador.');
       socket.disconnect(true);
     }
   }
-
   io.emit('adminUsersUpdated');
   res.json({ success: true });
 });
@@ -582,7 +636,8 @@ app.get('/api/admin/export-data', isAdmin, (req, res) => {
       slug: r.slug, name: r.name, admin: r.admin,
       queue: r.queue, chatHistory: r.chatHistory.slice(-50),
       history: r.history.slice(-20),
-      listenerCount: r.listenerCount, isPlaying: r.isPlaying
+      listenerCount: r.listenerCount, isPlaying: r.isPlaying,
+      radioMode: r.radioMode, pinnedMessage: r.pinnedMessage,
     })),
     settings
   };
@@ -625,6 +680,15 @@ io.on('connection', (socket) => {
     if (!room) { socket.emit('error', 'Sala não encontrada'); return; }
     if (room.bannedUsers.includes(name)) { socket.emit('error', 'Você foi banido'); return; }
 
+    // Verifica limite de ouvintes
+    if (room.listenerCount >= settings.maxListeners) {
+      // Coloca na fila de espera
+      if (!waitingRooms.has(slug)) waitingRooms.set(slug, []);
+      waitingRooms.get(slug).push(socket);
+      socket.emit('waitingRoom', { position: waitingRooms.get(slug).length, maxListeners: settings.maxListeners });
+      return;
+    }
+
     if (currentRoom) {
       socket.leave(currentRoom);
       const old = rooms.get(currentRoom);
@@ -649,6 +713,9 @@ io.on('connection', (socket) => {
 
     if (isGlobalAdmin && !room.admin) room.admin = name;
 
+    // Notifica próximos da fila de espera
+    notifyNextWaiting(slug);
+
     const likes = getRoomLikes(slug);
     socket.emit('likesState', likes);
     const votes = getRoomVotes(slug);
@@ -663,6 +730,10 @@ io.on('connection', (socket) => {
       admin: room.admin,
       isPlaying: room.isPlaying,
       history: room.history.slice(-10),
+      radioMode: room.radioMode,
+      pinnedMessage: room.pinnedMessage,
+      listenerCount: room.listenerCount,
+      maxListeners: settings.maxListeners,
     });
     socket.emit('chatHistory', room.chatHistory.slice(-150));
     socket.emit('isAdmin', socket.isAdmin);
@@ -670,6 +741,23 @@ io.on('connection', (socket) => {
     socket.emit('userPoints', points);
     broadcastUsers(slug);
   });
+
+  function notifyNextWaiting(slug) {
+    const waiting = waitingRooms.get(slug) || [];
+    if (waiting.length === 0) return;
+    const room = rooms.get(slug);
+    if (!room) return;
+    if (room.listenerCount < settings.maxListeners) {
+      const nextSocket = waiting.shift();
+      if (nextSocket) {
+        // Tenta novamente entrar
+        const { slug: s, userName, userAvatar } = nextSocket;
+        // Simula a entrada chamando o evento novamente
+        nextSocket.emit('waitingRoom', { position: 0, maxListeners: settings.maxListeners, canJoin: true });
+        // O frontend deve tentar novamente
+      }
+    }
+  }
 
   socket.on('chat', ({ text }) => {
     if (!currentRoom || !text.trim()) return;
@@ -680,7 +768,6 @@ io.on('connection', (socket) => {
       handleCommand(socket, command, parts.slice(1), room);
       return;
     }
-
     const msg = {
       _id: Date.now().toString() + Math.random(),
       user: socket.userName, text: text.trim(),
@@ -697,7 +784,6 @@ io.on('connection', (socket) => {
   function handleCommand(socket, cmd, args, room) {
     const email = socket.userEmail;
     let reply = '';
-
     switch(cmd) {
       case '/stats':
         let stats = '📊 Estatísticas da sala:\n';
@@ -716,7 +802,6 @@ io.on('connection', (socket) => {
           user: 'Sistema', text: stats, color: '#888', isSystem: true, createdAt: new Date() 
         });
         break;
-
       case '/vote':
         if (room.queue.length === 0) { reply = 'Nenhuma música na fila.'; break; }
         const track = room.queue[room.currentIndex];
@@ -736,7 +821,6 @@ io.on('connection', (socket) => {
           reply = 'Você já votou nessa música.';
         }
         break;
-
       case '/clear':
         if (!socket.isAdmin) { reply = 'Apenas admin pode limpar o chat.'; break; }
         room.chatHistory = [];
@@ -745,12 +829,10 @@ io.on('connection', (socket) => {
         addSystemMsg(currentRoom, '🧹 Chat limpo pelo admin');
         reply = 'Chat limpo.';
         break;
-
       case '/me':
         const p = userPoints.get(email) || { points: 0, badges: [] };
         reply = `👤 ${socket.userName} | Pontos: ${p.points} | Badges: ${p.badges.join(', ') || 'Nenhum'}`;
         break;
-
       case '/history':
         if (room.history.length === 0) { reply = 'Nenhuma música no histórico.'; break; }
         let hist = '📜 Histórico:\n';
@@ -762,11 +844,9 @@ io.on('connection', (socket) => {
           user: 'Sistema', text: hist, color: '#888', isSystem: true, createdAt: new Date() 
         });
         return;
-
       default:
         reply = `Comando desconhecido: ${cmd}. Use /stats, /vote, /clear (admin), /me, /history`;
     }
-
     if (reply) {
       socket.emit('chat', { 
         _id: Date.now().toString() + Math.random(),
@@ -809,12 +889,63 @@ io.on('connection', (socket) => {
     const currentVotes = room.skipVotes.size;
     io.to(currentRoom).emit('skipVoteUpdate', { votes: currentVotes, needed });
     addSystemMsg(currentRoom, `🗳️ ${socket.userName} votou para pular (${currentVotes}/${needed})`);
-
     if (currentVotes >= needed) {
       addSystemMsg(currentRoom, `⏭️ Música pulada por votação! (${currentVotes} votos)`);
       advanceQueue(currentRoom);
       room.skipVotes = new Set();
     }
+  });
+
+  // ===== MODO RÁDIO =====
+  socket.on('toggleRadio', (enabled) => {
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode controlar o modo rádio');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    room.radioMode = enabled;
+    if (enabled && room.queue.length === 0 && !room.isPlaying) {
+      startRadio(currentRoom);
+    }
+    broadcastState(currentRoom);
+    addSystemMsg(currentRoom, `${enabled ? '📻 Modo rádio ATIVADO' : '📻 Modo rádio DESATIVADO'} por ${socket.userName}`);
+  });
+
+  socket.on('setRadioGenre', (genre) => {
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    room.radioGenre = genre;
+    addSystemMsg(currentRoom, `🎵 Gênero do rádio alterado para "${genre}" por ${socket.userName}`);
+  });
+
+  // ===== MENSAGEM FIXADA =====
+  socket.on('setPinnedMessage', ({ text }) => {
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode fixar mensagem');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    room.pinnedMessage = {
+      text: text.trim(),
+      author: socket.userName,
+      createdAt: new Date()
+    };
+    broadcastState(currentRoom);
+    addSystemMsg(currentRoom, `📌 Mensagem fixada por ${socket.userName}: "${text}"`);
+  });
+
+  socket.on('removePinnedMessage', () => {
+    if (!currentRoom || !socket.isAdmin) {
+      socket.emit('error', 'Apenas admin pode remover mensagem fixada');
+      return;
+    }
+    const room = rooms.get(currentRoom);
+    room.pinnedMessage = null;
+    broadcastState(currentRoom);
+    addSystemMsg(currentRoom, `📌 Mensagem fixada removida por ${socket.userName}`);
   });
 
   // ===== ADD SONG =====
@@ -823,33 +954,30 @@ io.on('connection', (socket) => {
     const room = rooms.get(currentRoom);
     const now = Date.now();
     const lastAdd = room.lastAddTime.get(socket.userName) || 0;
-
     if (now - lastAdd < 30000) {
       const wait = Math.ceil((30000 - (now - lastAdd)) / 1000);
       socket.emit('error', `Aguarde ${wait}s`);
       return;
     }
-
     const userSongs = room.queue.filter(t => t.dj === socket.userName).length;
     if (userSongs >= MAX_SONGS_PER_USER) {
       socket.emit('error', `Você já tem ${MAX_SONGS_PER_USER} músicas na fila. Aguarde outras serem tocadas.`);
       return;
     }
-
     if (room.queue.length >= settings.maxQueue) {
       socket.emit('error', `Fila cheia (${settings.maxQueue})`);
       return;
     }
-
     if (song.duration && song.duration > settings.maxDuration) {
       socket.emit('error', `⛔ Vídeo muito longo! Duração: ${Math.floor(song.duration / 60)} min. Limite: ${settings.maxDuration / 60} min.`);
       return;
     }
-
     song.dj = socket.userName;
     room.queue.push(song);
     room.lastAddTime.set(socket.userName, now);
     addPoints(socket.userEmail, 2);
+    // Toca efeito sonoro (enviado para todos)
+    io.to(currentRoom).emit('playSound', 'add');
 
     if (!room.isPlaying && room.queue.length === 1) {
       room.isPlaying = true;
@@ -860,9 +988,7 @@ io.on('connection', (socket) => {
     } else {
       autoShuffle(room);
     }
-
     broadcastState(currentRoom);
-
     const musicMsg = {
       _id: Date.now().toString() + Math.random(),
       user: socket.userName, color: socket.userColor,
@@ -875,6 +1001,26 @@ io.on('connection', (socket) => {
     io.to(currentRoom).emit('chat', musicMsg);
   });
 
+  // ===== LIKE (com efeito sonoro) =====
+  socket.on('likeMessage', ({ messageId, room }) => {
+    if (!room || !socket.userName) return;
+    const likes = getRoomLikes(room);
+    if (!likes[messageId]) likes[messageId] = { likes: 0, users: [] };
+    const data = likes[messageId];
+    const userIndex = data.users.indexOf(socket.userName);
+    if (userIndex > -1) {
+      data.users.splice(userIndex, 1);
+      data.likes = Math.max(0, data.likes - 1);
+    } else {
+      data.users.push(socket.userName);
+      data.likes++;
+      addPoints(socket.userEmail, 1);
+      io.to(room).emit('playSound', 'like');
+    }
+    io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
+  });
+
+  // ===== VIDEO INFO =====
   socket.on('videoDuration', ({ duration }) => {
     if (!currentRoom || !duration) return;
     const room = rooms.get(currentRoom);
@@ -900,181 +1046,24 @@ io.on('connection', (socket) => {
     broadcastState(currentRoom);
   });
 
-  socket.on('skipTo', (index) => {
-    if (!currentRoom || !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin');
-      return;
-    }
-    const room = rooms.get(currentRoom);
-    if (index < 0 || index >= room.queue.length) return;
-    room.lastAdvanceAt = Date.now();
-    if (index > 0) room.queue.splice(0, index);
-    room.currentIndex = 0;
-    room.startedAt = Date.now();
-    room.isPlaying = true;
-    room.skipVotes = new Set();
-    const votes = getRoomVotes(currentRoom);
-    const newVotes = {};
-    room.queue.forEach((_, i) => {
-      if (votes[i]) newVotes[i] = votes[i];
-    });
-    roomVotes.set(currentRoom, newVotes);
-    autoShuffle(room);
-    broadcastState(currentRoom);
-    addSystemMsg(currentRoom, `⏭ ${socket.userName} pulou para: ${room.queue[0]?.title || 'fila vazia'}`);
-  });
-
-  socket.on('removeFromQueue', (index) => {
-    if (!currentRoom) {
-      socket.emit('error', 'Você não está em uma sala');
-      return;
-    }
-    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
-    const room = rooms.get(currentRoom);
-    if (!room) return;
-    if (!isGlobalAdmin && !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin pode remover músicas');
-      return;
-    }
-    const track = room.queue[index];
-    if (!track || index === room.currentIndex) {
-      socket.emit('error', 'Não é possível remover a música atual');
-      return;
-    }
-    room.queue.splice(index, 1);
-    if (index < room.currentIndex) room.currentIndex--;
-    const votes = getRoomVotes(currentRoom);
-    const newVotes = {};
-    room.queue.forEach((_, i) => {
-      if (votes[i + 1]) newVotes[i] = votes[i + 1];
-    });
-    roomVotes.set(currentRoom, newVotes);
-    autoShuffle(room);
-    broadcastState(currentRoom);
-    addSystemMsg(currentRoom, `🗑️ ${socket.userName} removeu "${track.title}"`);
-  });
-
-  socket.on('reorderQueue', (newOrder) => {
-    if (!currentRoom) {
-      socket.emit('error', 'Você não está em uma sala');
-      return;
-    }
-    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
-    if (!isGlobalAdmin && !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin pode reordenar');
-      return;
-    }
-    const room = rooms.get(currentRoom);
-    if (!room || room.queue.length === 0) return;
-    const currentTrack = room.queue[room.currentIndex];
-    const currentId = currentTrack ? currentTrack.id : null;
-    const newQueue = [];
-    for (const id of newOrder) {
-      const track = room.queue.find(t => t.id === id);
-      if (track) newQueue.push(track);
-    }
-    if (newQueue.length === room.queue.length) {
-      room.queue = newQueue;
-      const newIndex = room.queue.findIndex(t => t.id === currentId);
-      room.currentIndex = newIndex !== -1 ? newIndex : 0;
-      const votes = getRoomVotes(currentRoom);
-      const newVotes = {};
-      room.queue.forEach((track, i) => {
-        const oldIndex = room.queue.indexOf(track);
-        if (votes[oldIndex]) newVotes[i] = votes[oldIndex];
+  // ===== KARAOKÊ (solicitar letra) =====
+  socket.on('requestLyrics', ({ artist, title }) => {
+    if (!currentRoom) return;
+    fetch(`/api/lyrics?artist=${encodeURIComponent(artist)}&title=${encodeURIComponent(title)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.lyrics) {
+          socket.emit('lyricsResult', { artist, title, lyrics: data.lyrics });
+        } else {
+          socket.emit('lyricsResult', { artist, title, lyrics: null, error: 'Letra não encontrada' });
+        }
+      })
+      .catch(() => {
+        socket.emit('lyricsResult', { artist, title, lyrics: null, error: 'Erro ao buscar letra' });
       });
-      roomVotes.set(currentRoom, newVotes);
-      broadcastState(currentRoom);
-    }
   });
 
-  socket.on('voteSong', ({ index, type, room }) => {
-    if (!room || !socket.userName) return;
-    const roomData = rooms.get(room);
-    if (!roomData) return;
-    if (roomData.currentIndex === index) {
-      socket.emit('error', 'Não é possível votar na música atual');
-      return;
-    }
-    if (index >= roomData.queue.length) {
-      socket.emit('error', 'Música não encontrada');
-      return;
-    }
-    const votes = getRoomVotes(room);
-    if (!votes[index]) votes[index] = { up: [], down: [] };
-    const data = votes[index];
-    const upIndex = data.up.indexOf(socket.userName);
-    if (upIndex > -1) data.up.splice(upIndex, 1);
-    const downIndex = data.down.indexOf(socket.userName);
-    if (downIndex > -1) data.down.splice(downIndex, 1);
-    if (type === 'up') {
-      data.up.push(socket.userName);
-      addPoints(socket.userEmail, 1);
-    } else if (type === 'down') data.down.push(socket.userName);
-    if (data.down.length >= DISLIKE_THRESHOLD) {
-      const removed = roomData.queue.splice(index, 1)[0];
-      if (index < roomData.currentIndex) roomData.currentIndex--;
-      delete votes[index];
-      const newVotes = {};
-      roomData.queue.forEach((_, i) => {
-        if (votes[i + 1]) newVotes[i] = votes[i + 1];
-      });
-      roomVotes.set(room, newVotes);
-      autoShuffle(roomData);
-      broadcastState(room);
-      io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down, removed: true });
-      addSystemMsg(room, `👎 "${removed.title}" foi removida por votação! (${data.down.length} votos negativos)`);
-      return;
-    }
-    if (type === 'up') autoShuffle(roomData);
-    io.to(room).emit('voteUpdate', { index, up: data.up, down: data.down });
-    broadcastState(room);
-  });
-
-  socket.on('likeMessage', ({ messageId, room }) => {
-    if (!room || !socket.userName) return;
-    const likes = getRoomLikes(room);
-    if (!likes[messageId]) likes[messageId] = { likes: 0, users: [] };
-    const data = likes[messageId];
-    const userIndex = data.users.indexOf(socket.userName);
-    if (userIndex > -1) {
-      data.users.splice(userIndex, 1);
-      data.likes = Math.max(0, data.likes - 1);
-    } else {
-      data.users.push(socket.userName);
-      data.likes++;
-      addPoints(socket.userEmail, 1);
-    }
-    io.to(room).emit('likeUpdate', { messageId, likes: data.likes, users: data.users });
-  });
-
-  socket.on('videoEnded', () => {
-    if (currentRoom) advanceQueue(currentRoom);
-  });
-
-  socket.on('clearChat', () => {
-    if (!currentRoom) {
-      socket.emit('error', 'Você não está em uma sala');
-      return;
-    }
-    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
-    if (!isGlobalAdmin && !socket.isAdmin) {
-      socket.emit('error', 'Apenas admin pode limpar o chat');
-      return;
-    }
-    const room = rooms.get(currentRoom);
-    room.chatHistory = [];
-    roomLikes.set(currentRoom, {});
-    io.to(currentRoom).emit('chatCleared');
-    addSystemMsg(currentRoom, '🧹 Chat limpo pelo admin');
-  });
-
-  socket.on('adminBroadcast', (data) => {
-    const isGlobalAdmin = userEmail && adminEmails.has(userEmail);
-    if (!isGlobalAdmin && !socket.isAdmin) return;
-    io.emit('adminBroadcast', { message: data.message });
-  });
-
+  // ===== DISCONNECT =====
   socket.on('disconnect', () => {
     if (currentRoom) {
       const room = rooms.get(currentRoom);
@@ -1082,6 +1071,8 @@ io.on('connection', (socket) => {
         room.listenerCount = Math.max(0, room.listenerCount - 1);
         broadcastState(currentRoom);
         broadcastUsers(currentRoom);
+        // Verifica fila de espera
+        notifyNextWaiting(currentRoom);
       }
     }
   });
