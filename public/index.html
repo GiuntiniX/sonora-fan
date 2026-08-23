@@ -6,7 +6,7 @@
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
   
-  <!-- ===== CONFIGURAÇÃO FIREBASE ===== -->
+  <!-- ===== CONFIGURAÇÃO FIREBASE (COM SEUS DADOS REAIS) ===== -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script>
@@ -21,8 +21,10 @@
     };
     firebase.initializeApp(firebaseConfig);
   </script>
+  <!-- ===== FIM DA CONFIGURAÇÃO FIREBASE ===== -->
 
   <style>
+    /* ... (Mantido igual por questão de espaço, mas o CSS original funciona) ... */
     /* ===== ESTILOS GLOBAIS ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -153,9 +155,10 @@
     .modal-actions .btn-secondary:hover { background: var(--bg-hover); }
     .modal-actions .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
     .modal-actions .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    /* ===== ADMIN PANEL ===== */
+    /* ===== ADMIN PANEL (resumido) ===== */
     .admin-panel { max-width: 700px !important; max-height: 90vh; overflow-y: auto !important; }
     .admin-panel .tab-bar { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
     .admin-panel .tab-bar button { background: transparent; border: none; padding: 8px 16px; color: var(--text-muted); font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; }
@@ -558,7 +561,7 @@
     </div>
   </div>
 
-  <!-- ===== ADMIN PANEL (Atualizado) ===== -->
+  <!-- ===== ADMIN PANEL ===== -->
   <div class="modal-overlay" id="adminPanel">
     <div class="modal admin-panel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
@@ -576,21 +579,69 @@
           <span style="font-weight:700;font-size:13px;">👥 Usuários</span>
           <span style="font-size:11px;color:var(--text-muted);" id="adminUserCount">0</span>
         </div>
-        <div id="adminUserList" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
-          <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">Carregando...</div>
+        <div id="adminUserList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
+          <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;" data-i18n="admin.loadingUsers">Carregando...</div>
         </div>
       </div>
       <div id="tab-queues" class="admin-tab">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <span style="font-weight:700;font-size:13px;">🎵 Gerenciar Filas</span>
-          <button onclick="loadAdminQueues()" style="background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);padding:2px 8px;font-size:11px;cursor:pointer;">🔄 Atualizar</button>
+          <button onclick="loadAdminQueues()" style="background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit;" data-i18n="admin.refresh">🔄 Atualizar</button>
         </div>
-        <div id="adminQueueList" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
-          <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px;">Carregando salas...</div>
+        <div id="adminQueueList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+          <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px;" data-i18n="admin.loadingQueues">Carregando salas...</div>
         </div>
       </div>
-      <div id="tab-stats" class="admin-tab">...</div>
-      <div id="tab-settings" class="admin-tab">...</div>
+      <div id="tab-stats" class="admin-tab">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+            <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminUsers">0</div>
+            <div style="font-size:11px;color:var(--text-muted);">Usuários</div>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+            <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminRooms">0</div>
+            <div style="font-size:11px;color:var(--text-muted);">Salas</div>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+            <div style="font-size:24px;font-weight:800;color:var(--text);" id="adminOnline">0</div>
+            <div style="font-size:11px;color:var(--text-muted);">Online</div>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:8px;">🏆 Músicas mais votadas (últimos 7 dias)</div>
+          <div id="adminTopSongs" style="font-size:13px;color:var(--text-secondary);">Carregando...</div>
+        </div>
+      </div>
+      <div id="tab-settings" class="admin-tab">
+        <div class="admin-action-grid">
+          <button onclick="adminClearChats()" data-i18n="admin.clearChats">🗑️ Limpar Chats</button>
+          <button onclick="adminClearRooms()" data-i18n="admin.clearRooms">🧹 Limpar Salas</button>
+          <button onclick="adminExport()" data-i18n="admin.export">📥 Exportar</button>
+          <button onclick="adminBroadcast()" data-i18n="admin.broadcast">📢 Mensagem</button>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">🔗 Webhook Discord</label>
+          <input type="text" id="discordWebhookInput" placeholder="URL do webhook..." style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;">
+          <button onclick="saveDiscordWebhook()" style="margin-top:6px;padding:6px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;cursor:pointer;font-family:inherit;">Salvar</button>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">🎭 Tema da Sala</label>
+          <select id="roomThemeSelect" onchange="setRoomTheme(this.value)" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;">
+            <option value="default">🌙 Padrão</option>
+            <option value="80s">🎸 Anos 80</option>
+            <option value="mpb">🎵 MPB</option>
+            <option value="rock">🤘 Rock</option>
+            <option value="eletronica">💡 Eletrônica</option>
+            <option value="sertanejo">🌾 Sertanejo</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">⏳ Agendar Evento</label>
+          <input type="datetime-local" id="eventDateTime" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;">
+          <button onclick="setEventTime()" style="margin-top:6px;padding:6px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;cursor:pointer;font-family:inherit;">Agendar</button>
+          <button onclick="clearEventTime()" style="margin-top:6px;margin-left:6px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-weight:600;cursor:pointer;font-family:inherit;">Cancelar</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -649,6 +700,11 @@
           </div>
           <button class="admin-toggle-btn" onclick="toggleAdmin()" title="Admin" id="adminBtn" style="display:none;">🎛️</button>
           <button class="theme-toggle-btn" onclick="toggleTheme()" title="Trocar Tema" id="themeBtn">🌙</button>
+          <div class="lang-selector">
+            <button class="lang-btn active" data-lang="pt" onclick="setLanguage('pt')">PT</button>
+            <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            <button class="lang-btn" data-lang="es" onclick="setLanguage('es')">ES</button>
+          </div>
           <button class="logout-btn" onclick="doLogout()" data-i18n="logout">Sair</button>
         </div>
       </div>
@@ -667,13 +723,14 @@
     </div>
   </div>
 
-  <!-- ===== ROOM (Com botão remover) ===== -->
+  <!-- ===== ROOM ===== -->
   <div class="screen" id="screen-room">
     <div class="app">
       <div class="header">
         <div class="header-left">
           <button onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;" data-i18n="room.back">← Voltar</button>
           <h1 id="roomTitle">Sala</h1>
+          <span id="eventCountdown" style="font-size:13px;color:var(--warning);font-weight:700;display:none;"></span>
         </div>
         <div class="header-right">
           <button class="action-btn" onclick="copyInviteLink()" title="Convidar amigos">🔗</button>
@@ -690,11 +747,14 @@
             <span>🎵 Fila</span>
             <div style="display:flex;gap:8px;align-items:center;">
               <span class="count" id="queueCount">0 músicas</span>
+              <button onclick="copyQueueIds()" style="background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-muted);padding:2px 6px;font-size:10px;cursor:pointer;">📋</button>
             </div>
           </div>
           <div class="queue-list" id="queueList">
             <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px 0;" data-i18n="queue.empty">Nenhuma música na fila</div>
           </div>
+          <div id="waitingQueueLabel" class="waiting-queue-label hidden">⏳ Fila de espera:</div>
+          <div class="queue-list" id="waitingQueueList" style="max-height:120px;overflow-y:auto;padding:4px 12px 12px;border-top:1px solid var(--border);"></div>
         </div>
 
         <div class="player-column">
@@ -717,7 +777,7 @@
                 <div class="track-actions">
                   <button onclick="favoriteCurrent()" id="favCurrentBtn" data-i18n="player.fav">⭐ Favoritar</button>
                   <button onclick="voteSkip()" id="skipBtn" title="Votar para pular" data-i18n="player.skip">⏭️ Pular</button>
-                  <!-- BOTÃO ADMIN REMOVER -->
+                  <!-- Botão Admin Remover Música Atual -->
                   <button onclick="adminRemoveCurrentSong()" id="adminRemoveBtn" style="display:none;" title="Remover música atual (Admin)">🗑️ Remover</button>
                 </div>
               </div>
@@ -731,6 +791,12 @@
                 <span id="volumeValue" style="font-size:11px;color:var(--text-muted);min-width:28px;text-align:right;">80%</span>
               </div>
             </div>
+          </div>
+
+          <div class="next-track" id="nextTrack" style="display:none;">
+            <span class="label" data-i18n="next.label">A seguir</span>
+            <div class="thumb" id="nextThumb"></div>
+            <div class="info"><div class="title" id="nextTitle">-</div><div class="artist" id="nextArtist">-</div></div>
           </div>
 
           <div class="add-song-area">
@@ -752,6 +818,7 @@
                 <button class="song-preview-cancel" onclick="clearPreview()">✕</button>
               </div>
             </div>
+            <div class="cooldown-text hidden" id="cooldownText"></div>
           </div>
         </div>
 
@@ -767,6 +834,30 @@
               <button class="emoji-btn" onclick="toggleEmojis()">😀</button>
               <input type="text" id="chatInput" placeholder="Mensagem..." data-i18n-placeholder="chat.input" onkeydown="if(event.key==='Enter') sendMessage()">
               <button onclick="sendMessage()" data-i18n="chat.send">Enviar</button>
+              <div class="emoji-panel" id="emojiPanel">
+                <span class="emoji-item" onclick="insertEmoji('😀')">😀</span>
+                <span class="emoji-item" onclick="insertEmoji('😂')">😂</span>
+                <span class="emoji-item" onclick="insertEmoji('🥰')">🥰</span>
+                <span class="emoji-item" onclick="insertEmoji('😎')">😎</span>
+                <span class="emoji-item" onclick="insertEmoji('🤩')">🤩</span>
+                <span class="emoji-item" onclick="insertEmoji('😭')">😭</span>
+                <span class="emoji-item" onclick="insertEmoji('🥳')">🥳</span>
+                <span class="emoji-item" onclick="insertEmoji('👍')">👍</span>
+                <span class="emoji-item" onclick="insertEmoji('❤️')">❤️</span>
+                <span class="emoji-item" onclick="insertEmoji('🔥')">🔥</span>
+                <span class="emoji-item" onclick="insertEmoji('🎵')">🎵</span>
+                <span class="emoji-item" onclick="insertEmoji('🎸')">🎸</span>
+                <span class="emoji-item" onclick="insertEmoji('🎤')">🎤</span>
+                <span class="emoji-item" onclick="insertEmoji('🎧')">🎧</span>
+                <span class="emoji-item" onclick="insertEmoji('✨')">✨</span>
+                <span class="emoji-item" onclick="insertEmoji('🌟')">🌟</span>
+                <span class="emoji-item" onclick="insertEmoji('💯')">💯</span>
+                <span class="emoji-item" onclick="insertEmoji('🙌')">🙌</span>
+                <span class="emoji-item" onclick="insertEmoji('👏')">👏</span>
+                <span class="emoji-item" onclick="insertEmoji('🤘')">🤘</span>
+                <span class="emoji-item" onclick="insertEmoji('🕺')">🕺</span>
+                <span class="emoji-item" onclick="insertEmoji('💃')">💃</span>
+              </div>
             </div>
           </div>
         </div>
@@ -803,7 +894,7 @@
   <!-- ===== JAVASCRIPT ===== -->
   <script>
     // ============================================================
-    // VARIÁVEIS GLOBAIS
+    // JAVASCRIPT COMPLETO (ATUALIZADO COM FIREBASE E AJUSTES ADMIN)
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -811,7 +902,6 @@
     let player = null, currentTrackId = null, lastAddTime = 0, songData = null;
     let currentTheme = localStorage.getItem('sonoraTheme') || 'dark';
     let messageLikesSync = {}, queueVotes = {}, myFavorites = [], crossfadeInterval = null;
-    let fadeOutInterval = null; // ADICIONADO: Corrige o som sumir
     let pendingRoomAfterLogin = null, myPoints = 0, myBadges = [];
     let searchTimeout = null;
     let currentLang = localStorage.getItem('sonoraLang') || 'pt';
@@ -904,7 +994,6 @@
     function closeSignup() { $('signupModal').classList.remove('active'); $('landingScreen').style.display = 'block'; }
     function toggleChip(el) { el.classList.toggle('selected'); }
 
-    // [CORREÇÃO 1: CRIAR CONTA COM "CARREGANDO..."]
     async function submitSignup() {
       const nome = $('signupNome').value.trim();
       const email = $('signupEmail').value.trim();
@@ -915,6 +1004,7 @@
       if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
       if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
 
+      // Pega o botão e desabilita para mostrar loading
       const btn = document.querySelector('#signupModal .btn-primary');
       const originalText = btn.innerHTML;
       btn.disabled = true;
@@ -962,6 +1052,7 @@
       } catch(e) {
         toast(e.message || 'Erro ao criar conta', 'error');
       } finally {
+        // Restaura o botão independente do resultado
         btn.disabled = false;
         btn.innerHTML = originalText;
       }
@@ -1023,7 +1114,7 @@
       $('userPointsBadge').textContent = badgeText;
     }
 
-    // [CORREÇÃO 2: CHECK ADMIN APRIMORADO]
+    // Função Admin Aprimorada
     function checkAdmin() {
       const isAdmin = currentUser && (currentUser.email === 'admin@sonora.com' || amIAdmin);
       amIAdmin = isAdmin;
@@ -1065,7 +1156,6 @@
         $('adminOnline').textContent = d.onlineUsers || 0;
       } catch(e) {}
     }
-    
     async function loadAdminUsers() {
       try {
         const r = await fetch('/api/admin/users', { credentials: 'include' });
@@ -1085,6 +1175,7 @@
             <div class="actions">
               ${!u.isAdmin ? `<button class="promote" onclick="adminPromote('${u.email}')">👑</button>` : ''}
               <button class="delete" onclick="adminDeleteUser('${u.email}')">🗑️</button>
+              <button onclick="adminKickUser('${u.email}')" style="background:#f59e0b;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">👢</button>
               <button onclick="adminBanUser('${u.email}')" style="background:#ef4444;color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">⛔</button>
             </div>
           </div>
@@ -1200,7 +1291,7 @@
       toast('📢 Enviado!', 'success');
     }
 
-    // [CORREÇÃO 3: REMOVER MÚSICA ATUAL (ADMIN)]
+    // Função para remover a música atual (Admin)
     async function adminRemoveCurrentSong() {
       if (!amIAdmin) return;
       if (!currentRoomData || !currentRoomData.queue || !currentRoomData.queue.length) return;
@@ -1215,7 +1306,7 @@
         const d = await r.json();
         if (r.ok) {
           toast('🗑️ Música removida!', 'success');
-          socket.emit('videoEnded');
+          socket.emit('videoEnded'); // Força o servidor a pular para a próxima
         } else {
           toast(d.error || 'Erro ao remover', 'error');
         }
@@ -1392,7 +1483,18 @@
           const playingIndicator = r.isPlaying ? `<div class="playing-indicator"><span></span><span></span><span></span><span></span></div>` : '';
           const genreTag = (currentUser && currentUser.estilos && currentUser.estilos.length > 0) ? `<span class="genre-tag">🎵 ${currentUser.estilos[0]}</span>` : '';
           const eventBadge = r.eventStartTime ? '<span class="event-badge">📅 Evento</span>' : '';
-          card.innerHTML = `<div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge"><span class="icon">🎧</span> ${r.listenerCount || 0}</div>${playingIndicator}</div><div class="room-card-body"><h3>${escapeHtml(r.name)} ${r.radioMode ? '📻' : ''} ${eventBadge}</h3><div class="meta"><span class="listeners"><span class="icon">👥</span> <span class="count">${r.listenerCount || 0}</span> ouvintes</span><span>🎶 ${r.queueLength || 0} na fila</span>${genreTag}</div></div>`;
+          card.innerHTML = `
+            <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge"><span class="icon">🎧</span> ${r.listenerCount || 0}</div>${playingIndicator}</div>
+            <div class="room-card-body">
+              <h3>${escapeHtml(r.name)} ${r.radioMode ? '📻' : ''} ${eventBadge}</h3>
+              <div class="meta">
+                <span class="listeners"><span class="icon">👥</span> <span class="count">${r.listenerCount || 0}</span> ouvintes</span>
+                <span>🎶 ${r.queueLength || 0} na fila</span>
+                ${genreTag}
+              </div>
+              <div class="room-avatars"><span class="avatar-mini">👤</span><span class="avatar-mini">👤</span><span class="avatar-mini">👤</span></div>
+            </div>
+          `;
           grid.appendChild(card);
         });
       } catch(e) {
@@ -1436,7 +1538,7 @@
       currentRoomData = null;
       if (player && player.stopVideo) player.stopVideo();
       if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-      if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
+      if (eventCountdownInterval) { clearInterval(eventCountdownInterval); eventCountdownInterval = null; }
       showScreen('lobby');
       loadRooms();
     }
@@ -1456,13 +1558,10 @@
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
-              // [CORREÇÃO 5: Limpar crossfade e forçar volume]
-              if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-              if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
-
               const vol = parseInt($('volumeSlider').value);
               if (player && player.setVolume) player.setVolume(vol);
               try { const d = player.getDuration(); if (d > 0) socket.emit('videoDuration', { duration: Math.floor(d) }); } catch(e) {}
+              if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
               $('bufferingOverlay').classList.remove('show');
             }
             if (e.data === YT.PlayerState.BUFFERING) { $('bufferingOverlay').classList.add('show'); }
@@ -1482,7 +1581,9 @@
       renderWaitingQueue(state.waitingQueue);
       updateNextTrack(state.queue, state.currentIndex);
       renderPinnedMessage(state.pinnedMessage);
+
       if (state.eventStartTime) { startEventCountdown(state.eventStartTime); } else { $('eventCountdown').style.display = 'none'; }
+
       if (!track) {
         currentTrackId = null;
         $('trackTitle').textContent = 'Fila vazia';
@@ -1497,14 +1598,9 @@
       }
 
       if (currentTrackId !== track.id) {
-        // [CORREÇÃO 4: Limpar crossfade e forçar volume na troca de música]
-        if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-        if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
-
         currentTrackId = track.id;
         player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
         const vol = parseInt($('volumeSlider').value);
-        if (player && player.setVolume) player.setVolume(vol);
         setTimeout(() => { if (player && player.setVolume) { player.setVolume(vol); player.playVideo(); } }, 300);
         $('trackTitle').textContent = track.title || 'Música';
         $('trackArtist').textContent = track.artist || 'Desconhecido';
@@ -1569,7 +1665,20 @@
         let scoreClass = '', scoreSymbol = '⚪';
         if (score > 0) { scoreClass = 'positive'; scoreSymbol = '👍'; }
         if (score < 0) { scoreClass = 'negative'; scoreSymbol = '👎'; }
-        div.innerHTML = `<span class="pos">${i === currentIndex ? '▶' : i + 1}</span><div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div><div class="info"><div class="title">${escapeHtml(track.title || 'Música')}</div><div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div></div><span class="dj">${escapeHtml(track.dj || '')}</span><div class="queue-votes"><button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')"><span style="font-size:14px;">👍</span></button><span class="vote-count ${scoreClass}">${total > 0 ? scoreSymbol + score : '0'}</span><button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')"><span style="font-size:14px;">👎</span></button></div>`;
+        div.innerHTML = `
+          <span class="pos">${i === currentIndex ? '▶' : i + 1}</span>
+          <div class="thumb"><img src="https://img.youtube.com/vi/${track.id}/default.jpg" onerror="this.style.display='none'"></div>
+          <div class="info">
+            <div class="title">${escapeHtml(track.title || 'Música')}</div>
+            <div class="artist">${escapeHtml(track.artist || 'Desconhecido')}</div>
+          </div>
+          <span class="dj">${escapeHtml(track.dj || '')}</span>
+          <div class="queue-votes">
+            <button class="vote-btn up ${userVotedUp ? 'voted-up' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'up')"><span style="font-size:14px;">👍</span></button>
+            <span class="vote-count ${scoreClass}" title="Total: ${total} votos (${upCount} 👍, ${downCount} 👎)">${total > 0 ? scoreSymbol + score : '0'}</span>
+            <button class="vote-btn down ${userVotedDown ? 'voted-down' : ''}" onclick="event.stopPropagation();voteSong(${i}, 'down')"><span style="font-size:14px;">👎</span></button>
+          </div>
+        `;
         list.appendChild(div);
       });
     }
@@ -1586,7 +1695,6 @@
 
     function startCrossfade() {
       if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
-      if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
       crossfadeInterval = setInterval(() => {
         try {
           if (!player || !player.getCurrentTime) return;
@@ -1599,13 +1707,8 @@
             const steps = 20;
             const step = vol / steps;
             let cVol = vol;
-            if (fadeOutInterval) clearInterval(fadeOutInterval);
-            fadeOutInterval = setInterval(() => {
-              cVol = Math.max(0, cVol - step);
-              if (player && player.setVolume) player.setVolume(Math.round(cVol));
-              if (cVol <= 0) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
-            }, 50);
-            setTimeout(() => { if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; } }, 3000);
+            const fadeOut = setInterval(() => { cVol = Math.max(0, cVol - step); if (player && player.setVolume) player.setVolume(Math.round(cVol)); if (cVol <= 0) clearInterval(fadeOut); }, 50);
+            setTimeout(() => clearInterval(fadeOut), 3000);
           }
         } catch(e) {}
       }, 500);
@@ -1708,16 +1811,16 @@
       const confirmBtn = document.querySelector('.song-preview-confirm');
       if (data.duration > 0) {
         if (data.duration > MAX_SONG_DURATION) { $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > ${MAX_SONG_DURATION/60} min`; $('previewStatus').style.color = 'var(--danger)'; confirmBtn.disabled = true; confirmBtn.textContent = '⛔ Muito longo'; }
-        else if (data.duration > 300) { $('previewStatus').textContent = `⚠️ ${formatDuration(data.duration)} - música longa`; $('previewStatus').style.color = 'var(--warning)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar'; }
-        else { $('previewStatus').textContent = `✅ ${formatDuration(data.duration)}`; $('previewStatus').style.color = 'var(--success)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar'; }
-      } else { $('previewStatus').textContent = '⚠️ Duração não verificada.'; $('previewStatus').style.color = 'var(--warning)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar'; }
+        else if (data.duration > 300) { $('previewStatus').textContent = `⚠️ ${formatDuration(data.duration)} - música longa (máx ${MAX_SONG_DURATION/60} min)`; $('previewStatus').style.color = 'var(--warning)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar'; }
+        else { $('previewStatus').textContent = `✅ ${formatDuration(data.duration)} - dentro do limite`; $('previewStatus').style.color = 'var(--success)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar'; }
+      } else { $('previewStatus').textContent = '⚠️ Duração não verificada. O vídeo será verificado ao carregar.'; $('previewStatus').style.color = 'var(--warning)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar (sem verificação)'; }
       $('previewActions').classList.remove('hidden');
     }
 
     function clearPreview() { $('songPreview').classList.add('hidden'); songData = null; }
     function confirmAdd() {
       if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
-      if (songData.duration && songData.duration > MAX_SONG_DURATION) { toast(`⛔ Vídeo muito longo!`, 'error'); return; }
+      if (songData.duration && songData.duration > MAX_SONG_DURATION) { toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); return; }
       const now = Date.now();
       if (now - lastAddTime < COOLDOWN) { const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); toast(`Aguarde ${wait}s`, 'error'); return; }
       socket.emit('addSong', { id: songData.id, title: songData.title || 'Música do YouTube', artist: songData.artist || 'Desconhecido', duration: songData.duration || null });
@@ -1849,17 +1952,17 @@
     socket.on('chatHistory', (messages) => { const container = document.getElementById('chatMessagesInner'); if (!container) return; container.innerHTML = ''; const start = Math.max(0, messages.length - 10); messages.slice(start).forEach(m => renderMessage(m)); scrollChatToBottom(); });
     socket.on('likeUpdate', (data) => { const { messageId, likes, users } = data; messageLikesSync[messageId] = { likes, users }; updateLikeDisplay(messageId); });
     socket.on('likesState', (likesData) => { messageLikesSync = likesData || {}; const container = document.getElementById('chatMessagesInner'); if (!container) return; const msgElements = container.querySelectorAll('.msg'); for (const el of msgElements) { const msgId = el.dataset.msgId; if (msgId && messageLikesSync[msgId]) updateLikeDisplay(msgId); } });
-    socket.on('voteUpdate', (data) => { const { index, up, down } = data; queueVotes[index] = { up, down }; if (down.length >= DISLIKE_THRESHOLD) { toast(`👎 Música removida por votação!`, 'error'); } else { if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex); } });
+    socket.on('voteUpdate', (data) => { const { index, up, down } = data; queueVotes[index] = { up, down }; if (down.length >= DISLIKE_THRESHOLD) { toast(`👎 Música removida por votação! (${down.length} votos negativos)`, 'error'); if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex); } else { if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex); } });
     socket.on('votesState', (votesData) => { queueVotes = votesData || {}; if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex); });
     socket.on('error', (msg) => toast(msg, 'error'));
-    socket.on('isAdmin', (isAdmin) => { amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com'; if (amIAdmin) { $('adminBadge').classList.remove('hidden'); } checkAdmin(); });
+    socket.on('isAdmin', (isAdmin) => { amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com'; if (amIAdmin) { $('adminBadge').classList.remove('hidden'); toast('Você é admin desta sala!', 'success'); } checkAdmin(); });
     socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
     socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
     socket.on('chatCleared', () => { const container = document.getElementById('chatMessagesInner'); if (container) { container.innerHTML = ''; const div = document.createElement('div'); div.className = 'msg msg-system'; div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>'; container.appendChild(div); } toast('Chat limpo!', 'success'); });
-    socket.on('adminBroadcast', (data) => { toast(`📢 ${data.message}`, 'success'); });
+    socket.on('adminBroadcast', (data) => { toast(`📢 ${data.message}`, 'success'); if (currentRoom) { const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() }; renderMessage(msg); } });
     socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
     socket.on('skipVoteUpdate', ({ votes, needed }) => { toast(`🗳️ Votos para pular: ${votes}/${needed}`, 'success'); });
-    socket.on('waitingRoom', ({ position, maxListeners, canJoin }) => { if (canJoin) { toast('🟢 Uma vaga foi liberada!', 'success'); joinRoom(currentRoom); } else { toast(`⏳ Você está na fila de espera (posição ${position}).`, 'error'); } });
+    socket.on('waitingRoom', ({ position, maxListeners, canJoin }) => { if (canJoin) { toast('🟢 Uma vaga foi liberada! Tentando entrar...', 'success'); joinRoom(currentRoom); } else { toast(`⏳ Você está na fila de espera (posição ${position}). Aguarde uma vaga.`, 'error'); } });
     socket.on('playSound', (type) => { playSound(type); });
 
     setInterval(() => {
