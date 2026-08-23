@@ -24,7 +24,8 @@
   <!-- ===== FIM DA CONFIGURAÇÃO FIREBASE ===== -->
 
   <style>
-    /* ===== ESTILOS GLOBAIS (mantidos, apenas para referência) ===== */
+    /* ... (Mantido igual por questão de espaço, mas o CSS original funciona) ... */
+    /* ===== ESTILOS GLOBAIS ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -618,28 +619,6 @@
           <button onclick="adminExport()" data-i18n="admin.export">📥 Exportar</button>
           <button onclick="adminBroadcast()" data-i18n="admin.broadcast">📢 Mensagem</button>
         </div>
-        <div style="margin-bottom:12px;">
-          <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">🔗 Webhook Discord</label>
-          <input type="text" id="discordWebhookInput" placeholder="URL do webhook..." style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;">
-          <button onclick="saveDiscordWebhook()" style="margin-top:6px;padding:6px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;cursor:pointer;font-family:inherit;">Salvar</button>
-        </div>
-        <div style="margin-bottom:12px;">
-          <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">🎭 Tema da Sala</label>
-          <select id="roomThemeSelect" onchange="setRoomTheme(this.value)" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;">
-            <option value="default">🌙 Padrão</option>
-            <option value="80s">🎸 Anos 80</option>
-            <option value="mpb">🎵 MPB</option>
-            <option value="rock">🤘 Rock</option>
-            <option value="eletronica">💡 Eletrônica</option>
-            <option value="sertanejo">🌾 Sertanejo</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">⏳ Agendar Evento</label>
-          <input type="datetime-local" id="eventDateTime" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;">
-          <button onclick="setEventTime()" style="margin-top:6px;padding:6px 16px;border-radius:6px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:600;cursor:pointer;font-family:inherit;">Agendar</button>
-          <button onclick="clearEventTime()" style="margin-top:6px;margin-left:6px;padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-weight:600;cursor:pointer;font-family:inherit;">Cancelar</button>
-        </div>
       </div>
     </div>
   </div>
@@ -1081,7 +1060,6 @@
         loadFavorites();
         toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
       } catch(e) {
-        // Mensagem personalizada para erro de credencial inválida
         if (e.code === 'auth/invalid-credential' || e.message.includes('invalid-credential')) {
           errorEl.textContent = 'Sem cadastro, venha ser um Fan!';
         } else {
@@ -1289,7 +1267,6 @@
       toast('📢 Enviado!', 'success');
     }
 
-    // Função para remover a música atual (Admin)
     async function adminRemoveCurrentSong() {
       if (!amIAdmin) return;
       if (!currentRoomData || !currentRoomData.queue || !currentRoomData.queue.length) return;
@@ -1304,7 +1281,7 @@
         const d = await r.json();
         if (r.ok) {
           toast('🗑️ Música removida!', 'success');
-          socket.emit('videoEnded'); // Força o servidor a pular para a próxima
+          socket.emit('videoEnded');
         } else {
           toast(d.error || 'Erro ao remover', 'error');
         }
@@ -1599,7 +1576,6 @@
         currentTrackId = track.id;
         player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
         const vol = parseInt($('volumeSlider').value);
-        // Garantir que o áudio não fique mutado
         setTimeout(() => {
           if (player) {
             try {
