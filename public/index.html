@@ -871,7 +871,7 @@
   <!-- ============================================================ -->
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO (ATUALIZADO COM CORREÇÃO DE VOLUME)
+    // JAVASCRIPT COMPLETO (ATUALIZADO COM CORREÇÃO DE VOLUME E TEMAS)
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -943,12 +943,19 @@
     const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
     function censorText(t) { let c = t; badWords.forEach(w => { const r = new RegExp('\\b' + w + '\\b','gi'); c = c.replace(r,'***'); }); return c; }
 
+    // ===== TEMAS COMPLETOS (ATUALIZADO) =====
     function applyTheme() {
       const themes = {
         'dark': { btn:'🌙', bg:'#050508', card:'#0f0f18', hover:'#161620', border:'#1e1e2e', text:'#f0f0f8', textSec:'#9a9ab0', textMuted:'#555570', accent:'#ff6b35', accent2:'#7c3aed', bgImage:'none', overlay:'transparent' },
-        'light': { btn:'☀️', bg:'#ffffff', card:'#fafafa', hover:'#f0f0f0', border:'#d4af37', text:'#000000', textSec:'#222222', textMuted:'#333333', accent:'#d4af37', accent2:'#b8860b', bgImage:'none', overlay:'transparent' },
+        'light': { btn: '☀️', bg: '#f4f6f9', card: '#ffffff', hover: '#e9ecef', border: '#dee2e6', text: '#1a1a2e', textSec: '#2d4059', textMuted: '#6c757d', accent: '#c9a84c', accent2: '#b08a3a', bgImage: 'none', overlay: 'rgba(0,0,0,0.03)' },
         'neon': { btn:'🟢', bg:'#070a12', card:'#111827', hover:'#1a2236', border:'#1f2a4a', text:'#e0f0ff', textSec:'#88aacc', textMuted:'#446688', accent:'#22d3ee', accent2:'#10b981', bgImage:'none', overlay:'transparent' },
-        'terra-sonora': { btn:'🌄', bg:'#140a05', card:'#2a180e', hover:'#3a2216', border:'#4a2e1e', text:'#fcf3ee', textSec:'#cbaa98', textMuted:'#8a6a58', accent:'#e85d3a', accent2:'#d94a20', bgImage:'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay:'rgba(0,0,0,0.65)' }
+        'terra-sonora': { btn:'🌄', bg:'#140a05', card:'#2a180e', hover:'#3a2216', border:'#4a2e1e', text:'#fcf3ee', textSec:'#cbaa98', textMuted:'#8a6a58', accent:'#e85d3a', accent2:'#d94a20', bgImage:'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay:'rgba(0,0,0,0.65)' },
+        'ocean': { btn:'🌊', bg:'#e8f0fe', card:'#ffffff', hover:'#d2e3fc', border:'#b6c8e6', text:'#0b1e3a', textSec:'#2a4b7c', textMuted:'#6a8bb0', accent:'#1a73e8', accent2:'#0d47a1', bgImage:'none', overlay:'transparent' },
+        'sunset': { btn:'🌅', bg:'#1a0e12', card:'#2d1b20', hover:'#40262e', border:'#5a3845', text:'#fde8e0', textSec:'#eab8a8', textMuted:'#a07268', accent:'#ff7b54', accent2:'#ffb26b', bgImage:'none', overlay:'transparent' },
+        'forest': { btn:'🌿', bg:'#0f130a', card:'#1c2415', hover:'#2a3420', border:'#3d4a30', text:'#edf3e0', textSec:'#b3c99a', textMuted:'#6b7f56', accent:'#8bc34a', accent2:'#558b2f', bgImage:'none', overlay:'transparent' },
+        'high-contrast': { btn:'♿', bg:'#000000', card:'#1a1a1a', hover:'#333333', border:'#666666', text:'#ffffff', textSec:'#f0f0f0', textMuted:'#aaaaaa', accent:'#ffd700', accent2:'#ffaa00', bgImage:'none', overlay:'transparent' },
+        'cherry': { btn:'🌸', bg:'#fcf4f7', card:'#ffffff', hover:'#fce4ec', border:'#f8bbd0', text:'#4a1a2c', textSec:'#7a4b5c', textMuted:'#b08b9a', accent:'#e91e63', accent2:'#ad1457', bgImage:'none', overlay:'transparent' },
+        'retro': { btn:'📺', bg:'#0f0b06', card:'#1c150d', hover:'#2a1f14', border:'#3d2e1e', text:'#e8c98a', textSec:'#c4a064', textMuted:'#7a633a', accent:'#ffa500', accent2:'#cc8400', bgImage:'none', overlay:'rgba(0,0,0,0.4)' }
       };
       const t = themes[currentTheme] || themes['dark'];
       Object.entries(t).forEach(([k,v]) => {
@@ -958,8 +965,9 @@
       document.querySelectorAll('#themeBtn, #themeBtnRoom').forEach(b => { if(b) b.textContent = t.btn; });
       localStorage.setItem('sonoraTheme', currentTheme);
     }
+
     function toggleTheme() {
-      const keys = ['dark','light','neon','terra-sonora'];
+      const keys = ['dark','light','neon','terra-sonora','ocean','sunset','forest','high-contrast','cherry','retro'];
       const idx = keys.indexOf(currentTheme);
       currentTheme = keys[(idx+1) % keys.length];
       applyTheme();
@@ -1489,7 +1497,6 @@
         playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, enablejsapi: 1 },
         events: {
           onReady: () => {
-            // Garante o volume ao iniciar
             const vol = parseInt($('volumeSlider').value) || 80;
             volumeLevel = vol;
             if (player && player.setVolume) player.setVolume(vol);
@@ -1497,7 +1504,6 @@
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
-              // Reaplica o volume sempre que começar a tocar
               const vol = parseInt($('volumeSlider').value) || 80;
               volumeLevel = vol;
               if (player && player.setVolume) {
@@ -1542,7 +1548,6 @@
       if (currentTrackId !== track.id) {
         currentTrackId = track.id;
         player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
-        // Aplica volume com atraso e garante que não fique mudo
         const vol = parseInt($('volumeSlider').value) || 80;
         volumeLevel = vol;
         setTimeout(() => {
@@ -1554,7 +1559,6 @@
             } catch(e) { console.warn('Erro ao ajustar áudio:', e); }
           }
         }, 500);
-        // Reaplica após 2 segundos (garantia extra)
         setTimeout(() => {
           if (player && player.setVolume) {
             player.setVolume(vol);
