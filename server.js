@@ -7,18 +7,17 @@ const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const admin = require('firebase-admin');
 
-// ========== INICIALIZAÇÃO DO FIREBASE ==========
+// ========== INICIALIZAÇÃO DO FIREBASE (CORRIGIDA - LÊ O JSON INTEIRO) ==========
 try {
+  // Lê o JSON inteiro diretamente da variável de ambiente
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
   admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    }),
+    credential: admin.credential.cert(serviceAccount),
   });
   console.log('🔥 Firebase conectado!');
 } catch (e) {
   console.error('⚠️ Erro ao conectar Firebase:', e.message);
+  console.error('Verifique se a variável FIREBASE_SERVICE_ACCOUNT_KEY contém o JSON completo.');
 }
 
 const db = admin.firestore();
@@ -126,30 +125,19 @@ function broadcastState(slug) {
   const room = rooms.get(slug);
   if (!room) return;
   io.to(slug).emit('roomState', {
-    slug: room.slug, name: room.name,
-    currentIndex: room.currentIndex,
-    position: getPosition(room),
-    votes: room.votes,
-    queue: room.queue,
-    waitingQueue: room.waitingQueue,
-    admin: room.admin,
-    isPlaying: room.isPlaying,
-    history: room.history.slice(-10),
-    radioMode: room.radioMode,
-    pinnedMessage: room.pinnedMessage,
-    listenerCount: room.listenerCount,
-    maxListeners: settings.maxListeners,
-    color: room.color,
-    theme: room.theme,
-    inviteCount: room.inviteCount,
-    eventStartTime: room.eventStartTime,
+    slug: room.slug, name: room.name, currentIndex: room.currentIndex, position: getPosition(room), votes: room.votes,
+    queue: room.queue, waitingQueue: room.waitingQueue, admin: room.admin, isPlaying: room.isPlaying,
+    history: room.history.slice(-10), radioMode: room.radioMode, pinnedMessage: room.pinnedMessage,
+    listenerCount: room.listenerCount, maxListeners: settings.maxListeners, color: room.color,
+    theme: room.theme, inviteCount: room.inviteCount, eventStartTime: room.eventStartTime,
   });
 }
 function broadcastUsers(slug) {
   io.in(slug).fetchSockets().then(sockets => {
     const userList = sockets.map(s => ({
-      name: s.userName || 'Anônimo', color: s.userColor || '#888', isAdmin: s.isAdmin || false, avatar: s.userAvatar || '👤',
-      points: userPoints.get(s.userEmail)?.points || 0, badges: userPoints.get(s.userEmail)?.badges || [],
+      name: s.userName || 'Anônimo', color: s.userColor || '#888', isAdmin: s.isAdmin || false,
+      avatar: s.userAvatar || '👤', points: userPoints.get(s.userEmail)?.points || 0,
+      badges: userPoints.get(s.userEmail)?.badges || [],
     }));
     io.to(slug).emit('users', userList);
   });
@@ -280,9 +268,7 @@ app.post('/api/signup', async (req, res) => {
     const existing = await db.collection('users').doc(email).get();
     if (existing.exists) return res.status(400).json({ error: 'E-mail já cadastrado' });
 
-    // 🔥 IMPORTANTE: NÃO criar o usuário no Firebase Auth aqui!
-    // O frontend já cria o usuário com firebase.auth().createUserWithEmailAndPassword!
-    // Aqui apenas salvamos os dados no Firestore.
+    // NÃO criar o usuário no Firebase Auth aqui! O Frontend já fez isso.
     const userData = { nome, email, estilos, avatar: '🎸', criadoEm: new Date(), theme: 'dark', fontSize: 16, colorblind: false, discordWebhook: null };
     
     await setUserInFirestore(email, userData);
@@ -301,7 +287,6 @@ app.post('/api/login', async (req, res) => {
   if (!email) return res.status(400).json({ error: 'Preencha e-mail' });
 
   try {
-    // Não validamos a senha aqui, pois o Firebase Auth já validou no Frontend!
     const userDoc = await db.collection('users').doc(email).get();
     if (!userDoc.exists) return res.status(401).json({ error: 'Usuário não encontrado' });
 
@@ -383,11 +368,9 @@ app.delete('/api/favorites/:videoId', async (req, res) => {
 // ========== ROTAS DE SALAS ==========
 app.get('/api/rooms', (req, res) => {
   const list = Array.from(rooms.values()).map(r => ({
-    slug: r.slug, name: r.name, listenerCount: r.listenerCount,
-    queueLength: r.queue.length, isPlaying: r.isPlaying,
-    currentTrack: r.queue[r.currentIndex] || null,
-    radioMode: r.radioMode, color: r.color || '#7c3aed',
-    theme: r.theme || 'default', inviteCount: r.inviteCount, eventStartTime: r.eventStartTime,
+    slug: r.slug, name: r.name, listenerCount: r.listenerCount, queueLength: r.queue.length,
+    isPlaying: r.isPlaying, currentTrack: r.queue[r.currentIndex] || null, radioMode: r.radioMode,
+    color: r.color || '#7c3aed', theme: r.theme || 'default', inviteCount: r.inviteCount, eventStartTime: r.eventStartTime,
   }));
   res.json(list);
 });
