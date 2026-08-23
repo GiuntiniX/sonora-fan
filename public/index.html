@@ -903,7 +903,7 @@
     function closeSignup() { $('signupModal').classList.remove('active'); $('landingScreen').style.display = 'block'; }
     function toggleChip(el) { el.classList.toggle('selected'); }
 
-    // ===== SIGNUP (com mensagem amigável) =====
+    // ===== SIGNUP =====
     async function submitSignup() {
       const nome = $('signupNome').value.trim();
       const email = $('signupEmail').value.trim();
@@ -924,14 +924,12 @@
           await firebase.auth().createUserWithEmailAndPassword(email, senha);
         } catch (authError) {
           if (authError.code === 'auth/email-already-in-use') {
-            // Se já existe, tenta logar
             await firebase.auth().signInWithEmailAndPassword(email, senha);
           } else {
             throw authError;
           }
         }
 
-        // Tenta cadastrar no backend
         try {
           const res = await fetch('/api/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nome, email, senha, estilos }) });
           const data = await res.json();
@@ -960,7 +958,6 @@
         loadFavorites();
         toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
       } catch(e) {
-        // Mensagem amigável para erros comuns
         let msg = e.message || 'Erro ao criar conta';
         if (e.code === 'auth/email-already-in-use') {
           msg = 'Este e-mail já está cadastrado. Faça login ou use outro.';
@@ -974,7 +971,7 @@
       }
     }
 
-    // ===== LOGIN (com mensagem personalizada) =====
+    // ===== LOGIN =====
     async function doLogin() {
       const email = $('loginEmail').value.trim();
       const senha = $('loginPassword').value.trim();
@@ -1002,7 +999,6 @@
         loadFavorites();
         toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
       } catch(e) {
-        // ===== MENSAGEM PERSONALIZADA =====
         if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
           errorEl.textContent = 'Sem cadastro, venha ser um Fan!';
         } else {
@@ -1466,6 +1462,7 @@
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
+              // Restaura o volume ao iniciar a reprodução
               if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
               if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
               const vol = parseInt($('volumeSlider').value);
@@ -1509,9 +1506,14 @@
         if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
         currentTrackId = track.id;
         player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
+        // Força o volume após carregar
         const vol = parseInt($('volumeSlider').value);
-        if (player && player.setVolume) player.setVolume(vol);
-        setTimeout(() => { if (player && player.setVolume) { player.setVolume(vol); player.playVideo(); } }, 300);
+        setTimeout(() => {
+          if (player && player.setVolume) {
+            player.setVolume(vol);
+            player.playVideo();
+          }
+        }, 500);
         $('trackTitle').textContent = track.title || 'Música';
         $('trackArtist').textContent = track.artist || 'Desconhecido';
         $('trackDj').textContent = '👤 ' + (track.dj || '');
@@ -1655,7 +1657,8 @@
       fetch(`/api/video-info?id=${id}`).then(r => r.json()).then(data => {
         songData = { id, title, artist, duration: data.duration || null };
         showPreview(songData);
-      }).catch(() => { songData = { id, title, artist, duration: null }; showPreview(songData); });
+        toast('🎵 Prévia carregada! Clique em "Adicionar" novamente para enviar.', 'success');
+      }).catch(() => { songData = { id, title, artist, duration: null }; showPreview(songData); toast('🎵 Prévia carregada!', 'success'); });
     }
 
     function extractYouTubeId(url) {
@@ -1692,11 +1695,11 @@
       try {
         const r = await fetch(`/api/video-info?id=${videoId}`);
         const data = await r.json();
-        if (r.ok) { songData = { id: videoId, title: data.title, artist: data.artist || 'Desconhecido', duration: data.duration || null }; showPreview(songData); return; }
+        if (r.ok) { songData = { id: videoId, title: data.title, artist: data.artist || 'Desconhecido', duration: data.duration || null }; showPreview(songData); toast('🎵 Prévia carregada!', 'success'); return; }
       } catch(e) {
         try {
           const oembed = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-          if (oembed.ok) { const d = await oembed.json(); songData = { id: videoId, title: d.title || 'Música do YouTube', artist: d.author_name || 'Desconhecido', duration: null }; showPreview(songData); return; }
+          if (oembed.ok) { const d = await oembed.json(); songData = { id: videoId, title: d.title || 'Música do YouTube', artist: d.author_name || 'Desconhecido', duration: null }; showPreview(songData); toast('🎵 Prévia carregada!', 'success'); return; }
         } catch(e2) {}
         toast('Erro ao buscar informações', 'error');
         clearPreview();
@@ -1739,7 +1742,12 @@
       if (!url) { toast('Cole um link do YouTube', 'error'); return; }
       const videoId = extractYouTubeId(url);
       if (!videoId) { toast('Link inválido', 'error'); return; }
-      if (songData && songData.id === videoId) { confirmAdd(); } else { previewSong(); }
+      if (songData && songData.id === videoId) { 
+        confirmAdd(); 
+      } else { 
+        previewSong(); 
+        // Se a prévia for exibida, o usuário pode clicar em "Adicionar" novamente
+      }
     }
 
     function startCooldown() {
