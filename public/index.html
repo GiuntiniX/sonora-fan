@@ -24,8 +24,7 @@
   <!-- ===== FIM DA CONFIGURAÇÃO FIREBASE ===== -->
 
   <style>
-    /* ... (Mantido igual por questão de espaço, mas o CSS original funciona) ... */
-    /* ===== ESTILOS GLOBAIS ===== */
+    /* ===== ESTILOS GLOBAIS (mantidos, apenas para referência) ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -777,7 +776,6 @@
                 <div class="track-actions">
                   <button onclick="favoriteCurrent()" id="favCurrentBtn" data-i18n="player.fav">⭐ Favoritar</button>
                   <button onclick="voteSkip()" id="skipBtn" title="Votar para pular" data-i18n="player.skip">⏭️ Pular</button>
-                  <!-- Botão Admin Remover Música Atual -->
                   <button onclick="adminRemoveCurrentSong()" id="adminRemoveBtn" style="display:none;" title="Remover música atual (Admin)">🗑️ Remover</button>
                 </div>
               </div>
@@ -1004,7 +1002,6 @@
       if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
       if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
 
-      // Pega o botão e desabilita para mostrar loading
       const btn = document.querySelector('#signupModal .btn-primary');
       const originalText = btn.innerHTML;
       btn.disabled = true;
@@ -1052,7 +1049,6 @@
       } catch(e) {
         toast(e.message || 'Erro ao criar conta', 'error');
       } finally {
-        // Restaura o botão independente do resultado
         btn.disabled = false;
         btn.innerHTML = originalText;
       }
@@ -1085,7 +1081,12 @@
         loadFavorites();
         toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
       } catch(e) {
-        errorEl.textContent = e.message || 'Erro ao fazer login';
+        // Mensagem personalizada para erro de credencial inválida
+        if (e.code === 'auth/invalid-credential' || e.message.includes('invalid-credential')) {
+          errorEl.textContent = 'Sem cadastro, venha ser um Fan!';
+        } else {
+          errorEl.textContent = e.message || 'Erro ao fazer login';
+        }
         errorEl.classList.add('show');
       } finally {
         btn.disabled = false;
@@ -1114,14 +1115,11 @@
       $('userPointsBadge').textContent = badgeText;
     }
 
-    // Função Admin Aprimorada
     function checkAdmin() {
       const isAdmin = currentUser && (currentUser.email === 'admin@sonora.com' || amIAdmin);
       amIAdmin = isAdmin;
       ['adminBtn','adminBtnRoom'].forEach(id => { const el = $(id); if(el) el.style.display = isAdmin ? 'flex' : 'none'; });
       ['adminBadge'].forEach(id => { const el = $(id); if(el) el.classList.toggle('hidden', !isAdmin); });
-      
-      // Mostra/esconde o botão de remover música atual
       const adminRemoveBtn = $('adminRemoveBtn');
       if (adminRemoveBtn) adminRemoveBtn.style.display = isAdmin ? 'flex' : 'none';
     }
@@ -1601,7 +1599,16 @@
         currentTrackId = track.id;
         player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
         const vol = parseInt($('volumeSlider').value);
-        setTimeout(() => { if (player && player.setVolume) { player.setVolume(vol); player.playVideo(); } }, 300);
+        // Garantir que o áudio não fique mutado
+        setTimeout(() => {
+          if (player) {
+            try {
+              player.unMute();
+              player.setVolume(vol);
+              player.playVideo();
+            } catch(e) { console.warn('Erro ao ajustar áudio:', e); }
+          }
+        }, 300);
         $('trackTitle').textContent = track.title || 'Música';
         $('trackArtist').textContent = track.artist || 'Desconhecido';
         $('trackDj').textContent = '👤 ' + (track.dj || '');
