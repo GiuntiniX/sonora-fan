@@ -23,7 +23,7 @@
   </script>
 
   <style>
-    /* ===== ESTILOS GLOBAIS ===== */
+    /* ===== ESTILOS GLOBAIS (mesmo código anterior, omitido por brevidade) ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -61,10 +61,8 @@
     .particle:nth-child(10n) { background: var(--warning); animation-duration: 15s; animation-delay: 5s; left: 90%; }
     @keyframes float { 0%,100% { transform: translateY(0) rotate(0deg); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.6; } 50% { transform: translateY(-100vh) rotate(180deg); } }
 
-    /* ===== LANDING PAGE ===== */
     .landing-screen { position: relative; z-index: 90; flex: 1; overflow-y: auto; background: transparent; }
     .landing-inner { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 48px 24px 40px; }
-
     .landing-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 60px; flex-wrap: wrap; gap: 16px; }
     .landing-logo { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 10px; }
     .landing-logo span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -111,7 +109,6 @@
     @media (max-width: 992px) { .landing-features { grid-template-columns: 1fr 1fr; } .landing-hero-content { padding: 60px 30px; } .landing-hero-content h1 { font-size: 40px; } }
     @media (max-width: 600px) { .landing-hero-content { padding: 40px 20px; } .landing-hero-content h1 { font-size: 30px; } .landing-features { grid-template-columns: 1fr; } .landing-nav { flex-direction: column; align-items: stretch; } .landing-nav-actions { justify-content: center; } .landing-cta-band h2 { font-size: 24px; } .landing-cta-band p { font-size: 16px; } }
 
-    /* ===== LOGIN ===== */
     .login-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(8px); }
     .login-screen.active { display: flex; }
     .login-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 48px 40px; text-align: center; max-width: 420px; width: 92%; max-height: 92vh; overflow-y: auto; position: relative; }
@@ -130,7 +127,6 @@
     .login-switch { margin-top: 16px; color: var(--text-muted); font-size: 13px; }
     .login-switch a { color: var(--accent); cursor: pointer; font-weight: 600; text-decoration: none; }
 
-    /* ===== MODAIS ===== */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(4px); }
     .modal-overlay.active { display: flex; }
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 90%; max-width: 480px; max-height: 92vh; overflow-y: auto; position: relative; animation: slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
@@ -155,7 +151,6 @@
     .modal-actions .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
     @keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    /* ===== ADMIN PANEL ===== */
     .admin-panel { max-width: 700px !important; max-height: 90vh; overflow-y: auto !important; }
     .admin-panel .tab-bar { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
     .admin-panel .tab-bar button { background: transparent; border: none; padding: 8px 16px; color: var(--text-muted); font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; }
@@ -175,7 +170,6 @@
     .admin-action-grid button { padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); cursor: pointer; font-family: inherit; font-weight: 600; font-size: 12px; transition: all 0.15s; }
     .admin-action-grid button:hover { background: var(--bg-hover); border-color: var(--accent); }
 
-    /* ===== APP ===== */
     .app { position: relative; z-index: 1; display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; max-height: 100%; overflow: hidden; }
     .hidden { display: none !important; }
     .screen { display: none; flex-direction: column; flex: 1; height: 100%; max-height: 100%; overflow: hidden; }
@@ -194,7 +188,6 @@
     .admin-badge { background: linear-gradient(135deg, var(--accent), var(--accent2)); padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700; color: #fff; }
     .admin-badge.hidden { display: none; }
 
-    /* ===== LOBBY ===== */
     .lobby { padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; overflow-y: auto; }
     .lobby-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
     .lobby-top h2 { font-size: 24px; font-weight: 700; }
@@ -230,13 +223,11 @@
     .room-card .room-avatars .avatar-mini:first-child { margin-left: 0; }
     .room-card .event-badge { background: var(--warning); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 700; margin-left: 6px; }
 
-    /* ===== TOAST ===== */
     .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--bg-card); border: 1px solid var(--border); color: var(--text); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 14px; z-index: 300; opacity: 0; transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: none; font-weight: 500; box-shadow: 0 10px 40px rgba(0,0,0,0.4); max-width: 90%; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
     .toast.error { border-color: var(--danger); color: #fca5a5; }
     .toast.success { border-color: var(--success); color: #86efac; }
 
-    /* ===== ROOM LAYOUT ===== */
     .room-layout { display: grid; grid-template-columns: 1fr 1.2fr 1fr; grid-template-rows: 1fr; gap: 0; flex: 1; min-height: 0; height: 100%; max-height: 100%; overflow: hidden; }
     .queue-column { border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg); overflow: hidden; height: 100%; min-height: 0; }
     .queue-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: rgba(0,0,0,0.2); }
@@ -258,7 +249,6 @@
     @media (max-width: 1024px) { .room-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; } .queue-column { border-right: none; border-bottom: 1px solid var(--border); max-height: 33%; } .player-column { max-height: 34%; padding: 12px 16px; } .chat-column { border-left: none; border-top: 1px solid var(--border); max-height: 33%; } }
     @media (max-width: 768px) { .room-layout { grid-template-rows: 0.9fr 0.9fr 0.9fr; } .queue-column { max-height: 30%; } .player-column { max-height: 40%; } .chat-column { max-height: 30%; } .header { padding: 8px 12px; } .header h1 { font-size: 15px; } }
 
-    /* ===== COMPONENTES ===== */
     .queue-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; transition: all 0.2s; cursor: default; border-left: 3px solid transparent; flex-wrap: wrap; flex-shrink: 0; }
     .queue-item:hover { background: var(--bg-hover); }
     .queue-item.current { background: var(--bg-hover); border-left-color: var(--accent); }
@@ -347,7 +337,6 @@
     .search-item .info .title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .search-item .info .artist { font-size: 11px; color: var(--text-secondary); }
 
-    /* ===== CHAT ===== */
     .chat-messages { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0; min-height: 0; max-height: 100%; height: 100%; position: relative; }
     .chat-messages-inner { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; scroll-behavior: smooth; min-height: 0; max-height: 100%; }
     .chat-messages-inner::-webkit-scrollbar { width: 0px; background: transparent; }
@@ -389,7 +378,6 @@
     .emoji-item { font-size: 20px; cursor: pointer; padding: 3px 5px; border-radius: 4px; transition: background 0.15s; line-height: 1; }
     .emoji-item:hover { background: var(--bg-hover); }
 
-    /* ===== FOOTER ===== */
     .footer { display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12px; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); flex-shrink: 0; width: 100%; }
     .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
     .footer a:hover { text-decoration: underline; }
@@ -816,6 +804,7 @@
     let currentLang = localStorage.getItem('sonoraLang') || 'pt';
     let audioCtx = null;
     let eventCountdownInterval = null;
+    let retryTimeout = null; // para tentar recarregar em caso de erro
 
     // ===== TRADUÇÕES =====
     const translations = {
@@ -1443,6 +1432,7 @@
       if (player && player.stopVideo) player.stopVideo();
       if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
       if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
+      if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
       showScreen('lobby');
       loadRooms();
     }
@@ -1462,18 +1452,24 @@
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
-              // Restaura o volume ao iniciar a reprodução
               if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
               if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
               const vol = parseInt($('volumeSlider').value);
               if (player && player.setVolume) player.setVolume(vol);
               try { const d = player.getDuration(); if (d > 0) socket.emit('videoDuration', { duration: Math.floor(d) }); } catch(e) {}
               $('bufferingOverlay').classList.remove('show');
+              if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
             }
             if (e.data === YT.PlayerState.BUFFERING) { $('bufferingOverlay').classList.add('show'); }
             if (e.data === YT.PlayerState.ENDED) socket.emit('videoEnded');
           },
-          onError: () => { toast('Erro no vídeo, pulando...', 'error'); setTimeout(() => socket.emit('videoEnded'), 2000); }
+          onError: (e) => {
+            toast('⚠️ Erro ao reproduzir, pulando...', 'error');
+            // Tenta pular após 500ms
+            setTimeout(() => {
+              socket.emit('videoEnded');
+            }, 500);
+          }
         }
       });
     }
@@ -1504,16 +1500,21 @@
       if (currentTrackId !== track.id) {
         if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
         if (fadeOutInterval) { clearInterval(fadeOutInterval); fadeOutInterval = null; }
+        if (retryTimeout) { clearTimeout(retryTimeout); retryTimeout = null; }
         currentTrackId = track.id;
-        player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
-        // Força o volume após carregar
-        const vol = parseInt($('volumeSlider').value);
+        // Aguarda um pouco para garantir que o player está pronto
         setTimeout(() => {
-          if (player && player.setVolume) {
-            player.setVolume(vol);
-            player.playVideo();
+          if (player && player.loadVideoById) {
+            player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
+            const vol = parseInt($('volumeSlider').value);
+            setTimeout(() => {
+              if (player && player.setVolume) {
+                player.setVolume(vol);
+                player.playVideo();
+              }
+            }, 500);
           }
-        }, 500);
+        }, 300);
         $('trackTitle').textContent = track.title || 'Música';
         $('trackArtist').textContent = track.artist || 'Desconhecido';
         $('trackDj').textContent = '👤 ' + (track.dj || '');
@@ -1670,12 +1671,14 @@
         if (u.hostname.includes('youtube.com')) {
           const v = u.searchParams.get('v');
           if (v) return v;
+          // Tenta extrair de caminhos como /shorts/xxxx ou /embed/xxxx
           const parts = u.pathname.split('/').filter(Boolean);
           const markers = ['shorts', 'embed', 'live', 'watch'];
           const idx = parts.findIndex(p => markers.includes(p));
           if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
         }
       } catch(e) {}
+      // Fallback: regex para encontrar 11 caracteres alfanuméricos
       const match = url.match(/[a-zA-Z0-9_-]{11}/);
       return match ? match[0] : '';
     }
@@ -1684,7 +1687,7 @@
       const url = $('songUrl').value.trim();
       if (!url) { clearPreview(); return; }
       const videoId = extractYouTubeId(url);
-      if (!videoId) { toast('Link do YouTube inválido', 'error'); clearPreview(); return; }
+      if (!videoId || videoId.length !== 11) { toast('ID do YouTube inválido (deve ter 11 caracteres)', 'error'); clearPreview(); return; }
       const box = $('songPreview');
       box.classList.remove('hidden');
       $('previewThumb').innerHTML = '⏳';
@@ -1695,13 +1698,16 @@
       try {
         const r = await fetch(`/api/video-info?id=${videoId}`);
         const data = await r.json();
-        if (r.ok) { songData = { id: videoId, title: data.title, artist: data.artist || 'Desconhecido', duration: data.duration || null }; showPreview(songData); toast('🎵 Prévia carregada!', 'success'); return; }
+        if (r.ok) {
+          songData = { id: videoId, title: data.title || 'Música do YouTube', artist: data.artist || 'Desconhecido', duration: data.duration || null };
+          showPreview(songData);
+          toast('🎵 Prévia carregada! Clique em "Adicionar" novamente para enviar.', 'success');
+        } else {
+          toast('Erro ao obter informações do vídeo. Verifique o link.', 'error');
+          clearPreview();
+        }
       } catch(e) {
-        try {
-          const oembed = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
-          if (oembed.ok) { const d = await oembed.json(); songData = { id: videoId, title: d.title || 'Música do YouTube', artist: d.author_name || 'Desconhecido', duration: null }; showPreview(songData); toast('🎵 Prévia carregada!', 'success'); return; }
-        } catch(e2) {}
-        toast('Erro ao buscar informações', 'error');
+        toast('Erro ao conectar com o servidor.', 'error');
         clearPreview();
       }
     }
@@ -1741,12 +1747,11 @@
       const url = $('songUrl').value.trim();
       if (!url) { toast('Cole um link do YouTube', 'error'); return; }
       const videoId = extractYouTubeId(url);
-      if (!videoId) { toast('Link inválido', 'error'); return; }
-      if (songData && songData.id === videoId) { 
-        confirmAdd(); 
-      } else { 
-        previewSong(); 
-        // Se a prévia for exibida, o usuário pode clicar em "Adicionar" novamente
+      if (!videoId || videoId.length !== 11) { toast('Link inválido. Certifique-se de que é um vídeo do YouTube.', 'error'); return; }
+      if (songData && songData.id === videoId) {
+        confirmAdd();
+      } else {
+        previewSong();
       }
     }
 
