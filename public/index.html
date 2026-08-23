@@ -24,6 +24,7 @@
   <!-- ===== FIM DA CONFIGURAÇÃO FIREBASE ===== -->
 
   <style>
+    /* ... (Mantido igual por questão de espaço, mas o CSS original funciona) ... */
     /* ===== ESTILOS GLOBAIS ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -776,6 +777,8 @@
                 <div class="track-actions">
                   <button onclick="favoriteCurrent()" id="favCurrentBtn" data-i18n="player.fav">⭐ Favoritar</button>
                   <button onclick="voteSkip()" id="skipBtn" title="Votar para pular" data-i18n="player.skip">⏭️ Pular</button>
+                  <!-- Botão Admin Remover Música Atual -->
+                  <button onclick="adminRemoveCurrentSong()" id="adminRemoveBtn" style="display:none;" title="Remover música atual (Admin)">🗑️ Remover</button>
                 </div>
               </div>
             </div>
@@ -890,6 +893,9 @@
 
   <!-- ===== JAVASCRIPT ===== -->
   <script>
+    // ============================================================
+    // JAVASCRIPT COMPLETO (ATUALIZADO COM FIREBASE E AJUSTES ADMIN)
+    // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
     let currentUser = null, myName = '', myAvatar = '🎸', amIAdmin = false, currentRoom = null, currentRoomData = null;
@@ -902,6 +908,7 @@
     let audioCtx = null;
     let eventCountdownInterval = null;
 
+    // ===== TRADUÇÕES =====
     const translations = {
       pt: { 'hero.title': 'A pista é sua.<br>A trilha sonora é <span>de todo mundo</span>.', 'hero.sub': 'Entre em uma sala, adicione suas músicas favoritas do YouTube e converse em tempo real com a galera.', 'hero.cta1': '🎤 Entrar na sala', 'hero.cta2': '✍️ Criar conta', 'features.title': '🎶 Como funciona', 'features.sub': 'Tudo o que você precisa para criar a vibe perfeita', 'feature1.title': 'Fila colaborativa', 'feature1.desc': 'Todo mundo adiciona música do YouTube, a fila toca em sincronia para todos.', 'feature2.title': 'Chat ao vivo', 'feature2.desc': 'Comente as músicas, reaja com emojis e curta as escolhas da galera.', 'feature3.title': 'Votação democrática', 'feature3.desc': 'Curta ou dispense músicas da fila. Com 10 votos negativos, a música sai!', 'band.title': 'Ainda não tem conta? Crie uma agora!', 'band.sub': 'Cadastre-se e entre nas salas para ouvir música com amigos.', 'band.cta': 'Criar minha conta 🎵', 'login.sub': 'Entre com sua conta para acessar as salas.', 'login.error': 'Credenciais inválidas.', 'login.email': 'E-mail', 'login.password': 'Senha', 'login.btn': 'Entrar no palco', 'login.switch': 'Não tem conta?', 'login.signup': 'Cadastre-se', 'signup.title': '🎵 Criar conta', 'signup.name': 'Nome', 'signup.namePlaceholder': 'Seu nome', 'signup.nameError': 'Digite seu nome', 'signup.email': 'E-mail', 'signup.emailPlaceholder': 'voce@email.com', 'signup.emailError': 'Digite um e-mail válido', 'signup.password': 'Senha', 'signup.passwordPlaceholder': 'Crie uma senha', 'signup.passwordError': 'Mínimo 6 caracteres', 'signup.style': 'Estilo musical', 'signup.styleError': 'Escolha pelo menos um estilo', 'signup.cancel': 'Cancelar', 'signup.submit': 'Criar conta 🎶', 'admin.users': 'Usuários', 'admin.rooms': 'Salas', 'admin.online': 'Online', 'admin.clearChats': '🗑️ Limpar Chats', 'admin.clearRooms': '🧹 Limpar Salas', 'admin.export': '📥 Exportar', 'admin.broadcast': '📢 Mensagem', 'admin.manageQueues': '🎵 Gerenciar Filas', 'admin.refresh': '🔄 Atualizar', 'admin.loadingQueues': 'Carregando salas...', 'admin.usersTitle': '👥 Usuários', 'admin.loadingUsers': 'Carregando...', 'favorites.title': '⭐ Minhas Favoritas', 'favorites.loading': 'Carregando favoritos...', 'avatar.title': '🎨 Escolha seu avatar', 'avatar.cancel': 'Cancelar', 'avatar.save': 'Salvar', 'logout': 'Sair', 'lobby.title': 'Salas disponíveis', 'lobby.newRoom': '+ Nova sala', 'lobby.random': '🎲 Sala aleatória', 'lobby.loading': 'Carregando salas...', 'room.back': '← Voltar', 'queue.empty': 'Nenhuma música na fila', 'player.now': 'Tocando agora', 'player.live': 'Ao vivo', 'player.noTrack': 'Nenhuma música', 'player.addTrack': 'Adicione uma música', 'player.fav': '⭐ Favoritar', 'player.skip': '⏭️ Pular', 'next.label': 'A seguir', 'add.placeholder': 'Buscar no YouTube ou colar link...', 'add.btn': 'Adicionar', 'chat.listeners': 'ouvintes', 'chat.input': 'Mensagem...', 'chat.send': 'Enviar', 'createRoom.title': 'Criar sala', 'createRoom.placeholder': 'Nome da sala', 'createRoom.cancel': 'Cancelar', 'createRoom.create': 'Criar' },
       en: { 'hero.title': 'The dance floor is yours.<br>The soundtrack is <span>everyone\'s</span>.', 'hero.sub': 'Join a room, add your favorite YouTube songs and chat live with the crew.', 'hero.cta1': '🎤 Enter the room', 'hero.cta2': '✍️ Create account', 'features.title': '🎶 How it works', 'features.sub': 'Everything you need to create the perfect vibe', 'feature1.title': 'Collaborative queue', 'feature1.desc': 'Everyone adds YouTube music, the queue plays in sync for everyone.', 'feature2.title': 'Live chat', 'feature2.desc': 'Comment on the songs, react with emojis and like the crew\'s choices.', 'feature3.title': 'Democratic voting', 'feature3.desc': 'Like or dislike songs in the queue. With 10 dislikes, the song is removed!', 'band.title': 'Don\'t have an account yet? Create one now!', 'band.sub': 'Sign up and join rooms to listen to music with friends.', 'band.cta': 'Create my account 🎵', 'login.sub': 'Log in to access the rooms.', 'login.error': 'Invalid credentials.', 'login.email': 'Email', 'login.password': 'Password', 'login.btn': 'Enter the stage', 'login.switch': 'Don\'t have an account?', 'login.signup': 'Sign up', 'signup.title': '🎵 Create account', 'signup.name': 'Name', 'signup.namePlaceholder': 'Your name', 'signup.nameError': 'Enter your name', 'signup.email': 'Email', 'signup.emailPlaceholder': 'you@email.com', 'signup.emailError': 'Enter a valid email', 'signup.password': 'Password', 'signup.passwordPlaceholder': 'Create a password', 'signup.passwordError': 'Minimum 6 characters', 'signup.style': 'Music style', 'signup.styleError': 'Choose at least one style', 'signup.cancel': 'Cancel', 'signup.submit': 'Create account 🎶', 'admin.users': 'Users', 'admin.rooms': 'Rooms', 'admin.online': 'Online', 'admin.clearChats': '🗑️ Clear Chats', 'admin.clearRooms': '🧹 Clear Rooms', 'admin.export': '📥 Export', 'admin.broadcast': '📢 Message', 'admin.manageQueues': '🎵 Manage Queues', 'admin.refresh': '🔄 Refresh', 'admin.loadingQueues': 'Loading rooms...', 'admin.usersTitle': '👥 Users', 'admin.loadingUsers': 'Loading...', 'favorites.title': '⭐ My Favorites', 'favorites.loading': 'Loading favorites...', 'avatar.title': '🎨 Choose your avatar', 'avatar.cancel': 'Cancel', 'avatar.save': 'Save', 'logout': 'Logout', 'lobby.title': 'Available rooms', 'lobby.newRoom': '+ New room', 'lobby.random': '🎲 Random room', 'lobby.loading': 'Loading rooms...', 'room.back': '← Back', 'queue.empty': 'No songs in the queue', 'player.now': 'Now playing', 'player.live': 'Live', 'player.noTrack': 'No song', 'player.addTrack': 'Add a song', 'player.fav': '⭐ Favorite', 'player.skip': '⏭️ Skip', 'next.label': 'Up next', 'add.placeholder': 'Search YouTube or paste link...', 'add.btn': 'Add', 'chat.listeners': 'listeners', 'chat.input': 'Message...', 'chat.send': 'Send', 'createRoom.title': 'Create room', 'createRoom.placeholder': 'Room name', 'createRoom.cancel': 'Cancel', 'createRoom.create': 'Create' },
@@ -997,6 +1004,12 @@
       if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
       if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
 
+      // Pega o botão e desabilita para mostrar loading
+      const btn = document.querySelector('#signupModal .btn-primary');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Criando conta...';
+
       try {
         try {
           await firebase.auth().createUserWithEmailAndPassword(email, senha);
@@ -1038,6 +1051,10 @@
         toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
       } catch(e) {
         toast(e.message || 'Erro ao criar conta', 'error');
+      } finally {
+        // Restaura o botão independente do resultado
+        btn.disabled = false;
+        btn.innerHTML = originalText;
       }
     }
 
@@ -1097,11 +1114,16 @@
       $('userPointsBadge').textContent = badgeText;
     }
 
+    // Função Admin Aprimorada
     function checkAdmin() {
-      const isAdmin = currentUser && currentUser.email === 'admin@sonora.com';
+      const isAdmin = currentUser && (currentUser.email === 'admin@sonora.com' || amIAdmin);
       amIAdmin = isAdmin;
       ['adminBtn','adminBtnRoom'].forEach(id => { const el = $(id); if(el) el.style.display = isAdmin ? 'flex' : 'none'; });
       ['adminBadge'].forEach(id => { const el = $(id); if(el) el.classList.toggle('hidden', !isAdmin); });
+      
+      // Mostra/esconde o botão de remover música atual
+      const adminRemoveBtn = $('adminRemoveBtn');
+      if (adminRemoveBtn) adminRemoveBtn.style.display = isAdmin ? 'flex' : 'none';
     }
 
     function switchAdminTab(tabId) {
@@ -1267,6 +1289,30 @@
       if (!msg) return;
       socket.emit('adminBroadcast', { message: msg });
       toast('📢 Enviado!', 'success');
+    }
+
+    // Função para remover a música atual (Admin)
+    async function adminRemoveCurrentSong() {
+      if (!amIAdmin) return;
+      if (!currentRoomData || !currentRoomData.queue || !currentRoomData.queue.length) return;
+      const index = currentRoomData.currentIndex;
+      try {
+        const r = await fetch('/api/admin/remove-song', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ roomSlug: currentRoom, index })
+        });
+        const d = await r.json();
+        if (r.ok) {
+          toast('🗑️ Música removida!', 'success');
+          socket.emit('videoEnded'); // Força o servidor a pular para a próxima
+        } else {
+          toast(d.error || 'Erro ao remover', 'error');
+        }
+      } catch(e) {
+        toast('Erro ao remover', 'error');
+      }
     }
 
     async function loadAdminTopSongs() {
