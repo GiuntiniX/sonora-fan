@@ -22,7 +22,9 @@ const DISLIKE_THRESHOLD = 10;
 const MAX_SONGS_PER_USER = 3;
 const SKIP_VOTE_THRESHOLD = 0.5;
 const MIN_SKIP_VOTES = 3;
-const YOUTUBE_API_KEY = 'AIzaSyB--8a_0tAr9Mf2mxy0oWq7rB0qyacci3I';
+
+// 🔒 USE VARIÁVEL DE AMBIENTE PARA A CHAVE DO YOUTUBE
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 
 // ========== AUTENTICAÇÃO ==========
 const users = new Map();
