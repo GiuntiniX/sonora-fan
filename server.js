@@ -24,7 +24,6 @@ try {
   console.log('🔥 Firebase conectado!');
 } catch (e) {
   console.error('⚠️ Erro ao conectar Firebase:', e.message);
-  console.error('Verifique se a variável FIREBASE_SERVICE_ACCOUNT_KEY contém o JSON completo.');
 }
 
 const db = admin.firestore();
@@ -58,6 +57,17 @@ const rooms = new Map();
 const roomLikes = new Map();
 const roomVotes = new Map();
 const waitingRooms = new Map();
+
+// ========== FUNÇÕES DE APOIO FALTANTES (CORRIGIDO) ==========
+function getRoomLikes(slug) {
+  if (!roomLikes.has(slug)) roomLikes.set(slug, {});
+  return roomLikes.get(slug);
+}
+
+function getRoomVotes(slug) {
+  if (!roomVotes.has(slug)) roomVotes.set(slug, {});
+  return roomVotes.get(slug);
+}
 
 // ========== TEMAS DE SALA ==========
 const ROOM_THEMES = {
@@ -350,7 +360,7 @@ app.get('/api/rooms', (req, res) => {
   } catch (e) { console.error('Erro na rota /api/rooms:', e.message); res.status(500).json({ error: 'Erro interno ao listar salas' }); }
 });
 
-// ========== API DO YOUTUBE (COM TRY/CATCH FORTE) ==========
+// ========== API DO YOUTUBE ==========
 app.get('/api/search-youtube', async (req, res) => {
   const query = req.query.q;
   if (!query || query.length < 2) return res.json({ items: [] });
@@ -401,7 +411,7 @@ app.get('/api/video-info', async (req, res) => {
   res.json(info);
 });
 
-// ========== SOCKET (PROTEGIDO CONTRA CRASH) ==========
+// ========== SOCKET ==========
 io.on('connection', (socket) => {
   let currentRoom = null;
   let userEmail = null;
@@ -438,8 +448,11 @@ io.on('connection', (socket) => {
       socket.isAdmin = isGlobalAdmin || isRoomAdmin;
       if (isGlobalAdmin && !room.admin) room.admin = name;
       notifyNextWaiting(slug);
+
+      // Chama as funções corrigidas!
       socket.emit('likesState', getRoomLikes(slug));
       socket.emit('votesState', getRoomVotes(slug));
+
       socket.emit('roomState', {
         slug: room.slug, name: room.name, currentIndex: room.currentIndex,
         position: getPosition(room), votes: room.votes, queue: room.queue, waitingQueue: room.waitingQueue,
