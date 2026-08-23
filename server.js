@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const admin = require('firebase-admin');
 
-// ========== INICIALIZAÇÃO DO FIREBASE (CORRIGIDA - LÊ O JSON INTEIRO) ==========
+// ========== INICIALIZAÇÃO DO FIREBASE (LENDO JSON INTEIRO) ==========
 try {
   // Lê o JSON inteiro diretamente da variável de ambiente
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
@@ -83,21 +83,30 @@ function createRoom(slug, name, adminName = null) {
 
 // ========== FUNÇÕES FIREBASE ==========
 async function getUserFromFirestore(email) {
-  try { const doc = await db.collection('users').doc(email).get(); if (doc.exists) return doc.data(); } catch (e) {}
+  try {
+    const doc = await db.collection('users').doc(email).get();
+    if (doc.exists) return doc.data();
+  } catch (e) {}
   return null;
 }
 async function setUserInFirestore(email, data) {
   try { await db.collection('users').doc(email).set(data, { merge: true }); } catch (e) {}
 }
 async function getFavoritesFromFirestore(email) {
-  try { const doc = await db.collection('favorites').doc(email).get(); if (doc.exists) return doc.data().items || []; } catch (e) {}
+  try {
+    const doc = await db.collection('favorites').doc(email).get();
+    if (doc.exists) return doc.data().items || [];
+  } catch (e) {}
   return [];
 }
 async function setFavoritesInFirestore(email, items) {
   try { await db.collection('favorites').doc(email).set({ items }); } catch (e) {}
 }
 async function getPointsFromFirestore(email) {
-  try { const doc = await db.collection('points').doc(email).get(); if (doc.exists) return doc.data(); } catch (e) {}
+  try {
+    const doc = await db.collection('points').doc(email).get();
+    if (doc.exists) return doc.data();
+  } catch (e) {}
   return { points: 0, badges: [] };
 }
 async function setPointsInFirestore(email, data) {
@@ -113,9 +122,10 @@ async function loadAllUsers() {
 }
 loadAllUsers();
 
+// Cria a sala padrão (Lounge) caso não exista
 rooms.set('lounge', createRoom('lounge', 'Lounge Sonora', 'Sistema'));
 
-// ========== FUNÇÕES AUXILIARES ==========
+// ========== FUNÇÕES AUXILIARES DAS SALAS ==========
 function getPosition(room) {
   const track = room.queue[room.currentIndex];
   if (!track) return 0;
@@ -125,19 +135,30 @@ function broadcastState(slug) {
   const room = rooms.get(slug);
   if (!room) return;
   io.to(slug).emit('roomState', {
-    slug: room.slug, name: room.name, currentIndex: room.currentIndex, position: getPosition(room), votes: room.votes,
-    queue: room.queue, waitingQueue: room.waitingQueue, admin: room.admin, isPlaying: room.isPlaying,
-    history: room.history.slice(-10), radioMode: room.radioMode, pinnedMessage: room.pinnedMessage,
-    listenerCount: room.listenerCount, maxListeners: settings.maxListeners, color: room.color,
-    theme: room.theme, inviteCount: room.inviteCount, eventStartTime: room.eventStartTime,
+    slug: room.slug, name: room.name,
+    currentIndex: room.currentIndex,
+    position: getPosition(room),
+    votes: room.votes,
+    queue: room.queue,
+    waitingQueue: room.waitingQueue,
+    admin: room.admin,
+    isPlaying: room.isPlaying,
+    history: room.history.slice(-10),
+    radioMode: room.radioMode,
+    pinnedMessage: room.pinnedMessage,
+    listenerCount: room.listenerCount,
+    maxListeners: settings.maxListeners,
+    color: room.color,
+    theme: room.theme,
+    inviteCount: room.inviteCount,
+    eventStartTime: room.eventStartTime,
   });
 }
 function broadcastUsers(slug) {
   io.in(slug).fetchSockets().then(sockets => {
     const userList = sockets.map(s => ({
-      name: s.userName || 'Anônimo', color: s.userColor || '#888', isAdmin: s.isAdmin || false,
-      avatar: s.userAvatar || '👤', points: userPoints.get(s.userEmail)?.points || 0,
-      badges: userPoints.get(s.userEmail)?.badges || [],
+      name: s.userName || 'Anônimo', color: s.userColor || '#888', isAdmin: s.isAdmin || false, avatar: s.userAvatar || '👤',
+      points: userPoints.get(s.userEmail)?.points || 0, badges: userPoints.get(s.userEmail)?.badges || [],
     }));
     io.to(slug).emit('users', userList);
   });
@@ -256,7 +277,7 @@ async function sendDiscordWebhook(webhookUrl, message) {
   try { await fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: message }) }); } catch (e) {}
 }
 
-// ========== ROTAS DE AUTENTICAÇÃO ==========
+// ========== ROTAS DE AUTENTICAÇÃO (LOGIN CORRIGIDO) ==========
 app.post('/api/signup', async (req, res) => {
   const { nome, email, senha, estilos } = req.body;
   if (!nome || nome.length < 2) return res.status(400).json({ error: 'Nome inválido' });
@@ -291,6 +312,12 @@ app.post('/api/login', async (req, res) => {
     if (!userDoc.exists) return res.status(401).json({ error: 'Usuário não encontrado' });
 
     const userData = userDoc.data();
+    
+    // 🔥 ADICIONA USUÁRIO NA MEMÓRIA PARA A SALA CARREGAR
+    if (!users.has(email)) {
+      users.set(email, userData);
+    }
+
     const token = crypto.randomBytes(64).toString('hex');
     sessions.set(token, email);
     res.cookie('sessionToken', token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: 'lax', path: '/' });
