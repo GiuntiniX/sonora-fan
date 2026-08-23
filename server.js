@@ -69,16 +69,6 @@ function getRoomVotes(slug) {
   return roomVotes.get(slug);
 }
 
-// ========== TEMAS DE SALA ==========
-const ROOM_THEMES = {
-  default: { bg: '#050508', card: '#0f0f18', border: '#1e1e2e', accent: '#ff6b35', accent2: '#7c3aed' },
-  '80s': { bg: '#1a0a2e', card: '#2d1b4e', border: '#6c2bd9', accent: '#ff00ff', accent2: '#00ffff' },
-  mpb: { bg: '#0a1a0a', card: '#1a2a1a', border: '#2a5a2a', accent: '#f5a623', accent2: '#7cb342' },
-  rock: { bg: '#0a0a0a', card: '#1a1a1a', border: '#3a3a3a', accent: '#e53935', accent2: '#ff6f00' },
-  eletronica: { bg: '#050510', card: '#0a0a20', border: '#1a2a5a', accent: '#00e5ff', accent2: '#aa00ff' },
-  sertanejo: { bg: '#1a0a05', card: '#2a150a', border: '#4a2a15', accent: '#ff8f00', accent2: '#bf360c' },
-};
-
 function createRoom(slug, name, adminName = null) {
   roomLikes.set(slug, {});
   roomVotes.set(slug, {});
@@ -92,7 +82,7 @@ function createRoom(slug, name, adminName = null) {
     lastAddTime: new Map(), isPlaying: false, lastAdvanceAt: 0,
     history: [], skipVotes: new Set(),
     radioMode: false, radioGenre: 'pop',
-    pinnedMessage: null, color: '#7c3aed', theme: 'default',
+    pinnedMessage: null, color: '#7c3aed',
     discordWebhook: null, inviteCount: 0, eventStartTime: null,
     totalSongsAdded: 0, totalVotesGiven: 0, mostVoted: [],
   };
@@ -157,7 +147,6 @@ function broadcastState(slug) {
     listenerCount: room.listenerCount,
     maxListeners: settings.maxListeners,
     color: room.color,
-    theme: room.theme,
     inviteCount: room.inviteCount,
     eventStartTime: room.eventStartTime,
   });
@@ -354,61 +343,117 @@ app.get('/api/rooms', (req, res) => {
       queueLength: r.queue.length, isPlaying: r.isPlaying,
       currentTrack: r.queue[r.currentIndex] || null,
       radioMode: r.radioMode, color: r.color || '#7c3aed',
-      theme: r.theme || 'default', inviteCount: r.inviteCount, eventStartTime: r.eventStartTime,
+      inviteCount: r.inviteCount, eventStartTime: r.eventStartTime,
     }));
     res.json(list);
   } catch (e) { console.error('Erro na rota /api/rooms:', e.message); res.status(500).json({ error: 'Erro interno ao listar salas' }); }
 });
 
-// ========== API DO YOUTUBE ==========
-app.get('/api/search-youtube', async (req, res) => {
-  const query = req.query.q;
-  if (!query || query.length < 2) return res.json({ items: [] });
-  try {
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    const items = data.items.map(item => ({ id: item.id.videoId, title: item.snippet.title, artist: item.snippet.channelTitle, thumb: item.snippet.thumbnails.default.url }));
-    res.json({ items });
-  } catch (e) { console.error('Erro na busca do YouTube:', e.message); res.status(500).json({ error: 'Erro ao buscar vídeos: ' + e.message, items: [] }); }
+app.post('/api/rooms', (req, res) => {
+  const { name, adminName, color } = req.body;
+  if (!name || name.trim().length < 2) return res.status(400).json({ error: 'Nome inválido' });
+  const slug = name.trim().toLowerCase().replace(/\s+/g, '-') + '-' + Date.now().toString(36);
+  if (rooms.has(slug)) return res.status(400).json({ error: 'Sala já existe' });
+  const room = createRoom(slug, name.trim(), adminName || 'Anônimo');
+  if (color) room.color = color;
+  rooms.set(slug, room);
+  res.json({ slug, name: room.name });
 });
 
-function fetchUrl(url) {
-  return new Promise((resolve, reject) => {
-    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 }, (res) => {
-      if (res.statusCode !== 200) { res.resume(); return reject(new Error('HTTP ' + res.statusCode)); }
-      let data = ''; res.setEncoding('utf8');
-      res.on('data', chunk => { data += chunk; if (data.length > 4e6) req.destroy(); });
-      res.on('end', () => resolve(data));
-    });
-    req.on('timeout', () => req.destroy(new Error('timeout')));
-    req.on('error', reject);
-  });
-}
+app.get('/api/rooms/random', (req, res) => {
+  const roomList = Array.from(rooms.values());
+  if (roomList.length === 0) return res.status(404).json({ error: 'Nenhuma sala disponível' });
+  const randomRoom = roomList[Math.floor(Math.random() * roomList.length)];
+  res.json({ slug: randomRoom.slug });
+});
 
-app.get('/api/video-info', async (req, res) => {
-  const id = String(req.query.id || '').trim();
-  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
-  const info = { id, title: null, artist: null, duration: null };
-  try {
-    const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
-    const data = JSON.parse(raw); info.title = data.title || null; info.artist = data.author_name || null;
-  } catch (e) {}
-  try {
-    const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
-    const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
-    if (jsonLdMatch) {
-      try { const jsonLd = JSON.parse(jsonLdMatch[1]); if (jsonLd.duration) { const match = jsonLd.duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/); if (match) { info.duration = (parseInt(match[1] || 0) * 3600) + (parseInt(match[2] || 0) * 60) + parseInt(match[3] || 0); } } } catch (e) {}
-    }
-    if (!info.duration) {
-      const playerResponseMatch = html.match(/var ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
-      if (playerResponseMatch) { try { const data = JSON.parse(playerResponseMatch[1]); if (data.videoDetails && data.videoDetails.lengthSeconds) info.duration = parseInt(data.videoDetails.lengthSeconds, 10); } catch (e) {} }
-    }
-    if (!info.title) { const titleMatch = html.match(/<title>([^<]+)<\/title>/); if (titleMatch) info.title = titleMatch[1].replace(/ - YouTube\s*$/, '').trim(); }
-  } catch (e) {}
-  if (!info.title) info.title = 'Vídeo do YouTube (ID: ' + id + ')';
-  res.json(info);
+app.get('/api/room/:slug/queue', (req, res) => {
+  const room = rooms.get(req.params.slug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  res.json({ queue: room.queue, currentIndex: room.currentIndex });
+});
+
+app.get('/api/room/:slug/stats', (req, res) => {
+  const room = rooms.get(req.params.slug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  res.json({ mostVoted: room.mostVoted.slice(0, 10) });
+});
+
+app.post('/api/room/:slug/invite', (req, res) => {
+  const room = rooms.get(req.params.slug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  room.inviteCount = (room.inviteCount || 0) + 1;
+  res.json({ success: true });
+});
+
+app.post('/api/room/:slug/webhook', (req, res) => {
+  const room = rooms.get(req.params.slug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  room.discordWebhook = req.body.webhookUrl || null;
+  res.json({ success: true });
+});
+
+app.post('/api/room/:slug/event', (req, res) => {
+  const room = rooms.get(req.params.slug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  room.eventStartTime = req.body.startTime || null;
+  broadcastState(req.params.slug);
+  res.json({ success: true });
+});
+
+// ========== FAVORITOS ==========
+app.get('/api/favorites', async (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const favs = await getFavoritesFromFirestore(email);
+  res.json(favs);
+});
+
+app.post('/api/favorites', async (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const { videoId, title, artist } = req.body;
+  if (!videoId) return res.status(400).json({ error: 'ID do vídeo necessário' });
+  let favs = await getFavoritesFromFirestore(email);
+  if (!favs.find(f => f.id === videoId)) {
+    favs.push({ id: videoId, title: title || 'Música', artist: artist || 'Desconhecido' });
+    await setFavoritesInFirestore(email, favs);
+    userFavorites.set(email, favs);
+  }
+  res.json({ success: true });
+});
+
+app.delete('/api/favorites/:id', async (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const id = req.params.id;
+  let favs = await getFavoritesFromFirestore(email);
+  favs = favs.filter(f => f.id !== id);
+  await setFavoritesInFirestore(email, favs);
+  userFavorites.set(email, favs);
+  res.json({ success: true });
+});
+
+// ========== AVATAR ==========
+app.post('/api/update-avatar', async (req, res) => {
+  const token = req.cookies.sessionToken;
+  if (!token) return res.status(401).json({ error: 'Não autenticado' });
+  const email = sessions.get(token);
+  if (!email) return res.status(401).json({ error: 'Sessão inválida' });
+  const { avatar } = req.body;
+  if (!avatar) return res.status(400).json({ error: 'Avatar necessário' });
+  const userData = users.get(email) || await getUserFromFirestore(email);
+  if (!userData) return res.status(404).json({ error: 'Usuário não encontrado' });
+  userData.avatar = avatar;
+  await setUserInFirestore(email, userData);
+  users.set(email, userData);
+  res.json({ success: true });
 });
 
 // ========== ADMIN ROTAS ==========
@@ -483,7 +528,6 @@ app.post('/api/admin/ban-user', async (req, res) => {
   if (!userData) return res.status(404).json({ error: 'Usuário não encontrado' });
   userData.banned = true;
   await setUserInFirestore(email, userData);
-  // Desconectar de todas as salas
   io.fetchSockets().then(sockets => {
     for (const socket of sockets) {
       if (socket.userEmail === email) {
@@ -503,7 +547,6 @@ app.post('/api/admin/remove-song', (req, res) => {
   if (index < 0 || index >= room.queue.length) return res.status(400).json({ error: 'Índice inválido' });
   const removed = room.queue.splice(index, 1)[0];
   if (index < room.currentIndex) room.currentIndex--;
-  // Atualizar votos
   const votes = getRoomVotes(roomSlug);
   const newVotes = {};
   room.queue.forEach((_, i) => { if (votes[i + 1]) newVotes[i] = votes[i + 1]; });
@@ -543,6 +586,57 @@ app.get('/api/admin/export-data', (req, res) => {
     settings,
   };
   res.json(data);
+});
+
+// ========== API DO YOUTUBE ==========
+app.get('/api/search-youtube', async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.length < 2) return res.json({ items: [] });
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const items = data.items.map(item => ({ id: item.id.videoId, title: item.snippet.title, artist: item.snippet.channelTitle, thumb: item.snippet.thumbnails.default.url }));
+    res.json({ items });
+  } catch (e) { console.error('Erro na busca do YouTube:', e.message); res.status(500).json({ error: 'Erro ao buscar vídeos: ' + e.message, items: [] }); }
+});
+
+function fetchUrl(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 }, (res) => {
+      if (res.statusCode !== 200) { res.resume(); return reject(new Error('HTTP ' + res.statusCode)); }
+      let data = ''; res.setEncoding('utf8');
+      res.on('data', chunk => { data += chunk; if (data.length > 4e6) req.destroy(); });
+      res.on('end', () => resolve(data));
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+  });
+}
+
+app.get('/api/video-info', async (req, res) => {
+  const id = String(req.query.id || '').trim();
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(id)) return res.status(400).json({ error: 'ID inválido' });
+  const info = { id, title: null, artist: null, duration: null };
+  try {
+    const raw = await fetchUrl(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+    const data = JSON.parse(raw); info.title = data.title || null; info.artist = data.author_name || null;
+  } catch (e) {}
+  try {
+    const html = await fetchUrl(`https://www.youtube.com/watch?v=${id}`);
+    const jsonLdMatch = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    if (jsonLdMatch) {
+      try { const jsonLd = JSON.parse(jsonLdMatch[1]); if (jsonLd.duration) { const match = jsonLd.duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/); if (match) { info.duration = (parseInt(match[1] || 0) * 3600) + (parseInt(match[2] || 0) * 60) + parseInt(match[3] || 0); } } } catch (e) {}
+    }
+    if (!info.duration) {
+      const playerResponseMatch = html.match(/var ytInitialPlayerResponse\s*=\s*({[\s\S]*?});/);
+      if (playerResponseMatch) { try { const data = JSON.parse(playerResponseMatch[1]); if (data.videoDetails && data.videoDetails.lengthSeconds) info.duration = parseInt(data.videoDetails.lengthSeconds, 10); } catch (e) {} }
+    }
+    if (!info.title) { const titleMatch = html.match(/<title>([^<]+)<\/title>/); if (titleMatch) info.title = titleMatch[1].replace(/ - YouTube\s*$/, '').trim(); }
+  } catch (e) {}
+  if (!info.title) info.title = 'Vídeo do YouTube (ID: ' + id + ')';
+  res.json(info);
 });
 
 // ========== SOCKET ==========
@@ -591,7 +685,7 @@ io.on('connection', (socket) => {
         position: getPosition(room), votes: room.votes, queue: room.queue, waitingQueue: room.waitingQueue,
         admin: room.admin, isPlaying: room.isPlaying, history: room.history.slice(-10), radioMode: room.radioMode,
         pinnedMessage: room.pinnedMessage, listenerCount: room.listenerCount, maxListeners: settings.maxListeners,
-        color: room.color, theme: room.theme, inviteCount: room.inviteCount, eventStartTime: room.eventStartTime,
+        color: room.color, inviteCount: room.inviteCount, eventStartTime: room.eventStartTime,
       });
       socket.emit('chatHistory', room.chatHistory.slice(-150));
       socket.emit('isAdmin', socket.isAdmin);
