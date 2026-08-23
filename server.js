@@ -58,7 +58,7 @@ const roomLikes = new Map();
 const roomVotes = new Map();
 const waitingRooms = new Map();
 
-// ========== FUNÇÕES DE APOIO FALTANTES (CORRIGIDO) ==========
+// ========== FUNÇÕES DE APOIO ==========
 function getRoomLikes(slug) {
   if (!roomLikes.has(slug)) roomLikes.set(slug, {});
   return roomLikes.get(slug);
@@ -411,6 +411,140 @@ app.get('/api/video-info', async (req, res) => {
   res.json(info);
 });
 
+// ========== ADMIN ROTAS ==========
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    const snapshot = await db.collection('users').get();
+    const totalUsers = snapshot.size;
+    const totalRooms = rooms.size;
+    const onlineUsers = (await io.fetchSockets()).length;
+    res.json({ totalUsers, totalRooms, onlineUsers });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const snapshot = await db.collection('users').get();
+    const usersList = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      usersList.push({ email: doc.id, nome: data.nome, isAdmin: adminEmails.has(doc.id) });
+    });
+    res.json(usersList);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/promote', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email necessário' });
+  adminEmails.add(email);
+  res.json({ success: true });
+});
+
+app.post('/api/admin/delete-user', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email necessário' });
+  try {
+    await db.collection('users').doc(email).delete();
+    await db.collection('favorites').doc(email).delete();
+    await db.collection('points').doc(email).delete();
+    users.delete(email);
+    userPoints.delete(email);
+    userFavorites.delete(email);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/kick-user', (req, res) => {
+  const { email, roomSlug } = req.body;
+  if (!email || !roomSlug) return res.status(400).json({ error: 'Dados incompletos' });
+  const room = rooms.get(roomSlug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  io.in(roomSlug).fetchSockets().then(sockets => {
+    for (const socket of sockets) {
+      if (socket.userEmail === email) {
+        socket.emit('kicked', 'Você foi expulso da sala pelo admin.');
+        socket.leave(roomSlug);
+        room.listenerCount = Math.max(0, room.listenerCount - 1);
+        broadcastState(roomSlug);
+        broadcastUsers(roomSlug);
+        res.json({ success: true });
+        return;
+      }
+    }
+    res.status(404).json({ error: 'Usuário não está na sala' });
+  });
+});
+
+app.post('/api/admin/ban-user', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email necessário' });
+  const userData = await getUserFromFirestore(email);
+  if (!userData) return res.status(404).json({ error: 'Usuário não encontrado' });
+  userData.banned = true;
+  await setUserInFirestore(email, userData);
+  // Desconectar de todas as salas
+  io.fetchSockets().then(sockets => {
+    for (const socket of sockets) {
+      if (socket.userEmail === email) {
+        socket.emit('banned', 'Você foi banido do Sonora Fan.');
+        socket.disconnect();
+      }
+    }
+  });
+  res.json({ success: true });
+});
+
+app.post('/api/admin/remove-song', (req, res) => {
+  const { roomSlug, index } = req.body;
+  if (roomSlug === undefined || index === undefined) return res.status(400).json({ error: 'Dados incompletos' });
+  const room = rooms.get(roomSlug);
+  if (!room) return res.status(404).json({ error: 'Sala não encontrada' });
+  if (index < 0 || index >= room.queue.length) return res.status(400).json({ error: 'Índice inválido' });
+  const removed = room.queue.splice(index, 1)[0];
+  if (index < room.currentIndex) room.currentIndex--;
+  // Atualizar votos
+  const votes = getRoomVotes(roomSlug);
+  const newVotes = {};
+  room.queue.forEach((_, i) => { if (votes[i + 1]) newVotes[i] = votes[i + 1]; });
+  roomVotes.set(roomSlug, newVotes);
+  broadcastState(roomSlug);
+  addSystemMsg(roomSlug, `🗑️ "${removed.title}" removida pelo admin.`);
+  res.json({ success: true });
+});
+
+app.post('/api/admin/clear-all-chats', (req, res) => {
+  for (const [slug, room] of rooms) {
+    room.chatHistory = [];
+    roomLikes.set(slug, {});
+    io.to(slug).emit('chatCleared');
+  }
+  res.json({ success: true });
+});
+
+app.post('/api/admin/clear-all-rooms', (req, res) => {
+  for (const [slug, room] of rooms) {
+    if (slug === 'lounge') continue;
+    io.to(slug).emit('roomClosed', 'Sala removida pelo admin.');
+    rooms.delete(slug);
+    roomLikes.delete(slug);
+    roomVotes.delete(slug);
+    waitingRooms.delete(slug);
+  }
+  res.json({ success: true });
+});
+
+app.get('/api/admin/export-data', (req, res) => {
+  const data = {
+    users: Array.from(users.values()),
+    rooms: Array.from(rooms.values()).map(r => ({ ...r, lastAddTime: undefined, skipVotes: undefined })),
+    favorites: Array.from(userFavorites.entries()),
+    points: Array.from(userPoints.entries()),
+    settings,
+  };
+  res.json(data);
+});
+
 // ========== SOCKET ==========
 io.on('connection', (socket) => {
   let currentRoom = null;
@@ -449,7 +583,6 @@ io.on('connection', (socket) => {
       if (isGlobalAdmin && !room.admin) room.admin = name;
       notifyNextWaiting(slug);
 
-      // Chama as funções corrigidas!
       socket.emit('likesState', getRoomLikes(slug));
       socket.emit('votesState', getRoomVotes(slug));
 
