@@ -945,10 +945,23 @@
 
     function applyTheme() {
       const themes = {
-        'dark': { btn:'🌙', bg:'#050508', card:'#0f0f18', hover:'#161620', border:'#1e1e2e', text:'#f0f0f8', textSec:'#9a9ab0', textMuted:'#555570', accent:'#ff6b35', accent2:'#7c3aed', bgImage:'none', overlay:'transparent' },
-        'light': { btn:'☀️', bg:'#ffffff', card:'#fafafa', hover:'#f0f0f0', border:'#d4af37', text:'#000000', textSec:'#222222', textMuted:'#333333', accent:'#d4af37', accent2:'#b8860b', bgImage:'none', overlay:'transparent' },
-        'neon': { btn:'🟢', bg:'#070a12', card:'#111827', hover:'#1a2236', border:'#1f2a4a', text:'#e0f0ff', textSec:'#88aacc', textMuted:'#446688', accent:'#22d3ee', accent2:'#10b981', bgImage:'none', overlay:'transparent' },
-        'terra-sonora': { btn:'🌄', bg:'#140a05', card:'#2a180e', hover:'#3a2216', border:'#4a2e1e', text:'#fcf3ee', textSec:'#cbaa98', textMuted:'#8a6a58', accent:'#e85d3a', accent2:'#d94a20', bgImage:'url("https://t4.ftcdn.net/jpg/20/02/67/77/360_F_2002677708_UBAcK7cp7xpTppZmRkc4sohB3BlSYYU8.jpg")', overlay:'rgba(0,0,0,0.65)' }
+      // 1. OCEAN BREEZE (Azul calmo e refrescante - ideal para produtividade)
+'ocean': { btn:'🌊', bg:'#e8f0fe', card:'#ffffff', hover:'#d2e3fc', border:'#b6c8e6', text:'#0b1e3a', textSec:'#2a4b7c', textMuted:'#6a8bb0', accent:'#1a73e8', accent2:'#0d47a1', bgImage:'none', overlay:'transparent' },
+
+// 2. SUNSET GLOW (Quente e vibrante - energia e criatividade)
+'sunset': { btn:'🌅', bg:'#1a0e12', card:'#2d1b20', hover:'#40262e', border:'#5a3845', text:'#fde8e0', textSec:'#eab8a8', textMuted:'#a07268', accent:'#ff7b54', accent2:'#ffb26b', bgImage:'none', overlay:'transparent' },
+
+// 3. FOREST MOSS (Verde terroso - confortável e natural)
+'forest': { btn:'🌿', bg:'#0f130a', card:'#1c2415', hover:'#2a3420', border:'#3d4a30', text:'#edf3e0', textSec:'#b3c99a', textMuted:'#6b7f56', accent:'#8bc34a', accent2:'#558b2f', bgImage:'none', overlay:'transparent' },
+
+// 4. HIGH CONTRAST (Acessibilidade máxima - preto, branco e amarelo)
+'high-contrast': { btn:'♿', bg:'#000000', card:'#1a1a1a', hover:'#333333', border:'#666666', text:'#ffffff', textSec:'#f0f0f0', textMuted:'#aaaaaa', accent:'#ffd700', accent2:'#ffaa00', bgImage:'none', overlay:'transparent' },
+
+// 5. CHERRY BLOSSOM (Suave e delicado - rosa com cinza)
+'cherry': { btn:'🌸', bg:'#fcf4f7', card:'#ffffff', hover:'#fce4ec', border:'#f8bbd0', text:'#4a1a2c', textSec:'#7a4b5c', textMuted:'#b08b9a', accent:'#e91e63', accent2:'#ad1457', bgImage:'none', overlay:'transparent' },
+
+// 6. RETRO AMBER (Estilo terminal antigo - nostálgico e suave para os olhos)
+'retro': { btn:'📺', bg:'#0f0b06', card:'#1c150d', hover:'#2a1f14', border:'#3d2e1e', text:'#e8c98a', textSec:'#c4a064', textMuted:'#7a633a', accent:'#ffa500', accent2:'#cc8400', bgImage:'none', overlay:'rgba(0,0,0,0.4)' }
       };
       const t = themes[currentTheme] || themes['dark'];
       Object.entries(t).forEach(([k,v]) => {
