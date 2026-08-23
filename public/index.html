@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Sonora Fan — A melhor Vibe</title>
   <script src="/socket.io/socket.io.js"></script>
+  
+  <!-- TROCAR AQUI: INICIO DA CONFIGURAÇÃO FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script>
+    // Substitua pelos valores do seu projeto Firebase (Configurações > Seus apps > SDK)
+    const firebaseConfig = {
+      apiKey: ""AIzaSyAF1I-hhlJeiaAWNj6Ze7B6KMP1-iyOBWU",
+      authDomain: "sonorafan-777.firebaseapp.com",
+      projectId: "sonorafan-777",
+      storageBucket: "sonorafan-777.firebasestorage.app",
+      messagingSenderId: "790544929713",
+      appId: "1:790544929713:web:aa42cb147b7c4ecfe2a390"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+  <!-- TROCAR AQUI: FIM DA CONFIGURAÇÃO FIREBASE -->
+
   <style>
     /* ===== ESTILOS GLOBAIS ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -1123,14 +1141,14 @@
       <a href="#" onclick="sharePage('whatsapp'); return false;" title="WhatsApp"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/960px-WhatsApp.svg.png" alt="WhatsApp"></a>
       <a href="#" onclick="sharePage('twitter'); return false;" title="Twitter"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvBQj3eYlJYOfo13gijtX4XWNDpiM0O7a7IfpxGMhiQ9CltsrZ8myP9uQ&s=10" alt="Twitter"></a>
       <a href="#" onclick="sharePage('facebook'); return false;" title="Facebook"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/0/04/Facebook_f_logo_%282021%29.svg/3840px-Facebook_f_logo_%282021%29.svg.png" alt="Facebook"></a>
-      <a href="#" onclick="sharePage('threads'); return false;" title="Threads"><img src="https://vectorseek.com/wp-content/uploads/2023/07/vectorseek.com-Threads-Logo-Vector.png" alt="Threads"></a>
+      <a href="#" onclick="sharePage('threads'); return false;" title="Threads"><img src="https://img.magnific.com/vetores-gratis/topicos-logotipo-em-fundo-preto-em-vetor_1017-45262.jpg?semt=ais_hybrid&w=740&q=80" alt="Threads"></a>
     </div>
   </div>
 
   <!-- ===== JAVASCRIPT ===== -->
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO
+    // JAVASCRIPT COMPLETO (ATUALIZADO COM FIREBASE)
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -1443,7 +1461,7 @@
     const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
     function censorText(t) { let c = t; badWords.forEach(w => { const r = new RegExp('\\b' + w + '\\b','gi'); c = c.replace(r,'***'); }); return c; }
 
-    // ===== TEMAS (com ajuste para light) =====
+    // ===== TEMAS =====
     function applyTheme() {
       const themes = {
         'dark': { btn:'🌙', bg:'#050508', card:'#0f0f18', hover:'#161620', border:'#1e1e2e', text:'#f0f0f8', textSec:'#9a9ab0', textMuted:'#555570', accent:'#ff6b35', accent2:'#7c3aed', bgImage:'none', overlay:'transparent' },
@@ -1470,7 +1488,7 @@
       toast('Tema: ' + currentTheme, 'success');
     }
 
-    // ===== AUTENTICAÇÃO =====
+    // ===== AUTENTICAÇÃO (FIREBASE CLIENT) =====
     function showLogin() { $('landingScreen').style.display = 'none'; $('loginScreen').classList.add('active'); }
     function hideLogin() { $('loginScreen').classList.remove('active'); }
     function openSignup() { hideLogin(); $('signupModal').classList.add('active'); }
@@ -1486,7 +1504,11 @@
       if (!email.includes('@')) return toast('E-mail inválido', 'error');
       if (senha.length < 6) return toast('Senha deve ter 6+ caracteres', 'error');
       if (estilos.length === 0) return toast('Escolha um estilo musical', 'error');
+      
       try {
+        // Cria usuário no Firebase Client
+        await firebase.auth().createUserWithEmailAndPassword(email, senha);
+        
         const res = await fetch('/api/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1494,6 +1516,7 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
+        
         const loginRes = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1501,12 +1524,13 @@
         });
         const loginData = await loginRes.json();
         if (!loginRes.ok) throw new Error(loginData.error);
+        
         currentUser = loginData.user;
         myName = currentUser.nome;
         myAvatar = currentUser.avatar || '🎸';
         myPoints = currentUser.points || 0;
         myBadges = currentUser.badges || [];
-        if (currentUser.theme) { currentTheme = currentUser.theme; applyTheme(); }
+        
         closeSignup();
         hideLogin();
         $('landingScreen').style.display = 'none';
@@ -1516,11 +1540,7 @@
         checkAdmin();
         loadFavorites();
         toast('Bem-vindo(a) ' + myName + '! 🎉', 'success');
-        if (pendingRoomAfterLogin) {
-          const s = pendingRoomAfterLogin;
-          pendingRoomAfterLogin = null;
-          setTimeout(() => joinRoom(s), 1000);
-        }
+        
       } catch(e) {
         toast(e.message || 'Erro ao criar conta', 'error');
       }
@@ -1531,10 +1551,15 @@
       const senha = $('loginPassword').value.trim();
       const errorEl = $('loginError');
       if (!email || !senha) { errorEl.textContent = 'Preencha e-mail e senha'; errorEl.classList.add('show'); return; }
+      
       const btn = $('loginBtn');
       btn.disabled = true;
       btn.textContent = 'Entrando...';
+      
       try {
+        // Login real no Firebase Client (Valida a senha)
+        await firebase.auth().signInWithEmailAndPassword(email, senha);
+        
         const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1542,12 +1567,13 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
+        
         currentUser = data.user;
         myName = currentUser.nome;
         myAvatar = currentUser.avatar || '🎸';
         myPoints = currentUser.points || 0;
         myBadges = currentUser.badges || [];
-        if (currentUser.theme) { currentTheme = currentUser.theme; applyTheme(); }
+        
         hideLogin();
         $('landingScreen').style.display = 'none';
         showScreen('lobby');
@@ -1556,11 +1582,7 @@
         checkAdmin();
         loadFavorites();
         toast('Bem-vindo(a) de volta ' + myName + '!', 'success');
-        if (pendingRoomAfterLogin) {
-          const s = pendingRoomAfterLogin;
-          pendingRoomAfterLogin = null;
-          setTimeout(() => joinRoom(s), 1000);
-        }
+        
       } catch(e) {
         errorEl.textContent = e.message || 'Erro ao fazer login';
         errorEl.classList.add('show');
@@ -1571,6 +1593,8 @@
     }
 
     function doLogout() {
+      // Desloga do Firebase
+      firebase.auth().signOut().catch(() => {});
       fetch('/api/logout', { method: 'POST' }).catch(() => {});
       if (currentRoom) { socket.emit('leaveRoom'); currentRoom = null; }
       currentUser = null;
