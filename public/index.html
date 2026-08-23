@@ -707,7 +707,6 @@
         <div class="header-left">
           <button onclick="leaveRoom()" style="background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;" data-i18n="room.back">← Voltar</button>
           <h1 id="roomTitle">Sala</h1>
-          <span id="eventCountdown" style="font-size:13px;color:var(--warning);font-weight:700;display:none;"></span>
         </div>
         <div class="header-right">
           <button class="action-btn" onclick="copyInviteLink()" title="Convidar amigos">🔗</button>
@@ -867,10 +866,12 @@
     </div>
   </div>
 
-  <!-- ===== JAVASCRIPT ===== -->
+  <!-- ============================================================ -->
+  <!-- ===== JAVASCRIPT (PARTE 1) ===== -->
+  <!-- ============================================================ -->
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO (ATUALIZADO COM TODAS AS CORREÇÕES)
+    // JAVASCRIPT COMPLETO (ATUALIZADO COM CORREÇÃO DE VOLUME)
     // ============================================================
     const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
@@ -883,6 +884,7 @@
     let currentLang = localStorage.getItem('sonoraLang') || 'pt';
     let audioCtx = null;
     let eventCountdownInterval = null;
+    let volumeLevel = 80; // valor fixo para evitar perda de volume
 
     // ===== TRADUÇÕES =====
     const translations = {
@@ -1266,6 +1268,7 @@
       toast('📢 Enviado!', 'success');
     }
 
+    // Função para remover a música atual (Admin)
     async function adminRemoveCurrentSong() {
       if (!amIAdmin) return;
       if (!currentRoomData || !currentRoomData.queue || !currentRoomData.queue.length) return;
@@ -1416,11 +1419,10 @@
           const live = r.isPlaying ? '<div class="room-live-badge"><span class="live-dot"></span> AO VIVO</div>' : '';
           const playingIndicator = r.isPlaying ? `<div class="playing-indicator"><span></span><span></span><span></span><span></span></div>` : '';
           const genreTag = (currentUser && currentUser.estilos && currentUser.estilos.length > 0) ? `<span class="genre-tag">🎵 ${currentUser.estilos[0]}</span>` : '';
-          const eventBadge = r.eventStartTime ? '<span class="event-badge">📅 Evento</span>' : '';
           card.innerHTML = `
             <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge"><span class="icon">🎧</span> ${r.listenerCount || 0}</div>${playingIndicator}</div>
             <div class="room-card-body">
-              <h3>${escapeHtml(r.name)} ${r.radioMode ? '📻' : ''} ${eventBadge}</h3>
+              <h3>${escapeHtml(r.name)} ${r.radioMode ? '📻' : ''}</h3>
               <div class="meta">
                 <span class="listeners"><span class="icon">👥</span> <span class="count">${r.listenerCount || 0}</span> ouvintes</span>
                 <span>🎶 ${r.queueLength || 0} na fila</span>
@@ -1477,6 +1479,7 @@
       loadRooms();
     }
 
+    // ===== PLAYER (com correção de volume) =====
     function loadYouTubeAPI() { if (window.YT && window.YT.Player) { initPlayer(); return; } const tag = document.createElement('script'); tag.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(tag); }
     function onYouTubeIframeAPIReady() { initPlayer(); }
     function initPlayer() {
@@ -1486,14 +1489,21 @@
         playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, enablejsapi: 1 },
         events: {
           onReady: () => {
-            const vol = parseInt($('volumeSlider').value);
+            // Garante o volume ao iniciar
+            const vol = parseInt($('volumeSlider').value) || 80;
+            volumeLevel = vol;
             if (player && player.setVolume) player.setVolume(vol);
             if (currentRoomData) syncPlayer(currentRoomData);
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
-              const vol = parseInt($('volumeSlider').value);
-              if (player && player.setVolume) player.setVolume(vol);
+              // Reaplica o volume sempre que começar a tocar
+              const vol = parseInt($('volumeSlider').value) || 80;
+              volumeLevel = vol;
+              if (player && player.setVolume) {
+                player.setVolume(vol);
+                player.unMute();
+              }
               try { const d = player.getDuration(); if (d > 0) socket.emit('videoDuration', { duration: Math.floor(d) }); } catch(e) {}
               if (crossfadeInterval) { clearInterval(crossfadeInterval); crossfadeInterval = null; }
               $('bufferingOverlay').classList.remove('show');
@@ -1516,8 +1526,6 @@
       updateNextTrack(state.queue, state.currentIndex);
       renderPinnedMessage(state.pinnedMessage);
 
-      if (state.eventStartTime) { startEventCountdown(state.eventStartTime); } else { $('eventCountdown').style.display = 'none'; }
-
       if (!track) {
         currentTrackId = null;
         $('trackTitle').textContent = 'Fila vazia';
@@ -1534,7 +1542,9 @@
       if (currentTrackId !== track.id) {
         currentTrackId = track.id;
         player.loadVideoById({ videoId: track.id, startSeconds: Math.floor(state.position || 0) });
-        const vol = parseInt($('volumeSlider').value);
+        // Aplica volume com atraso e garante que não fique mudo
+        const vol = parseInt($('volumeSlider').value) || 80;
+        volumeLevel = vol;
         setTimeout(() => {
           if (player) {
             try {
@@ -1543,13 +1553,20 @@
               player.playVideo();
             } catch(e) { console.warn('Erro ao ajustar áudio:', e); }
           }
-        }, 300);
+        }, 500);
+        // Reaplica após 2 segundos (garantia extra)
+        setTimeout(() => {
+          if (player && player.setVolume) {
+            player.setVolume(vol);
+            player.unMute();
+          }
+        }, 2000);
         $('trackTitle').textContent = track.title || 'Música';
         $('trackArtist').textContent = track.artist || 'Desconhecido';
         $('trackDj').textContent = '👤 ' + (track.dj || '');
         $('trackCover').innerHTML = `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="" onerror="this.parentElement.textContent='🎵'">`;
         const items = document.querySelectorAll('.queue-item');
-        items.forEach((el, idx) => { if (idx === state.currentIndex) { el.classList.add('current'); el.style.animation = 'none'; setTimeout(() => el.style.animation = 'highlightFade 0.6s ease'); } else el.classList.remove('current'); });
+        items.forEach((el, idx) => { if (idx === state.currentIndex) { el.classList.add('current'); } else el.classList.remove('current'); });
       }
     }
 
@@ -1645,7 +1662,7 @@
           const current = player.getCurrentTime();
           const remaining = duration - current;
           if (remaining <= 3 && remaining > 0) {
-            const vol = parseInt($('volumeSlider').value);
+            const vol = parseInt($('volumeSlider').value) || 80;
             const steps = 20;
             const step = vol / steps;
             let cVol = vol;
@@ -1659,8 +1676,12 @@
     function setVolume(val) {
       const volume = parseInt(val);
       if (isNaN(volume)) return;
+      volumeLevel = volume;
       $('volumeValue').textContent = volume + '%';
-      if (player && player.setVolume) player.setVolume(volume);
+      if (player && player.setVolume) {
+        player.setVolume(volume);
+        player.unMute();
+      }
     }
 
     function voteSong(index, type) {
@@ -1866,6 +1887,7 @@
       if (e.key === 'ArrowDown') { e.preventDefault(); const v = Math.max(0, parseInt($('volumeSlider').value) - 5); $('volumeSlider').value = v; setVolume(v); }
     });
 
+    // ===== SOCKET EVENTS =====
     socket.on('adminUsersUpdated', () => { if (amIAdmin) loadAdminUsers(); });
     socket.on('userPoints', (data) => { if (data) { myPoints = data.points || 0; myBadges = data.badges || []; updateUserInfo(); } });
     socket.on('roomState', (state) => {
@@ -1891,86 +1913,23 @@
     });
     socket.on('users', (users) => { $('userCount').textContent = users.length; });
     socket.on('chat', renderMessage);
-    socket.on('chatHistory', (messages) => {
-      const container = document.getElementById('chatMessagesInner');
-      if (!container) return;
-      container.innerHTML = '';
-      const start = Math.max(0, messages.length - 10);
-      messages.slice(start).forEach(m => renderMessage(m));
-      scrollChatToBottom();
-    });
-    socket.on('likeUpdate', (data) => {
-      const { messageId, likes, users } = data;
-      messageLikesSync[messageId] = { likes, users };
-      updateLikeDisplay(messageId);
-    });
-    socket.on('likesState', (likesData) => {
-      messageLikesSync = likesData || {};
-      const container = document.getElementById('chatMessagesInner');
-      if (!container) return;
-      const msgElements = container.querySelectorAll('.msg');
-      for (const el of msgElements) {
-        const msgId = el.dataset.msgId;
-        if (msgId && messageLikesSync[msgId]) updateLikeDisplay(msgId);
-      }
-    });
-    socket.on('voteUpdate', (data) => {
-      const { index, up, down } = data;
-      queueVotes[index] = { up, down };
-      if (down.length >= DISLIKE_THRESHOLD) {
-        toast(`👎 Música removida por votação! (${down.length} votos negativos)`, 'error');
-        if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-      } else {
-        if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-      }
-    });
-    socket.on('votesState', (votesData) => {
-      queueVotes = votesData || {};
-      if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex);
-    });
+    socket.on('chatHistory', (messages) => { const container = document.getElementById('chatMessagesInner'); if (!container) return; container.innerHTML = ''; const start = Math.max(0, messages.length - 10); messages.slice(start).forEach(m => renderMessage(m)); scrollChatToBottom(); });
+    socket.on('likeUpdate', (data) => { const { messageId, likes, users } = data; messageLikesSync[messageId] = { likes, users }; updateLikeDisplay(messageId); });
+    socket.on('likesState', (likesData) => { messageLikesSync = likesData || {}; const container = document.getElementById('chatMessagesInner'); if (!container) return; const msgElements = container.querySelectorAll('.msg'); for (const el of msgElements) { const msgId = el.dataset.msgId; if (msgId && messageLikesSync[msgId]) updateLikeDisplay(msgId); } });
+    socket.on('voteUpdate', (data) => { const { index, up, down } = data; queueVotes[index] = { up, down }; if (down.length >= DISLIKE_THRESHOLD) { toast(`👎 Música removida por votação! (${down.length} votos negativos)`, 'error'); if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex); } else { if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex); } });
+    socket.on('votesState', (votesData) => { queueVotes = votesData || {}; if (currentRoomData && currentRoomData.queue) renderQueue(currentRoomData.queue, currentRoomData.currentIndex); });
     socket.on('error', (msg) => toast(msg, 'error'));
-    socket.on('isAdmin', (isAdmin) => {
-      amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com';
-      if (amIAdmin) {
-        $('adminBadge').classList.remove('hidden');
-        toast('Você é admin desta sala!', 'success');
-      }
-      checkAdmin();
-    });
+    socket.on('isAdmin', (isAdmin) => { amIAdmin = isAdmin || currentUser?.email === 'admin@sonora.com'; if (amIAdmin) { $('adminBadge').classList.remove('hidden'); toast('Você é admin desta sala!', 'success'); } checkAdmin(); });
     socket.on('kicked', (msg) => { alert(msg); leaveRoom(); });
     socket.on('banned', (msg) => { alert(msg); leaveRoom(); });
-    socket.on('chatCleared', () => {
-      const container = document.getElementById('chatMessagesInner');
-      if (container) {
-        container.innerHTML = '';
-        const div = document.createElement('div');
-        div.className = 'msg msg-system';
-        div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>';
-        container.appendChild(div);
-      }
-      toast('Chat limpo!', 'success');
-    });
-    socket.on('adminBroadcast', (data) => {
-      toast(`📢 ${data.message}`, 'success');
-      if (currentRoom) {
-        const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() };
-        renderMessage(msg);
-      }
-    });
+    socket.on('chatCleared', () => { const container = document.getElementById('chatMessagesInner'); if (container) { container.innerHTML = ''; const div = document.createElement('div'); div.className = 'msg msg-system'; div.innerHTML = '<span class="msg-text">🧹 Chat limpo pelo admin</span>'; container.appendChild(div); } toast('Chat limpo!', 'success'); });
+    socket.on('adminBroadcast', (data) => { toast(`📢 ${data.message}`, 'success'); if (currentRoom) { const msg = { user: '📢 Admin', text: data.message, isSystem: true, createdAt: new Date() }; renderMessage(msg); } });
     socket.on('roomClosed', (msg) => { alert(msg); leaveRoom(); });
-    socket.on('skipVoteUpdate', ({ votes, needed }) => {
-      toast(`🗳️ Votos para pular: ${votes}/${needed}`, 'success');
-    });
-    socket.on('waitingRoom', ({ position, maxListeners, canJoin }) => {
-      if (canJoin) {
-        toast('🟢 Uma vaga foi liberada! Tentando entrar...', 'success');
-        joinRoom(currentRoom);
-      } else {
-        toast(`⏳ Você está na fila de espera (posição ${position}). Aguarde uma vaga.`, 'error');
-      }
-    });
+    socket.on('skipVoteUpdate', ({ votes, needed }) => { toast(`🗳️ Votos para pular: ${votes}/${needed}`, 'success'); });
+    socket.on('waitingRoom', ({ position, maxListeners, canJoin }) => { if (canJoin) { toast('🟢 Uma vaga foi liberada! Tentando entrar...', 'success'); joinRoom(currentRoom); } else { toast(`⏳ Você está na fila de espera (posição ${position}). Aguarde uma vaga.`, 'error'); } });
     socket.on('playSound', (type) => { playSound(type); });
 
+    // ===== ATUALIZAÇÃO DA BARRA DE PROGRESSO =====
     setInterval(() => {
       if (!player || !player.getCurrentTime) return;
       try {
@@ -1984,6 +1943,7 @@
       } catch(e) {}
     }, 1000);
 
+    // ===== INICIALIZAÇÃO =====
     function init() {
       setLanguage(currentLang);
       applyTheme();
@@ -2008,11 +1968,7 @@
             checkAdmin();
             loadFavorites();
             toast('Bem-vindo(a) ' + myName + '!', 'success');
-            if (pendingRoomAfterLogin) {
-              const s = pendingRoomAfterLogin;
-              pendingRoomAfterLogin = null;
-              setTimeout(() => joinRoom(s), 1000);
-            }
+            if (pendingRoomAfterLogin) { const s = pendingRoomAfterLogin; pendingRoomAfterLogin = null; setTimeout(() => joinRoom(s), 1000); }
           }
         })
         .catch(() => {
@@ -2023,11 +1979,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       init();
-      setInterval(() => {
-        if (document.getElementById('screen-lobby').classList.contains('active')) {
-          loadRooms();
-        }
-      }, 15000);
+      setInterval(() => { if (document.getElementById('screen-lobby').classList.contains('active')) { loadRooms(); } }, 15000);
     });
   </script>
 </body>
