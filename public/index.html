@@ -40,6 +40,7 @@
       min-height: 100vh; max-height: 100vh; overflow: hidden;
       background-image: var(--bg-image); background-size: cover; background-position: center;
       display: flex; flex-direction: column;
+      transition: background-image 0.5s ease;
     }
     body::before { content: ''; position: fixed; inset: 0; background: var(--bg-overlay); pointer-events: none; z-index: -1; }
     * { scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg-elevated); }
@@ -840,11 +841,25 @@
     </div>
   </div>
 
-  <!-- ===== CREATE ROOM ===== -->
+  <!-- ===== CREATE ROOM (MODIFICADO: adicionado seletor de gênero) ===== -->
   <div class="modal-overlay" id="createRoomModal">
     <div class="modal">
       <h3 data-i18n="createRoom.title">Criar sala</h3>
       <input type="text" id="newRoomName" placeholder="Nome da sala" maxlength="40" data-i18n-placeholder="createRoom.placeholder">
+      <label class="form-label">🎵 Gênero musical</label>
+      <select id="newRoomGenre">
+        <option value="pop">🎤 Pop</option>
+        <option value="rock">🎸 Rock</option>
+        <option value="sertanejo">🌾 Sertanejo</option>
+        <option value="eletronica">🎧 Eletrônica</option>
+        <option value="mpb">🎵 MPB</option>
+        <option value="funk">🕺 Funk</option>
+        <option value="pagode">🎶 Pagode/Samba</option>
+        <option value="hiphop">🎤 Hip Hop/Rap</option>
+        <option value="forro">🪗 Forró</option>
+        <option value="gospel">🙏 Gospel</option>
+        <option value="indie">🎸 Indie</option>
+      </select>
       <div class="modal-actions">
         <button class="btn-secondary" onclick="closeCreateRoom()" data-i18n="createRoom.cancel">Cancelar</button>
         <button class="btn-primary" onclick="createRoom()" data-i18n="createRoom.create">Criar</button>
@@ -871,9 +886,12 @@
   <!-- ============================================================ -->
   <script>
     // ============================================================
-    // JAVASCRIPT COMPLETO - SONORA FAN
+    // JAVASCRIPT COMPLETO - SONORA FAN (COM AJUSTES)
     // ============================================================
-    const MAX_SONG_DURATION = 600, DISLIKE_THRESHOLD = 10, COOLDOWN = 30000, MAX_SONGS_PER_USER = 3;
+    const MAX_SONG_DURATION = 999999; // SEM LIMITE (apenas para compatibilidade)
+    const DISLIKE_THRESHOLD = 10;
+    const COOLDOWN = 30000;
+    const MAX_SONGS_PER_USER = 3;
     const socket = io({ withCredentials: true });
     let currentUser = null, myName = '', myAvatar = '🎸', amIAdmin = false, currentRoom = null, currentRoomData = null;
     let player = null, currentTrackId = null, lastAddTime = 0, songData = null;
@@ -1173,7 +1191,7 @@
     const badWords = ['porra','caralho','merda','puta','foda','cu','buceta','pica','bosta','viado','bicha','corno','fdp','pqp','arrombado','desgraçado','vagabundo','escroto','idiota','imbecil','retardado','fuck','shit','bitch','asshole','dick','cock','pussy','cunt','whore','slut','bastard','damn','hell','nigger','fag'];
     function censorText(t) { let c = t; badWords.forEach(w => { const r = new RegExp('\\b' + w + '\\b','gi'); c = c.replace(r,'***'); }); return c; }
 
-    // ===== TEMAS (DARK PADRÃO) =====
+    // ===== TEMAS =====
     function applyTheme() {
       const themes = {
         'dark': { btn:'🌙', bg:'#050508', card:'#0f0f18', hover:'#161620', border:'#1e1e2e', text:'#f0f0f8', textSec:'#9a9ab0', textMuted:'#555570', accent:'#ff6b35', accent2:'#7c3aed', bgImage:'none', overlay:'transparent' },
@@ -1199,6 +1217,39 @@
       currentTheme = keys[(idx + 1) % keys.length];
       applyTheme();
       toast('Tema: ' + currentTheme, 'success');
+    }
+
+    // ===== APLICAR TEMA DA SALA (por gênero) =====
+    function applyRoomTheme(genre, color) {
+      if (!genre) genre = 'pop';
+      // Cor principal
+      document.documentElement.style.setProperty('--accent', color || '#7c3aed');
+      // Emoji no título
+      const genreEmojis = {
+        pop: '🎤', rock: '🎸', sertanejo: '🌾', eletronica: '🎧',
+        mpb: '🎵', funk: '🕺', pagode: '🎶', hiphop: '🎤',
+        forro: '🪗', gospel: '🙏', indie: '🎸'
+      };
+      if (currentRoomData) {
+        $('roomTitle').textContent = (genreEmojis[genre] || '🎵') + ' ' + currentRoomData.name;
+      }
+      // Imagem de fundo baseada no gênero (usando Unsplash para imagens temáticas)
+      const backgrounds = {
+        pop: 'url("https://source.unsplash.com/1600x900/?pop,music,concert")',
+        rock: 'url("https://source.unsplash.com/1600x900/?rock,concert,guitar")',
+        sertanejo: 'url("https://source.unsplash.com/1600x900/?country,music,brazil")',
+        eletronica: 'url("https://source.unsplash.com/1600x900/?electronic,music,party")',
+        mpb: 'url("https://source.unsplash.com/1600x900/?brazilian,music,mpb")',
+        funk: 'url("https://source.unsplash.com/1600x900/?funk,party,dance")',
+        pagode: 'url("https://source.unsplash.com/1600x900/?samba,brazilian,music")',
+        hiphop: 'url("https://source.unsplash.com/1600x900/?hiphop,rap,music")',
+        forro: 'url("https://source.unsplash.com/1600x900/?forro,brazilian,music")',
+        gospel: 'url("https://source.unsplash.com/1600x900/?gospel,church,music")',
+        indie: 'url("https://source.unsplash.com/1600x900/?indie,music,alternative")'
+      };
+      const bg = backgrounds[genre] || 'none';
+      document.documentElement.style.setProperty('--bg-image', bg);
+      document.documentElement.style.setProperty('--bg-overlay', 'rgba(0,0,0,0.65)');
     }
 
     // ===== LOGIN / SIGNUP =====
@@ -1656,7 +1707,11 @@
           const thumb = track ? `<img src="https://img.youtube.com/vi/${track.id}/mqdefault.jpg" alt="">` : '<div style="padding:30px;text-align:center;font-size:40px;">🎧</div>';
           const live = r.isPlaying ? '<div class="room-live-badge"><span class="live-dot"></span> AO VIVO</div>' : '';
           const playingIndicator = r.isPlaying ? `<div class="playing-indicator"><span></span><span></span><span></span><span></span></div>` : '';
-          const genreTag = (currentUser && currentUser.estilos && currentUser.estilos.length > 0) ? `<span class="genre-tag">🎵 ${currentUser.estilos[0]}</span>` : '';
+          const genreEmoji = {
+            pop: '🎤', rock: '🎸', sertanejo: '🌾', eletronica: '🎧',
+            mpb: '🎵', funk: '🕺', pagode: '🎶', hiphop: '🎤',
+            forro: '🪗', gospel: '🙏', indie: '🎸'
+          }[r.genre] || '🎵';
           card.innerHTML = `
             <div class="room-thumb">${thumb} ${live} <div class="room-listeners-badge"><span class="icon">🎧</span> ${r.listenerCount || 0}</div>${playingIndicator}</div>
             <div class="room-card-body">
@@ -1664,7 +1719,7 @@
               <div class="meta">
                 <span class="listeners"><span class="icon">👥</span> <span class="count">${r.listenerCount || 0}</span> ouvintes</span>
                 <span>🎶 ${r.queueLength || 0} na fila</span>
-                ${genreTag}
+                <span class="genre-tag">${genreEmoji} ${r.genre || 'Geral'}</span>
               </div>
               <div class="room-avatars"><span class="avatar-mini">👤</span><span class="avatar-mini">👤</span><span class="avatar-mini">👤</span></div>
             </div>
@@ -1680,9 +1735,14 @@
     function closeCreateRoom() { $('createRoomModal').classList.remove('active'); }
     async function createRoom() {
       const name = $('newRoomName').value.trim();
+      const genre = $('newRoomGenre').value || 'pop';
       if (!name) return toast('Digite um nome', 'error');
       try {
-        const r = await fetch('/api/rooms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, adminName: myName, color: '#7c3aed' }) });
+        const r = await fetch('/api/rooms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, adminName: myName, genre })
+        });
         const d = await r.json();
         if (d.slug) { closeCreateRoom(); joinRoom(d.slug); }
       } catch(e) { toast('Erro ao criar sala', 'error'); }
@@ -1746,7 +1806,13 @@
             if (e.data === YT.PlayerState.BUFFERING) { $('bufferingOverlay').classList.add('show'); }
             if (e.data === YT.PlayerState.ENDED) socket.emit('videoEnded');
           },
-          onError: () => { toast('Erro no vídeo, pulando...', 'error'); setTimeout(() => socket.emit('videoEnded'), 2000); }
+          onError: (err) => {
+            console.warn('Erro no player:', err);
+            toast('Erro no vídeo, tentando pular...', 'error');
+            setTimeout(() => {
+              if (currentRoom) socket.emit('videoEnded');
+            }, 2000);
+          }
         }
       });
     }
@@ -1760,6 +1826,11 @@
       renderWaitingQueue(state.waitingQueue);
       updateNextTrack(state.queue, state.currentIndex);
       renderPinnedMessage(state.pinnedMessage);
+
+      // Aplicar tema da sala
+      if (state.genre) {
+        applyRoomTheme(state.genre, state.color);
+      }
 
       if (!track) {
         currentTrackId = null;
@@ -2005,18 +2076,17 @@
       $('previewTitle').textContent = data.title || 'Música do YouTube';
       $('previewArtist').textContent = data.artist || 'Desconhecido';
       const confirmBtn = document.querySelector('.song-preview-confirm');
-      if (data.duration > 0) {
-        if (data.duration > MAX_SONG_DURATION) { $('previewStatus').textContent = `⛔ Muito longo! ${formatDuration(data.duration)} > ${MAX_SONG_DURATION/60} min`; $('previewStatus').style.color = 'var(--danger)'; confirmBtn.disabled = true; confirmBtn.textContent = '⛔ Muito longo'; }
-        else if (data.duration > 300) { $('previewStatus').textContent = `⚠️ ${formatDuration(data.duration)} - música longa (máx ${MAX_SONG_DURATION/60} min)`; $('previewStatus').style.color = 'var(--warning)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar'; }
-        else { $('previewStatus').textContent = `✅ ${formatDuration(data.duration)} - dentro do limite`; $('previewStatus').style.color = 'var(--success)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar'; }
-      } else { $('previewStatus').textContent = '⚠️ Duração não verificada. O vídeo será verificado ao carregar.'; $('previewStatus').style.color = 'var(--warning)'; confirmBtn.disabled = false; confirmBtn.textContent = '✓ Adicionar (sem verificação)'; }
+      // Sem limite de duração, então sempre habilitado
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '✓ Adicionar';
+      $('previewStatus').textContent = data.duration ? `✅ ${formatDuration(data.duration)}` : '✅ Vídeo válido';
+      $('previewStatus').style.color = 'var(--success)';
       $('previewActions').classList.remove('hidden');
     }
 
     function clearPreview() { $('songPreview').classList.add('hidden'); songData = null; }
     function confirmAdd() {
       if (!songData || !songData.id) { toast('Nenhuma música selecionada', 'error'); return; }
-      if (songData.duration && songData.duration > MAX_SONG_DURATION) { toast(`⛔ Vídeo muito longo! Limite: ${MAX_SONG_DURATION/60} min`, 'error'); return; }
       const now = Date.now();
       if (now - lastAddTime < COOLDOWN) { const wait = Math.ceil((COOLDOWN - (now - lastAddTime)) / 1000); toast(`Aguarde ${wait}s`, 'error'); return; }
       socket.emit('addSong', { id: songData.id, title: songData.title || 'Música do YouTube', artist: songData.artist || 'Desconhecido', duration: songData.duration || null });
@@ -2132,6 +2202,8 @@
       syncPlayer(state);
     });
     socket.on('queueEmpty', () => {
+      // A fila está vazia, mas o rádio automático já deve ter sido acionado no backend.
+      // Apenas atualizamos a UI.
       currentTrackId = null;
       $('trackTitle').textContent = 'Fila vazia';
       $('trackArtist').textContent = 'Adicione uma música';
@@ -2143,7 +2215,7 @@
       $('nextTrack').style.display = 'none';
       try { player.stopVideo(); } catch(e) {}
       renderQueue([], 0);
-      toast('Fila encerrada! Adicione músicas.', 'success');
+      toast('⏳ Aguardando músicas...', 'success');
     });
     socket.on('users', (users) => { $('userCount').textContent = users.length; });
     socket.on('chat', renderMessage);
